@@ -1,7 +1,14 @@
 {
-  "current": "v1.17.0",
+  "current": "v1.18.0",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.18.0",
+      "date": "2026-07-02 19:21（北京时间）",
+      "summary": "修复大盘情绪/持仓总览卡片点击无响应（onclick从card-arrow移至整个home-card）；修复涨停/跌停数不显示（ut参数被截断导致API返回null，跌停endpoint错误getTopicZTPool→getTopicDTPool）。",
+      "cache": "a-share-review-v21-20260702",
+      "deploy_url": "待预览确认后部署"
+    },
     {
       "version": "v1.17.0",
       "date": "2026-07-02 18:59（北京时间）",
