@@ -16,7 +16,7 @@
 ### 修改代码
 
 1. **只修改** `a-share-review-dashboard.html`
-2. 修改后同步副本: `cp a-share-review-dashboard.html site/index.html && cp a-share-review-dashboard.html site/preview.html`
+2. 修改后同步副本: `cp a-share-review-dashboard.html site/index.html && cp a-share-review-dashboard.html site/preview.html && cp a-share-review-dashboard.html index.html`
 
 ### 版本号
 
