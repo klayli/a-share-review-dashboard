@@ -700,9 +700,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.21.0';
-const APP_VERSION_DATE = '2026-07-03 00:52';
-const APP_RELEASE_NOTES = 'UI体验优化：备选标的限制显示3个；附录·当日热点题材汇总默认显示前6条，其余可点击展开/收起；个股涨跌比按A股习惯涨红(#ff1744)跌绿(#00c853)着色；明日一句话策略包含具体推荐股票（名称(代码) N板→板块格式）。';
+const APP_VERSION = 'v1.22.0';
+const APP_VERSION_DATE = '2026-07-03 01:10';
+const APP_RELEASE_NOTES = '全文字段股票可点击：隔夜单计划/热点题材描述/明日操作方向/驱动消息等所有文本中提及的股票，自动识别为蓝色可点击链接，点击弹出K线详情弹窗；连板梯队显示股票代码；linkStocks()默认不显示价格避免正文杂乱。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -833,6 +833,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.22.0', date:'2026-07-03 01:10', notes:'全文字段股票可点击：隔夜单计划/热点题材原因描述/明日操作方向/驱动消息/板块强度说明等所有正文中提及的股票名称，自动识别转换为蓝色可点击链接（显示名称+代码），点击弹出K线详情弹窗；隔夜单计划连板梯队补充股票代码；linkStocks()新增opts参数，正文链接默认不显示价格避免破坏排版。' },
   { version:'v1.21.0', date:'2026-07-03 00:52', notes:'UI体验优化：备选标的限制显示3个；热点题材默认显示前6条+展开收起；个股涨跌比涨红跌绿着色；明日策略包含具体推荐股票（名称(代码) N板→板块）。' },
   { version:'v1.20.0', date:'2026-07-03 00:25', notes:'热点题材原因智能生成：附录·当日热点题材汇总新增驱动因素+龙头表现自动描述（如"避险情绪升温+大宗商品涨价催化，赤峰黄金涨停领涨"）；23个细分板块驱动模板库，连板数/涨停时间/封单额自动分析；样式升级为圆角卡片+涨跌幅+区分主线/活跃标签。' },
   { version:'v1.19.1', date:'2026-07-02 19:55', notes:'修复大盘情绪详情页数据不显示核心bug：涨停池API字段名hy→hybk修复（导致所有板块龙头归集为空）；板块龙头匹配增加前缀模糊匹配（hybk返回4字截断名如"汽车零部"）；ensureTodayData()增加已有数据回填逻辑；跌停池Pagesize修正为500。' },
@@ -957,8 +958,9 @@ function formatUd(ud) {
   return html;
 }
 
-function linkStocks(text) {
+function linkStocks(text, opts={}) {
   if (!text) return text;
+  const showPrice = opts.price === true;
   let html = text;
   const entries = Object.keys(STOCK_INFO).map(code => ({code, ...STOCK_INFO[code]}))
     .sort((a,b) => b.name.length - a.name.length);
@@ -970,9 +972,9 @@ function linkStocks(text) {
   });
   // Replace any remaining 6-digit codes
   html = html.replace(/\b(\d{6})\b/g, (m, code) => STOCK_INFO[code] ? `@@STOCK_${code}@@` : m);
-  // Resolve placeholders to clickable tags (include latest price inline)
+  // Resolve placeholders to clickable tags
   entries.forEach(e => {
-    html = html.replace(new RegExp(`@@STOCK_${e.code}@@`, 'g'), stockTag(e.code));
+    html = html.replace(new RegExp(`@@STOCK_${e.code}@@`, 'g'), stockTag(e.code, { price: showPrice }));
   });
   return html;
 }
@@ -3505,7 +3507,7 @@ function generateOvernightPlan(d, ztStocks) {
   const theme = d.theme || '';
   const lbcStocks = Object.values(ztStocks).filter(s => s.lbc >= 2).sort((a, b) => b.lbc - a.lbc).slice(0, 5);
   let plan = `主线方向：${theme}\n`;
-  if (lbcStocks.length > 0) plan += `关注连板梯队：${lbcStocks.map(s => `${s.name}(${s.lbc}板)`).join('、')}\n`;
+  if (lbcStocks.length > 0) plan += `关注连板梯队：${lbcStocks.map(s => `${s.name}(${s.code}) ${s.lbc}板`).join('、')}\n`;
   plan += '策略：尾盘观察主线板块龙头承接情况，若封板坚定可考虑隔夜排队';
   return plan;
 }
@@ -3935,7 +3937,7 @@ function renderThemeCard(t, hidden) {
   const cls = 'theme ' + (hidden ? 'theme-extra ' : '') + (t.dim ? 'dim' : '');
   return `<div class="${cls.trim()}"${hidden ? ' style="display:none"' : ''}>
     <div class="tn"><span class="rank">${t.rank}</span>${t.name}<span class="pct" style="color:${pctColor}">${pctStr}</span>${t.badge ? '<span class="badge ' + badgeClass + '">' + t.badge + '</span>' : ''}</div>
-    <div class="td">${t.desc}</div>
+    <div class="td">${linkStocks(t.desc)}</div>
     <div class="ts">${linkStocks(t.stocks)}</div>
   </div>`;
 }
@@ -3990,7 +3992,7 @@ function renderMarket() {
   </div>`;
 
   html += `<div class="info-item" style="margin-bottom:16px"><div class="label" style="margin-bottom:4px;">明日操作方向</div>
-    <div><span class="hl-yellow">${d.direction}</span></div></div>`;
+    <div><span class="hl-yellow">${linkStocks(d.direction)}</span></div></div>`;
   html += `</div>`;
 
   // === 今日主线板块 ===
@@ -3999,7 +4001,7 @@ function renderMarket() {
     <div class="sector">
       <div class="sname">${d.sectorName || '—'}${d.sectorBadge ? ' <span class="badge badge-hot">' + d.sectorBadge + '</span>' : ''}</div>
       <h3 style="color:var(--yellow);margin-bottom:4px">驱动消息</h3>
-      <ul>${d.drivers.map(dr => `<li>${dr}</li>`).join('')}</ul>
+      <ul>${d.drivers.map(dr => `<li>${linkStocks(dr)}</li>`).join('')}</ul>
       <div class="leader">
         <strong>板块龙头：</strong>${linkStocks(d.leader || '—')}<br>
         <strong>板块强度：</strong>${d.sectorStrength ? `<span class="hl-${d.sectorStrength === '强' || d.sectorStrength === '极强' ? 'green' : d.sectorStrength === '弱' ? 'red' : 'yellow'}">${d.sectorStrength}</span>` : '—'}${d.sectorReason ? ' — ' + linkStocks(d.sectorReason) : ''}
@@ -4070,7 +4072,8 @@ function renderMarket() {
   html += `</div>`;
 
   // === 隔夜单计划 ===
-  html += `<div class="section"><h2>隔夜单计划</h2><div class="info-item">${d.overnight || d.overnightPlan || '—'}</div></div>`;
+  const overnightText = (d.overnight || d.overnightPlan || '—').replace(/\n/g, '<br>');
+  html += `<div class="section"><h2>隔夜单计划</h2><div class="info-item">${linkStocks(overnightText)}</div></div>`;
 
   // === 明日操作纪律 ===
   html += `<div class="section"><h2>明日操作纪律</h2>
