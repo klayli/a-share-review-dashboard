@@ -124,14 +124,20 @@
   .rules-box li { margin-bottom:3px; font-size:0.85rem; color:var(--text-dim); }
 
   /* Themes grid */
-  .themes { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:10px; }
-  .theme { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px; }
-  .theme .rank { display:inline-block; width:22px; height:22px; background:var(--yellow-bg); color:var(--yellow); text-align:center; line-height:22px; border-radius:5px; font-size:0.78rem; font-weight:700; margin-right:6px; }
-  .theme .tn { font-weight:600; margin-bottom:4px; }
-  .theme .td { font-size:0.82rem; color:var(--text-dim); }
-  .theme .ts { font-size:0.82rem; color:var(--blue); margin-top:4px; }
-  .theme.dim { border-color:var(--red); opacity:0.7; }
-  .theme.dim .rank { background:var(--red-bg); color:var(--red); }
+  .themes { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px; }
+  .theme { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 16px; transition:all 0.2s; }
+  .theme:hover { border-color:var(--blue); box-shadow:0 2px 12px rgba(52,152,219,.15); }
+  .theme .rank { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; background:var(--yellow-bg); color:var(--yellow); border-radius:8px; font-size:0.95rem; font-weight:800; margin-right:8px; }
+  .theme .tn { display:flex; align-items:center; flex-wrap:wrap; gap:6px; font-weight:700; font-size:0.95rem; margin-bottom:8px; }
+  .theme .tn .badge { font-size:0.72rem; padding:2px 8px; border-radius:6px; font-weight:600; }
+  .theme .tn .badge-hot { background:linear-gradient(135deg,#ff6b6b,#ee5a24); color:#fff; }
+  .theme .tn .badge-active { background:var(--blue-bg); color:var(--blue); border:1px solid var(--blue); }
+  .theme .pct { font-size:0.82rem; font-weight:600; color:var(--green); margin-left:4px; }
+  .theme .td { font-size:0.84rem; color:var(--text); line-height:1.6; margin-bottom:8px; opacity:0.85; }
+  .theme .ts { display:flex; flex-wrap:wrap; gap:6px; font-size:0.82rem; }
+  .theme .ts .stock-link { font-size:0.8rem; padding:3px 10px; }
+  .theme.dim { opacity:0.65; }
+  .theme.dim .rank { background:var(--card-hover); color:var(--text-dim); }
 
   /* Stock links & prices */
   .stock-link { display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:var(--blue); text-decoration:none; background:var(--blue-bg); border:1px solid var(--blue); border-radius:6px; padding:2px 8px; transition:all 0.2s; font-weight:600; }
@@ -694,9 +700,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.19.1';
-const APP_VERSION_DATE = '2026-07-02 19:55';
-const APP_RELEASE_NOTES = '修复大盘情绪详情页所有字段无数据问题：1)涨停池API字段hy→hybk修复；2)板块排行API新增f204/f205领涨股字段，概念板块龙头（印染/黄金/钨/氟化工等）全部可显示；3)板块热力图按20个大类合并显示龙头股；4)龙头股动态注册到STOCK_INFO支持点击弹窗K线；5)复合板块名(印染·水产饲料)按+·、拆分匹配龙头；6)修复化工大类错误归集医药股问题；7)盘后数据获取时间窗延长至23点。';
+const APP_VERSION = 'v1.20.0';
+const APP_VERSION_DATE = '2026-07-03 00:35';
+const APP_RELEASE_NOTES = '热点题材原因智能生成：附录·当日热点题材汇总新增驱动因素+龙头表现自动描述（如"避险情绪升温+大宗商品涨价催化，赤峰黄金涨停领涨"），23个细分板块驱动模板库，连板数/涨停时间/封单额自动分析，样式升级为圆角卡片+涨跌幅+区分主线/活跃标签。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -827,6 +833,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.20.0', date:'2026-07-03 00:25', notes:'热点题材原因智能生成：附录·当日热点题材汇总新增驱动因素+龙头表现自动描述（如"避险情绪升温+大宗商品涨价催化，赤峰黄金涨停领涨"）；23个细分板块驱动模板库，连板数/涨停时间/封单额自动分析；样式升级为圆角卡片+涨跌幅+区分主线/活跃标签。' },
   { version:'v1.19.1', date:'2026-07-02 19:55', notes:'修复大盘情绪详情页数据不显示核心bug：涨停池API字段名hy→hybk修复（导致所有板块龙头归集为空）；板块龙头匹配增加前缀模糊匹配（hybk返回4字截断名如"汽车零部"）；ensureTodayData()增加已有数据回填逻辑；跌停池Pagesize修正为500。' },
   { version:'v1.19.0', date:'2026-07-02 19:46', notes:'补全大盘情绪详情页全部数据：个股涨跌比/赚钱效应/操作方向/备选标的/隔夜计划/热点汇总均通过API实时计算；板块热力图按大类(医药/银行/煤炭/有色等20类)合并，显示龙头股可点击弹窗；动态注册涨停股到STOCK_INFO。' },
   { version:'v1.18.1', date:'2026-07-02 19:28', notes:'修复大盘情绪详情页无法打开：renderMarket()中d.drivers.map()因ensureTodayData()缺字段崩溃；补全新交易日默认字段(drivers/leader/sectorBadge等)，renderMarket加null-safety防御，refreshMarketData自动填充板块驱动/龙头/强度。' },
@@ -2974,7 +2981,7 @@ async function refreshMarketData() {
     const nowM = bjNow.getMinutes();
     const isMarketHours = (nowH > 9 || (nowH === 9 && nowM >= 30)) && (nowH < 15 || (nowH === 15 && nowM <= 30));
     const isPreMarketOpen = nowH === 9 && nowM >= 25 && nowM < 30;
-    const canFetchMarketData = isMarketHours || isPreMarketOpen || (nowH >= 15 && nowH < 23);
+    const canFetchMarketData = isMarketHours || isPreMarketOpen || (nowH >= 15) || (nowH < 2);
 
     if (sectors.length > 0) {
       // Build API-provided leaders map (both concept + industry boards)
@@ -3253,8 +3260,10 @@ async function refreshMarketData() {
         todayD.direction = '情绪回暖，可适当加仓主线龙头，持股待涨为主';
       } else if (zt > 80 && pct > -1) {
         todayD.direction = '情绪尚可，聚焦主线龙头低吸，控制仓位5成以内';
+      } else if (zt > 80 && pct <= -1) {
+        todayD.direction = `涨停${zt}家结构性分化，指数大跌但局部热点活跃，聚焦最强主线龙头低吸，控制仓位3成，设好止损`;
       } else if (zt > 50) {
-        todayD.direction = '涨停50+情绪分化，聚焦最强主线龙头低吸，控制仓位3-5成，设好止损';
+        todayD.direction = `涨停${zt}家情绪分化，聚焦最强主线龙头低吸，控制仓位3-5成，设好止损`;
       } else if (zt > 20 && pct > -3) {
         todayD.direction = '情绪偏弱，以观望为主，轻仓试错龙头，设好止损';
       } else if (dt > 100) {
@@ -3266,37 +3275,141 @@ async function refreshMarketData() {
 
     // 4.9 生成热点题材汇总hotThemes
     if (sectors.length > 0) {
+      // Build a map of sector -> zt stocks (with lbc/time info)
+      const sectorZtStocks = {};
+      Object.keys(sectorLeaders).forEach(hy => {
+        if (sectorLeaders[hy] && sectorLeaders[hy].length > 0) {
+          sectorZtStocks[hy] = sectorLeaders[hy];
+        }
+      });
+
+      // Sector driver/catalyst templates by keyword
+      const SECTOR_DRIVERS = [
+        { kw: ['黄金','贵金属','钨','小金属','铜','铝','稀土'], reason: '避险情绪升温+大宗商品涨价催化' },
+        { kw: ['医药','医疗','医美','中药','生物','疫苗','创新药','化学制药'], reason: '医保政策利好+创新药纳入商保预期' },
+        { kw: ['印染','纺织','服装','辅料','涤纶','粘胶','化妆品'], reason: '出口数据超预期+消费复苏带动' },
+        { kw: ['水产','饲料','养殖','鸡肉','猪肉','食用菌'], reason: '农产品涨价+业绩预增预期' },
+        { kw: ['银行','保险','证券','券商','多元金融'], reason: '大金融护盘+估值修复' },
+        { kw: ['煤炭','石油','油气','燃气','石化'], reason: '能源价格上涨+红利防御逻辑' },
+        { kw: ['电力','光伏','风电','电池','储能','锂电','太阳能','电气','绿电'], reason: '新能源政策加码+电力供需紧张' },
+        { kw: ['半导体','芯片','集成电路','消费电子','光学','面板','LED','元器件','PCB','电子'], reason: '国产替代加速+科技自立自强政策催化' },
+        { kw: ['计算机','软件','云计算','信创','网络安全','AI','人工智能','数据','数字媒体','营销','广告'], reason: 'AI应用落地加速+数字经济政策推动' },
+        { kw: ['通信','5G','6G','光纤','运营商','卫星'], reason: '算力网络建设+通信技术迭代' },
+        { kw: ['传媒','游戏','影视','出版','教育'], reason: '内容消费复苏+AI赋能内容生产' },
+        { kw: ['军工','航天','航空','船舶','兵器','地面兵装'], reason: '国防订单放量+地缘局势催化' },
+        { kw: ['机床','机械','机器人','自动化','工程机械','通用设备','专用设备'], reason: '设备更新政策+制造业复苏' },
+        { kw: ['氟化工','磷化工','化学制品','化学纤维','化纤','钛白粉','聚氨酯','塑料','农化','化工'], reason: '化工品涨价+供给收缩预期' },
+        { kw: ['航运','港口','物流','快递','航空','机场','铁路','公路'], reason: '物流需求回升+国企改革预期' },
+        { kw: ['房地产','地产','装修','建材','水泥','家居','物业'], reason: '地产政策放松+保交楼推进' },
+        { kw: ['汽车','新能源车','整车','零部件','汽车配件','汽配','乘用车','商用车'], reason: '以旧换新政策+销量数据回暖' },
+        { kw: ['白酒','酿酒','食品','饮料','乳业','啤酒','调味品','零食'], reason: '消费升级+中秋国庆备货预期' },
+        { kw: ['农业','种业','种植','林业','农药','化肥'], reason: '粮食安全+种业振兴政策' },
+        { kw: ['钢铁','有色','工业金属'], reason: '基建投资加码+供需改善' },
+        { kw: ['环保'], reason: '环保政策趋严+绿色发展' },
+        { kw: ['家居','家电'], reason: '以旧换新+地产链修复' },
+        { kw: ['电网'], reason: '特高压建设+电网投资加速' },
+      ];
+
+      function getSectorDriver(sectorName) {
+        for (const d of SECTOR_DRIVERS) {
+          for (const kw of d.kw) {
+            if (sectorName.includes(kw)) return d.reason;
+          }
+        }
+        return '资金轮动+板块异动';
+      }
+
+      function getSectorZtStocks(sectorName) {
+        const names = String(sectorName || '').split(/[+·、]/).map(n => n.trim()).filter(Boolean);
+        const matched = [];
+        const seen = new Set();
+        for (const name of names) {
+          for (const [hy, stocks] of Object.entries(sectorZtStocks)) {
+            const isMatch = hy === name || hy.includes(name) || name.includes(hy) ||
+              (name.length >= 2 && (hy.startsWith(name.length >= 3 ? name.slice(0, 3) : name) ||
+                name.startsWith(hy.slice(0, Math.min(hy.length, name.length)))));
+            if (isMatch) {
+              stocks.forEach(s => {
+                if (!seen.has(s.code)) { seen.add(s.code); matched.push(s); }
+              });
+            }
+          }
+        }
+        return matched.sort((a, b) => (b.lbc || 0) - (a.lbc || 0) || (a.time || '999').localeCompare(b.time || '999'));
+      }
+
       const themeList = [];
       const usedSectors = new Set();
       sectors.slice(0, 20).forEach((s, idx) => {
         if (usedSectors.has(s.name)) return;
-        const leaders = (() => {
-          // 1. Try zt pool leaders
-          let matchedHy = Object.keys(sectorLeaders).find(hy =>
-            hy && (hy === s.name || hy.includes(s.name) || s.name.includes(hy)));
-          if (!matchedHy && s.name.length >= 2) {
-            const p = s.name.length >= 3 ? s.name.slice(0, 3) : s.name;
-            matchedHy = Object.keys(sectorLeaders).find(hy =>
-              hy && (hy.startsWith(p) || s.name.startsWith(hy.slice(0, Math.min(hy.length, s.name.length)))));
+
+        // Find zt stocks for this sector
+        const sectorZt = getSectorZtStocks(s.name);
+        const hasZt = sectorZt.length > 0;
+
+        // Build leader stocks display
+        let leaderStocks = '';
+        if (hasZt) {
+          leaderStocks = sectorZt.slice(0, 3).map(l => `${l.name}(${l.code})`).join('、');
+        } else if (s.leaderName && s.leaderCode) {
+          leaderStocks = `${s.leaderName}(${s.leaderCode})`;
+        }
+
+        // Generate reason text
+        const driver = getSectorDriver(s.name);
+        let reason = driver;
+        const ztCount = sectorZt.length;
+        if (hasZt) {
+          const topLbc = sectorZt[0].lbc || 1;
+          const topName = sectorZt[0].name;
+          const topTime = sectorZt[0].time || '';
+          if (ztCount >= 5) {
+            reason += `，板块${ztCount}股涨停`;
+          } else if (ztCount >= 2) {
+            reason += `，板块${ztCount}股涨停`;
           }
-          if (matchedHy && sectorLeaders[matchedHy] && sectorLeaders[matchedHy].length > 0) {
-            return sectorLeaders[matchedHy].slice(0, 3).map(l => `${l.name}(${l.code})`).join('、');
+          if (topLbc >= 4) {
+            reason += `，${topName}${topLbc}连板成为高标龙头`;
+          } else if (topLbc >= 2) {
+            reason += `，${topName}${topLbc}连板领涨`;
+          } else if (topTime && topTime <= '092503') {
+            reason += `，${topName}一字板领涨`;
+          } else if (topTime && topTime <= '093500') {
+            reason += `，${topName}快速封板领涨`;
+          } else {
+            reason += `，${topName}涨停领涨`;
           }
-          // 2. Fallback to API leader (f204/f205)
-          if (s.leaderName && s.leaderCode) {
-            return `${s.leaderName}(${s.leaderCode})`;
+          // Check for secondary strong stocks
+          if (sectorZt.length >= 2 && topLbc < 2) {
+            const followers = sectorZt.slice(1, 3).map(x => x.name).join('、');
+            if (followers) reason += `，${followers}跟涨`;
           }
-          return '';
-        })();
+          // Check for 历史新高 (when seal amount is huge > 5亿)
+          const bigSeal = sectorZt.find(x => x.seal && parseFloat(x.seal) > 50000);
+          if (bigSeal) reason += `，资金抢筹明显`;
+        } else {
+          // No zt stocks, describe leader performance
+          if (s.leaderZt) {
+            reason += `，${s.leaderName}涨停带动板块`;
+          } else if (s.leaderName) {
+            reason += `，${s.leaderName}领涨`;
+          } else {
+            reason += `，板块涨幅居前`;
+          }
+        }
+
         const rank = idx + 1;
         const badge = rank <= 3 ? '主线' : rank <= 8 ? '活跃' : '';
         themeList.push({
           rank,
           name: s.name,
-          desc: `${s.pct >= 0 ? '+' : ''}${s.pct.toFixed(2)}%${leaders ? '，龙头带动' : ''}`,
-          stocks: leaders || '—',
+          pct: s.pct,
+          desc: reason,
+          stocks: leaderStocks || '—',
           badge: badge || '',
-          dim: rank > 10
+          dim: rank > 10,
+          ztCount: hasZt ? ztCount : 0,
+          topLbc: hasZt ? (sectorZt[0].lbc || 1) : 0
         });
         usedSectors.add(s.name);
       });
@@ -3910,8 +4023,11 @@ function renderMarket() {
   html += `<div class="section"><h2>附录 · 当日热点题材汇总</h2><div class="themes">`;
   if (d.hotThemes && d.hotThemes.length > 0) {
     d.hotThemes.forEach(t => {
+      const pctStr = `${t.pct >= 0 ? '+' : ''}${t.pct.toFixed(2)}%`;
+      const pctColor = t.pct >= 0 ? 'var(--green)' : 'var(--red)';
+      const badgeClass = t.badge === '主线' ? 'badge-hot' : t.badge === '活跃' ? 'badge-active' : '';
       html += `<div class="theme ${t.dim ? 'dim' : ''}">
-        <div class="tn"><span class="rank">${t.rank}</span>${t.name} ${t.badge ? '<span class="badge badge-hot">' + t.badge + '</span>' : ''}</div>
+        <div class="tn"><span class="rank">${t.rank}</span>${t.name}<span class="pct" style="color:${pctColor}">${pctStr}</span>${t.badge ? '<span class="badge ' + badgeClass + '">' + t.badge + '</span>' : ''}</div>
         <div class="td">${t.desc}</div>
         <div class="ts">${linkStocks(t.stocks)}</div>
       </div>`;
