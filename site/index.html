@@ -682,7 +682,7 @@ async function fetchWeather() {
 }
 
 function updateHeaderClock() {
-  const now = new Date();
+  const now = getBeijingTime();
   const timeEl = document.getElementById('headerTime');
   const dateEl = document.getElementById('headerDate');
   const lunarEl = document.getElementById('headerLunar');
@@ -695,8 +695,8 @@ function updateHeaderClock() {
 
 // ==================== DATA ====================
 const APP_VERSION = 'v1.17.0';
-const APP_VERSION_DATE = '2026-07-02 08:52';
-const APP_RELEASE_NOTES = '修复板块热力图API百分比解析bug（f3字段不再除以100），刷新后涨跌幅显示正确；修复三大指数实时数据刷新格式兼容问题；板块龙头股从涨停池数据推导显示；版本说明移除明文密码；新增test测试账号（test/test）展示模拟数据，数据与admin完全隔离，显示测试模式标识；新增Cloudflare Worker后端支持交易日定时自动同步市场数据；前端适配Worker API，不可用时降级为内置数据。';
+const APP_VERSION_DATE = '2026-07-02 18:59';
+const APP_RELEASE_NOTES = '三大指数实时数据刷新修复：优先使用新浪JSONP(无CORS问题)、东方财富为备用，基于昨收价(f60)计算涨跌幅；ensureTodayData新交易日初始化为盘前状态(不拷贝昨日板块数据)；交易时段判断统一使用北京时间(UTC+8)，避免时区偏差；盘前(9:25前)涨停数为0不覆盖，收盘后仍可获取当日收盘统计；refreshMarketData完成后自动渲染；页面加载即刷新市场数据。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -827,7 +827,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
-  { version:'v1.17.0', date:'2026-07-02 08:52', notes:'修复三大指数实时数据刷新：添加fltt=2参数、基于昨收价(f60)计算涨跌幅、新增新浪JSONP备用数据源；修复ensureTodayData不再深拷贝昨日板块数据避免混淆；盘前时段显示等待开盘状态，交易时段(9:30-15:00)才更新涨停/情绪数据；修正TEST_DATA中7月2日错误占位指数值；refreshMarketData完成后自动触发页面重渲染；版本发布时间修正为实际时间。' },
+  { version:'v1.17.0', date:'2026-07-02 18:59', notes:'三大指数实时数据刷新修复：优先新浪JSONP(无CORS)、东财备用，基于昨收价计算涨跌幅；ensureTodayData新交易日初始化为盘前状态；交易时段统一用北京时间(UTC+8)判断，解决时区偏差；盘前涨停数为0不覆盖，收盘后仍可获取当日统计；refreshMarketData自动渲染；页面加载即刷新市场数据。' },
   { version:'v1.16.0', date:'2026-07-02 10:30', notes:'查看全部按钮常驻显示+水平对齐；纪念日新增去除描述输入框，改为创建后点击✎编辑描述；面包屑导航改为显示全部栏目（首页/持仓总览/大盘情绪/待办清单/纪念日），支持点击任意栏目快捷跳转，后续新增卡片自动加入面包屑；修复三大指数（上证/深证/创业板）secid格式，确保实时数据正确更新。' },
   { version:'v1.15.0', date:'2026-07-02 02:22', notes:'登录系统+待办清单+纪念日功能；登录后数据自动解密；待办清单和纪念日首页最多显示5条+查看详情页；当日盈亏图表去重修复多条曲线问题；市场情绪数据刷新同步更新sectorHeat字段。' },
   { version:'v1.14.0', date:'2026-07-02 15:37', notes:'古诗词扩充至120首减少重复；大盘详情移除重复指数卡片；市场情绪数据API自动获取（板块排行/涨停池/成交额/封单）；规则推算策略+隔夜计划+热点汇总；定时30分钟自动更新+15:30自动保存至localStorage；网络请求异常处理优化（r.ok检查）；版本区域显示随机古诗词+UI美化；底部布局重排（版本号在上，免责声明在下）。' },
@@ -2455,23 +2455,30 @@ function fmt(v, d=2) { return v != null ? v.toFixed(d) : '—'; }
 function sign(v) { return v >= 0 ? '+' : ''; }
 function cls(v) { return v >= 0 ? 'pos' : 'neg'; }
 function pad2(n) { return String(n).padStart(2, '0'); }
-function todayText(now = new Date()) { return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`; }
-function timeText(now = new Date()) { return `${pad2(now.getHours())}:${pad2(now.getMinutes())}`; }
+function getBeijingTime(now = new Date()) {
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  return new Date(utc + 8 * 3600000);
+}
+function todayText(now = new Date()) { const bj = getBeijingTime(now); return `${bj.getFullYear()}-${pad2(bj.getMonth() + 1)}-${pad2(bj.getDate())}`; }
+function timeText(now = new Date()) { const bj = getBeijingTime(now); return `${pad2(bj.getHours())}:${pad2(bj.getMinutes())}`; }
 function isTradingRefreshWindow(now = new Date()) {
-  const day = now.getDay();
-  const mins = now.getHours() * 60 + now.getMinutes();
-  return day >= 1 && day <= 5 && mins >= 9 * 60 + 30 && mins <= 15 * 60 + 15;
+  const bj = getBeijingTime(now);
+  const day = bj.getDay();
+  const mins = bj.getHours() * 60 + bj.getMinutes();
+  return day >= 1 && day <= 5 && mins >= 9 * 60 + 25 && mins <= 15 * 60 + 20;
 }
 function latestDay() { return DAYS[DAYS.length - 1]; }
 function getWeekdayText(now = new Date()) {
+  const bj = getBeijingTime(now);
   const map = ['周日','周一','周二','周三','周四','周五','周六'];
-  return map[now.getDay()];
+  return map[bj.getDay()];
 }
 function ensureTodayData() {
   const today = todayText();
   if (DAYS.some(d => d.date === today)) return;
-  const day = new Date().getDay();
-  if (day < 1 || day > 5) return; // 周末不自动创建
+  const bj = getBeijingTime();
+  const day = bj.getDay();
+  if (day < 1 || day > 5) return;
   const latest = latestDay();
   if (!latest) return;
   // 以昨收价作为今日指数起点，涨跌幅初始化为0（等待盘中实时更新）
@@ -2609,29 +2616,19 @@ async function loadEastmoneyQuotes(codes, prevPrices = {}) {
   const quotes = {};
   for (const code of codes) {
     try {
-      const r = await fetch(`https://push2.eastmoney.com/api/qt/stock/get?secid=${eastmoneySecid(code)}&fields=${fields}&_=${Date.now()}`);
+      const r = await fetch(`https://push2delay.eastmoney.com/api/qt/stock/get?secid=${eastmoneySecid(code)}&fields=${fields}&fltt=2&invt=2&_=${Date.now()}`);
       if (!r.ok) continue;
       const data = await r.json();
       if (data.rc === 0 && data.data) {
         const d = data.data;
-        // 动态计算价格缩放比例：股票通常为100，ETF通常为1000
-        let scale = 100;
-        const knownPrev = prevPrices[code];
-        if (knownPrev && d.f60) {
-          const ratio = d.f60 / knownPrev;
-          if (ratio >= 800 && ratio <= 1200) scale = 1000;
-          else if (ratio >= 80 && ratio <= 120) scale = 100;
-        }
-        const price = d.f43 ? d.f43 / scale : null;
-        const prevClose = d.f60 ? d.f60 / scale : null;
+        const price = d.f43 ? Number(d.f43) : null;
+        const prevClose = d.f60 ? Number(d.f60) : null;
         if (price && prevClose && price > 0) {
           quotes[code] = { price, prevClose };
         }
       }
     } catch (e) {
-      // 单只失败不影响其他
     }
-    // 东方财富接口有频率限制，间隔 400ms
     if (codes.indexOf(code) < codes.length - 1) {
       await new Promise(resolve => setTimeout(resolve, 400));
     }
@@ -2679,80 +2676,69 @@ async function refreshLivePnL() {
   }
   if (!todayData) return;
   try {
-    // 1. 刷新三大指数实时数据（优先新浪JSONP，CORS友好；东财fetch作为备用）
-    const sinaIdxList = [
-      { sym: 'sh000001', key: 'sh' },
-      { sym: 'sz399001', key: 'sz' },
-      { sym: 'sz399006', key: 'cy' }
-    ];
-    const eastmoneyIdxList = [
-      { secid: '1.000001', key: 'sh' },
-      { secid: '0.399001', key: 'sz' },
-      { secid: '0.399006', key: 'cy' }
+    // 1. 刷新三大指数实时数据（优先push2delay CORS接口，备用新浪JSONP）
+    const idxList = [
+      { secid: '1.000001', key: 'sh', sym: 'sh000001' },
+      { secid: '0.399001', key: 'sz', sym: 'sz399001' },
+      { secid: '0.399006', key: 'cy', sym: 'sz399006' }
     ];
     IDX_LIVE = {};
     try {
-      // 优先使用新浪财经JSONP（script标签不受CORS限制，与个股行情方案一致）
-      let sinaOk = false;
-      try {
-        const sinaSymbols = sinaIdxList.map(s => s.sym).join(',');
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = `https://hq.sinajs.cn/list=${sinaSymbols}&_=${Date.now()}`;
-          script.charset = 'gbk';
-          script.async = true;
-          script.onload = () => {
-            let count = 0;
-            sinaIdxList.forEach(({ sym, key }) => {
-              const raw = window['hq_str_' + sym];
-              if (!raw) return;
-              const parts = raw.split(',');
-              if (parts.length >= 4) {
-                const prevClose = parseFloat(parts[2]);
-                const price = parseFloat(parts[3]);
-                if (price > 0 && prevClose > 0) {
-                  const pct = ((price - prevClose) / prevClose) * 100;
-                  todayData.idx[key] = [Number(price.toFixed(2)), Number(pct.toFixed(2))];
-                  IDX_LIVE[key] = [Number(price.toFixed(2)), Number(pct.toFixed(2))];
-                  count++;
-                }
-              }
-              try { delete window['hq_str_' + sym]; } catch(e) { window['hq_str_' + sym] = null; }
-            });
-            script.remove();
-            if (count >= 3) { sinaOk = true; resolve(); }
-            else reject(new Error('sina partial: ' + count));
-          };
-          script.onerror = () => { script.remove(); reject(new Error('sina network error')); };
-          document.body.appendChild(script);
-          setTimeout(() => { script.remove(); reject(new Error('sina timeout')); }, 8000);
-        });
-      } catch(e) {}
-
-      // 新浪失败时，尝试东方财富API（可能被CORS阻止，但在部分环境可用）
-      if (!sinaOk) {
-        for (const { secid, key } of eastmoneyIdxList) {
-          if (IDX_LIVE[key]) continue;
-          try {
-            const url = `https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f57,f60,f170&fltt=2&invt=2&_=${Date.now()}`;
-            const r = await fetch(url);
-            if (!r.ok) continue;
-            const data = await r.json();
-            if (data.rc === 0 && data.data) {
-              const d = data.data;
-              const point = d.f43 || 0;
-              const prevClose = d.f60 || 0;
-              if (point > 0 && prevClose > 0) {
-                const pct = ((point - prevClose) / prevClose) * 100;
-                todayData.idx[key] = [Number(point.toFixed(2)), Number(pct.toFixed(2))];
-                IDX_LIVE[key] = [Number(point.toFixed(2)), Number(pct.toFixed(2))];
-              }
+      // 优先使用push2delay（支持CORS，fltt=2直接返回十进制数据）
+      for (const { secid, key } of idxList) {
+        try {
+          const url = `https://push2delay.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f57,f60,f170&fltt=2&invt=2&_=${Date.now()}`;
+          const r = await fetch(url);
+          if (!r.ok) continue;
+          const data = await r.json();
+          if (data.rc === 0 && data.data) {
+            const d = data.data;
+            const point = Number(d.f43) || 0;
+            const prevClose = Number(d.f60) || 0;
+            if (point > 0 && prevClose > 0) {
+              const pct = ((point - prevClose) / prevClose) * 100;
+              todayData.idx[key] = [Number(point.toFixed(2)), Number(pct.toFixed(2))];
+              IDX_LIVE[key] = [Number(point.toFixed(2)), Number(pct.toFixed(2))];
             }
-          } catch(e) {}
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
+          }
+        } catch(e) {}
+        await new Promise(resolve => setTimeout(resolve, 150));
       }
-      const idxNow = new Date();
+      // 备用：新浪JSONP（script标签，不受CORS限制）
+      if (Object.keys(IDX_LIVE).length < 3) {
+        try {
+          const sinaSymbols = idxList.map(s => s.sym).join(',');
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = `https://hq.sinajs.cn/list=${sinaSymbols}&_=${Date.now()}`;
+            script.charset = 'gbk';
+            script.async = true;
+            script.onload = () => {
+              idxList.forEach(({ sym, key }) => {
+                const raw = window['hq_str_' + sym];
+                if (!raw) return;
+                const parts = raw.split(',');
+                if (parts.length >= 4) {
+                  const prevClose = parseFloat(parts[2]);
+                  const price = parseFloat(parts[3]);
+                  if (price > 0 && prevClose > 0) {
+                    const pct = ((price - prevClose) / prevClose) * 100;
+                    todayData.idx[key] = [Number(price.toFixed(2)), Number(pct.toFixed(2))];
+                    IDX_LIVE[key] = [Number(price.toFixed(2)), Number(pct.toFixed(2))];
+                  }
+                }
+                try { delete window['hq_str_' + sym]; } catch(e) { window['hq_str_' + sym] = null; }
+              });
+              script.remove();
+              resolve();
+            };
+            script.onerror = () => { script.remove(); reject(new Error('sina network error')); };
+            document.body.appendChild(script);
+            setTimeout(() => { script.remove(); reject(new Error('sina timeout')); }, 8000);
+          });
+        } catch(e) {}
+      }
+      const idxNow = getBeijingTime();
       DATA_UPDATED_AT = `${idxNow.getFullYear()}-${pad2(idxNow.getMonth()+1)}-${pad2(idxNow.getDate())} ${pad2(idxNow.getHours())}:${pad2(idxNow.getMinutes())}:${pad2(idxNow.getSeconds())}`;
     } catch(e) {}
 
@@ -2820,7 +2806,7 @@ async function refreshLivePnL() {
       INTRADAY_PNL = Object.keys(seen).sort().map(t => ({ time: t, value: seen[t] }));
     }
 
-    const now2 = new Date();
+    const now2 = getBeijingTime();
     lastLiveUpdateText = `${now2.getFullYear()}-${pad2(now2.getMonth()+1)}-${pad2(now2.getDate())} ${pad2(now2.getHours())}:${pad2(now2.getMinutes())}:${pad2(now2.getSeconds())}`;
     if (currentDate === today) {
       render();
@@ -2881,7 +2867,7 @@ async function refreshMarketData() {
     } catch(e) {}
 
     // 2. 获取板块涨跌幅排行（概念板块+行业板块）
-    const sectorUrl = 'https://push2.eastmoney.com/api/qt/clist/get';
+    const sectorUrl = 'https://push2delay.eastmoney.com/api/qt/clist/get';
     const sectors = [];
     for (const fs of ['m:90+t:2', 'm:90+t:1']) {
       try {
@@ -2898,10 +2884,13 @@ async function refreshMarketData() {
       await new Promise(r => setTimeout(r, 500));
     }
     sectors.sort((a, b) => b.pct - a.pct);
-    // 判断是否在交易时段（9:30-15:00）
-    const nowH = new Date().getHours();
-    const nowM = new Date().getMinutes();
-    const isMarketHours = (nowH > 9 || (nowH === 9 && nowM >= 30)) && nowH < 15;
+    // 判断是否在交易时段或盘后（北京时间9:25-16:00）
+    const bjNow = getBeijingTime();
+    const nowH = bjNow.getHours();
+    const nowM = bjNow.getMinutes();
+    const isMarketHours = (nowH > 9 || (nowH === 9 && nowM >= 30)) && (nowH < 15 || (nowH === 15 && nowM <= 30));
+    const isPreMarketOpen = nowH === 9 && nowM >= 25 && nowM < 30;
+    const canFetchMarketData = isMarketHours || isPreMarketOpen || (nowH >= 15 && nowH < 16);
 
     if (sectors.length > 0) {
       function findLeadersForSector(sectorName) {
@@ -2926,15 +2915,20 @@ async function refreshMarketData() {
       todayD.sectorName = sectors.slice(0, 2).map(s => s.name).join('·');
     }
 
-    // 涨停/跌停/封板率/情绪：仅在交易时段且API返回有效数据时更新
-    if (isMarketHours && ztCount > 0) {
+    // 涨停/跌停/封板率/情绪：交易日API返回有效数据时即更新（收盘后API仍返回当日统计）
+    // 盘前集合竞价前（北京时间9:25前）ztCount=0不覆盖
+    const bjDay = bjNow.getDay();
+    const isWeekday = bjDay >= 1 && bjDay <= 5;
+    const nowMins = nowH * 60 + nowM;
+    const isBeforeOpen = isWeekday && nowMins < 9 * 60 + 25;
+    if (isWeekday && (ztCount > 0 || (!isBeforeOpen && dtCount > 0))) {
       todayD.limitUp = ztCount;
       todayD.limitDown = dtCount;
       todayD.sealRate = totalZt > 0 ? (sealCount / totalZt * 100).toFixed(0) + '%' : todayD.sealRate;
       if (ztCount > 100) todayD.sentiment = '强势';
       else if (ztCount > 50) todayD.sentiment = '偏强';
       else if (ztCount > 20) todayD.sentiment = '一般';
-      else todayD.sentiment = '偏弱';
+      else if (ztCount > 0) todayD.sentiment = '偏弱';
     }
 
     // 3. 更新 watchlist 涨停时间和封单
@@ -2952,7 +2946,7 @@ async function refreshMarketData() {
       let totalVol = 0;
       for (const secid of ['1.000001', '0.399001']) {
         try {
-          const vr = await fetch(`https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f47&fltt=2&invt=2&_=${Date.now()}`);
+          const vr = await fetch(`https://push2delay.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f47&fltt=2&invt=2&_=${Date.now()}`);
           if (vr.ok) {
             const vd = await vr.json();
             if (vd.data && vd.data.f47) totalVol += vd.data.f47;
@@ -3188,12 +3182,14 @@ function startLiveRefresh() {
 let marketAutoSaveTimer = null;
 function startMarketAutoSave() {
   marketAutoSaveTimer = setInterval(async () => {
-    const now = new Date();
-    // 仅交易日 9:30-15:30 期间执行
-    if (now.getHours() < 9 || (now.getHours() === 9 && now.getMinutes() < 30)) return;
-    if (now.getHours() >= 16) return;
-    const day = now.getDay();
-    if (day === 0 || day === 6) return; // 周末不执行
+    const bj = getBeijingTime();
+    const hrs = bj.getHours();
+    const mins = bj.getMinutes();
+    const day = bj.getDay();
+    // 仅交易日 9:25-16:00 期间执行
+    if (hrs < 9 || (hrs === 9 && mins < 25)) return;
+    if (hrs >= 16) return;
+    if (day === 0 || day === 6) return;
 
     // 更新当天 DAYS 数据中的指数快照
     const todayD = DAYS.find(dd => dd.date === todayText());
@@ -3204,7 +3200,7 @@ function startMarketAutoSave() {
     }
 
     // 15:30 收盘后自动保存到 localStorage
-    if (now.getHours() === 15 && now.getMinutes() >= 30) {
+    if (hrs === 15 && mins >= 30) {
       await refreshMarketData();
       saveMarketData();
       console.log('[市场数据] 15:30 自动保存完成');
@@ -3803,6 +3799,8 @@ async function initApp() {
   runPlControlsTest();
   startLiveRefresh();
   startMarketAutoSave();
+  // 页面加载后立即刷新一次市场情绪数据（板块/涨停等）
+  refreshMarketData().catch(() => {});
   fetchWeather();
   updateHeaderClock();
   setInterval(updateHeaderClock, 1000);
@@ -3813,11 +3811,11 @@ initApp();
 
 function scheduleWorkerAutoRefresh() {
   function checkRefresh() {
-    const now = new Date();
-    const day = now.getDay();
+    const bj = getBeijingTime();
+    const day = bj.getDay();
     if (day < 1 || day > 5) return;
-    const h = now.getHours();
-    const m = now.getMinutes();
+    const h = bj.getHours();
+    const m = bj.getMinutes();
     const currentTime = h * 60 + m;
     const triggers = [10*60, 14*60, 15*60+5];
     for (const t of triggers) {
