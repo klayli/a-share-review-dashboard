@@ -694,9 +694,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.19.0';
-const APP_VERSION_DATE = '2026-07-02 19:46';
-const APP_RELEASE_NOTES = '补全大盘情绪详情页缺失数据：个股涨跌比(从f104/f105/f106接口获取)、赚钱效应(按上涨比例分级)、明日操作方向(基于涨停数+大盘涨跌生成)、备选标的(从涨停池连板高标自动选取)、隔夜单计划(从连板梯队生成)、热点题材汇总(从板块+龙头自动生成)；板块热力图按大类合并(医药/银行/煤炭/有色/电力/电子半导体/计算机等20个大类)，大类显示「大类」标识+细分板块数量；板块龙头股动态注册到STOCK_INFO，支持点击弹窗查看K线详情；同步修复Worker的ut参数截断和跌停endpoint错误，Worker数据新增drivers/leader/ud/earnEffect/direction/watchlist/hotThemes字段。';
+const APP_VERSION = 'v1.19.1';
+const APP_VERSION_DATE = '2026-07-02 19:55';
+const APP_RELEASE_NOTES = '修复大盘情绪详情页所有字段无数据问题：1)涨停池API字段hy→hybk修复；2)板块排行API新增f204/f205领涨股字段，概念板块龙头（印染/黄金/钨/氟化工等）全部可显示；3)板块热力图按20个大类合并显示龙头股；4)龙头股动态注册到STOCK_INFO支持点击弹窗K线；5)复合板块名(印染·水产饲料)按+·、拆分匹配龙头；6)修复化工大类错误归集医药股问题；7)盘后数据获取时间窗延长至23点。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -827,6 +827,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.19.1', date:'2026-07-02 19:55', notes:'修复大盘情绪详情页数据不显示核心bug：涨停池API字段名hy→hybk修复（导致所有板块龙头归集为空）；板块龙头匹配增加前缀模糊匹配（hybk返回4字截断名如"汽车零部"）；ensureTodayData()增加已有数据回填逻辑；跌停池Pagesize修正为500。' },
   { version:'v1.19.0', date:'2026-07-02 19:46', notes:'补全大盘情绪详情页全部数据：个股涨跌比/赚钱效应/操作方向/备选标的/隔夜计划/热点汇总均通过API实时计算；板块热力图按大类(医药/银行/煤炭/有色等20类)合并，显示龙头股可点击弹窗；动态注册涨停股到STOCK_INFO。' },
   { version:'v1.18.1', date:'2026-07-02 19:28', notes:'修复大盘情绪详情页无法打开：renderMarket()中d.drivers.map()因ensureTodayData()缺字段崩溃；补全新交易日默认字段(drivers/leader/sectorBadge等)，renderMarket加null-safety防御，refreshMarketData自动填充板块驱动/龙头/强度。' },
   { version:'v1.18.0', date:'2026-07-02 19:21', notes:'修复大盘情绪/持仓总览卡片点击无响应（onclick从card-arrow移至整个home-card）；修复涨停/跌停数不显示（ut参数被截断导致API返回null，跌停endpoint错误getTopicZTPool→getTopicDTPool）。' },
@@ -2525,23 +2526,11 @@ function getWeekdayText(now = new Date()) {
 }
 function ensureTodayData() {
   const today = todayText();
-  if (DAYS.some(d => d.date === today)) return;
   const bj = getBeijingTime();
   const day = bj.getDay();
-  if (day < 1 || day > 5) return;
-  const latest = latestDay();
-  if (!latest) return;
-  // 以昨收价作为今日指数起点，涨跌幅初始化为0（等待盘中实时更新）
-  const todayData = {
-    date: today,
-    weekday: getWeekdayText(),
-    idx: {
-      sh: [latest.idx.sh[0], 0],
-      sz: [latest.idx.sz[0], 0],
-      cy: [latest.idx.cy[0], 0]
-    },
+  const isWeekday = day >= 1 && day <= 5;
+  const defaults = {
     price: {},
-    prev: { ...latest.price },
     theme: '等待开盘',
     themeDesc: '',
     sectorName: '—',
@@ -2549,10 +2538,7 @@ function ensureTodayData() {
     limitUp: 0,
     limitDown: 0,
     sealRate: '—',
-    ud: '',
     volume: '—',
-    direction: '',
-    earnEffect: '',
     sentiment: '—',
     strength: '',
     sectorHeat: [],
@@ -2565,26 +2551,58 @@ function ensureTodayData() {
     leader: '—',
     sectorStrength: '',
     sectorReason: '',
+    ud: '—',
+    earnEffect: '—',
+    direction: '等待开盘后自动生成',
     overnight: '盘前观察中。',
     strategy: '盘前数据，等待9:30开盘后自动刷新。',
     overnightPlan: '盘前观察中。',
-    appendix: '盘前',
-    ud: '—',
-    earnEffect: '—',
-    direction: '等待开盘后自动生成'
+    appendix: '盘前'
+  };
+  let todayD = DAYS.find(d => d.date === today);
+  if (todayD) {
+    let changed = false;
+    Object.keys(defaults).forEach(k => {
+      if (todayD[k] === undefined || todayD[k] === null) {
+        todayD[k] = defaults[k];
+        changed = true;
+      }
+    });
+    if (!todayD.idx) {
+      const latest = DAYS.find(d => d.date !== today && d.idx && d.idx.sh);
+      if (latest) {
+        todayD.idx = {
+          sh: [latest.idx.sh[0], 0], sz: [latest.idx.sz[0], 0], cy: [latest.idx.cy[0], 0]
+        };
+        todayD.prev = { ...latest.price };
+        changed = true;
+      }
+    }
+    return;
+  }
+  if (!isWeekday) return;
+  const latest = latestDay();
+  if (!latest) return;
+  const todayData = {
+    date: today,
+    weekday: getWeekdayText(),
+    idx: {
+      sh: [latest.idx.sh[0], 0],
+      sz: [latest.idx.sz[0], 0],
+      cy: [latest.idx.cy[0], 0]
+    },
+    prev: { ...latest.price },
+    ...defaults
   };
   DAYS.push(todayData);
   currentDate = today;
-  // 为新交易日重置实时曲线数据
   INTRADAY_PNL = [];
-  // 尝试从 localStorage 恢复之前的 intraday 数据
   try {
     const saved = localStorage.getItem('intradayPnl_' + today);
     if (saved) {
       INTRADAY_PNL = JSON.parse(saved);
     }
   } catch(e) {}
-  // 基金当日收益是T+1更新，新交易日重置为0
   FUND_PORTFOLIO.forEach(f => { f.dailyIncome = 0; });
 }
 function allTransactions() { return [...(TRANSACTIONS.stocks || []), ...(TRANSACTIONS.funds || [])]; }
@@ -2901,11 +2919,12 @@ async function refreshMarketData() {
           ztData.data.pool.forEach(s => {
             totalZt++;
             if (s.zbc === 0) sealCount++;
+            const hyName = s.hybk || s.hy || '';
             const stockInfo = {
               name: s.n, code: s.c,
               time: typeof s.fbt === 'number' ? String(s.fbt).padStart(6, '0').replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') : '',
               seal: s.fund ? (s.fund / 10000).toFixed(0) + '万' : '—',
-              lbc: s.lbc || 0, hy: s.hy || ''
+              lbc: s.lbc || 0, hy: hyName
             };
             ztStocks[s.c] = stockInfo;
             // 动态注册涨停股到STOCK_INFO使linkStocks可点击
@@ -2913,9 +2932,9 @@ async function refreshMarketData() {
               const prefix = s.c.startsWith('6') || s.c.startsWith('9') ? '1' : '0';
               STOCK_INFO[s.c] = { name: s.n, prefix, price: '—' };
             }
-            if (s.hy) {
-              if (!sectorLeaders[s.hy]) sectorLeaders[s.hy] = [];
-              sectorLeaders[s.hy].push(stockInfo);
+            if (hyName) {
+              if (!sectorLeaders[hyName]) sectorLeaders[hyName] = [];
+              sectorLeaders[hyName].push(stockInfo);
             }
           });
           ztCount = totalZt;
@@ -2935,13 +2954,14 @@ async function refreshMarketData() {
     const sectors = [];
     for (const fs of ['m:90+t:2', 'm:90+t:1']) {
       try {
-        const r = await fetch(`${sectorUrl}?pn=1&pz=50&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f12,f14,f3,f10,f15&_=${Date.now()}`);
+        const r = await fetch(`${sectorUrl}?pn=1&pz=80&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f12,f14,f3,f10,f15,f204,f205,f206&_=${Date.now()}`);
         if (!r.ok) continue;
         const data = await r.json();
         if (data.data && data.data.diff) {
           sectors.push(...data.data.diff.map(s => ({
             code: s.f12, name: s.f14, pct: s.f3,
-            vol: s.f15, amount: s.f10
+            vol: s.f15, amount: s.f10,
+            leaderName: s.f204 || '', leaderCode: s.f205 || '', leaderZt: s.f206 === 1
           })));
         }
       } catch(e) {}
@@ -2954,13 +2974,51 @@ async function refreshMarketData() {
     const nowM = bjNow.getMinutes();
     const isMarketHours = (nowH > 9 || (nowH === 9 && nowM >= 30)) && (nowH < 15 || (nowH === 15 && nowM <= 30));
     const isPreMarketOpen = nowH === 9 && nowM >= 25 && nowM < 30;
-    const canFetchMarketData = isMarketHours || isPreMarketOpen || (nowH >= 15 && nowH < 16);
+    const canFetchMarketData = isMarketHours || isPreMarketOpen || (nowH >= 15 && nowH < 23);
 
     if (sectors.length > 0) {
+      // Build API-provided leaders map (both concept + industry boards)
+      const sectorApiLeaders = {};
+      sectors.forEach(s => {
+        if (s.leaderName && s.leaderCode) {
+          if (!sectorApiLeaders[s.name]) sectorApiLeaders[s.name] = [];
+          const prefix = s.leaderCode.startsWith('6') || s.leaderCode.startsWith('9') ? '1' : '0';
+          if (!STOCK_INFO[s.leaderCode]) {
+            STOCK_INFO[s.leaderCode] = { name: s.leaderName, prefix, price: '—' };
+          }
+          sectorApiLeaders[s.name].push({ name: s.leaderName, code: s.leaderCode });
+        }
+      });
+
       function findLeadersForSector(sectorName) {
-        const matchedHy = Object.keys(sectorLeaders).find(hy => hy.includes(sectorName) || sectorName.includes(hy));
-        if (matchedHy && sectorLeaders[matchedHy] && sectorLeaders[matchedHy].length > 0) {
-          return sectorLeaders[matchedHy].slice(0, 4).map(s => `${s.name}(${s.code})`).join(' · ');
+        const names = String(sectorName || '').split(/[+·、]/).map(n => n.trim()).filter(Boolean);
+        for (const name of names) {
+          // 1. Try zt pool leaders (涨停股, most authoritative)
+          let matchedHy = Object.keys(sectorLeaders).find(hy =>
+            hy && (hy === name || hy.includes(name) || name.includes(hy))
+          );
+          if (!matchedHy && name.length >= 2) {
+            const prefix = name.length >= 3 ? name.slice(0, 3) : name;
+            matchedHy = Object.keys(sectorLeaders).find(hy =>
+              hy && (hy.startsWith(prefix) || name.startsWith(hy.slice(0, Math.min(hy.length, name.length))))
+            );
+          }
+          if (matchedHy && sectorLeaders[matchedHy] && sectorLeaders[matchedHy].length > 0) {
+            return sectorLeaders[matchedHy].slice(0, 4).map(s => `${s.name}(${s.code})`).join(' · ');
+          }
+          // 2. Fallback to API-provided leaders (领涨股)
+          let matchedApi = Object.keys(sectorApiLeaders).find(sn =>
+            sn && (sn === name || sn.includes(name) || name.includes(sn))
+          );
+          if (!matchedApi && name.length >= 2) {
+            const prefix = name.length >= 3 ? name.slice(0, 3) : name;
+            matchedApi = Object.keys(sectorApiLeaders).find(sn =>
+              sn && (sn.startsWith(prefix) || name.startsWith(sn.slice(0, Math.min(sn.length, name.length))))
+            );
+          }
+          if (matchedApi && sectorApiLeaders[matchedApi] && sectorApiLeaders[matchedApi].length > 0) {
+            return sectorApiLeaders[matchedApi].slice(0, 3).map(s => `${s.name}(${s.code})`).join(' · ');
+          }
         }
         return '';
       }
@@ -3050,34 +3108,36 @@ async function refreshMarketData() {
       todayD.ud = `${upCount} : ${downCount}` + (flatCount > 0 ? ` : ${flatCount}` : '');
       const totalUdp = upCount + downCount;
       const upRatio = totalUdp > 0 ? (upCount / totalUdp) : 0;
-      if (upRatio > 0.6) todayD.earnEffect = '很好';
-      else if (upRatio > 0.45) todayD.earnEffect = '一般';
-      else if (upRatio > 0.3) todayD.earnEffect = '较差';
-      else todayD.earnEffect = '很差';
+      if (upRatio > 0.7) todayD.earnEffect = `很好（${(upRatio*100).toFixed(0)}%个股上涨，普涨行情）`;
+      else if (upRatio > 0.55) todayD.earnEffect = `较好（${(upRatio*100).toFixed(0)}%个股上涨，多数盈利）`;
+      else if (upRatio > 0.45) todayD.earnEffect = `一般（上涨${upCount}家/下跌${downCount}家，分化行情）`;
+      else if (upRatio > 0.3) todayD.earnEffect = `较差（仅${(upRatio*100).toFixed(0)}%个股上涨，多数回调）`;
+      else todayD.earnEffect = `很差（仅${upCount}家上涨，普跌行情）`;
     }
 
     // 4.6 板块大类映射（用于热力图合并）
     const SECTOR_CATEGORIES = [
-      { key: '医药', keywords: ['医药','医疗','医美','中药','生物','疫苗','医院','制药','医疗器械','药房'] },
+      { key: '医药', keywords: ['医药','医疗','医美','中药','生物','疫苗','医院','制药','医疗器械','药房','化学制药'] },
       { key: '银行', keywords: ['银行'] },
       { key: '煤炭', keywords: ['煤炭','焦炭'] },
       { key: '有色', keywords: ['黄金','贵金属','有色','铜','铝','钨','稀土','锂矿','小金属'] },
       { key: '石油石化', keywords: ['石油','石化','油气','油田','燃气'] },
-      { key: '电力', keywords: ['电力','火电','水电','核电','绿电','光伏','风电'] },
+      { key: '电力', keywords: ['电力','火电','水电','核电','绿电'] },
       { key: '钢铁', keywords: ['钢铁','特钢'] },
       { key: '地产建筑', keywords: ['房地产','地产','建筑','建材','水泥','装修','物业'] },
       { key: '汽车', keywords: ['汽车','新能源车','整车','零部件','汽车配件','汽配'] },
       { key: '食品饮料', keywords: ['白酒','酿酒','食品','饮料','乳业','啤酒','调味品','零食','养殖','饲料','鸡肉','猪肉','水产','食用菌'] },
       { key: '纺织服装', keywords: ['纺织','服装','印染','辅料','涤纶','粘胶','鞋类','化妆','化妆品'] },
-      { key: '电子半导体', keywords: ['半导体','芯片','集成电路','电子','元器件','PCB','消费电子','光学','面板','LED'] },
-      { key: '计算机', keywords: ['计算机','软件','云计算','信创','数据','人工智能','AI','网络安全','操作系统','数字媒体','营销','广告'] },
+      { key: '电子半导体', keywords: ['半导体','芯片','集成电路','消费电子','光学','面板','LED','元器件','PCB'] },
+      { key: '计算机', keywords: ['计算机','软件','云计算','信创','网络安全','操作系统','数字媒体','营销','广告','人工智能','AI','数据'] },
       { key: '通信', keywords: ['通信','5G','6G','光纤','运营商','卫星'] },
       { key: '传媒', keywords: ['传媒','游戏','影视','出版','教育'] },
-      { key: '机械军工', keywords: ['军工','航天','航空','船舶','兵器','机床','机械','机器人','自动化'] },
-      { key: '化工', keywords: ['化工','氟化工','磷化工','化学','化纤','钛白粉','聚氨酯'] },
+      { key: '机械军工', keywords: ['军工','航天','航空','船舶','兵器','机床','机械','机器人','自动化','工程机械','通用设备','专用设备'] },
+      { key: '化工', keywords: ['化工','氟化工','磷化工','化学制品','化学纤维','化纤','钛白粉','聚氨酯','塑料','农化'] },
       { key: '交通运输', keywords: ['航运','港口','物流','快递','航空','机场','铁路','公路'] },
       { key: '农林牧渔', keywords: ['农业','种业','种植','林业','渔业','农药','化肥'] },
       { key: '大金融', keywords: ['证券','券商','保险','信托','期货','多元金融'] },
+      { key: '电力设备', keywords: ['光伏','风电','风电设备','电池','储能','锂电','太阳能','电气设备'] },
     ];
     function categorizeSector(name) {
       for (const cat of SECTOR_CATEGORIES) {
@@ -3108,12 +3168,22 @@ async function refreshMarketData() {
         catMap[cat].maxPct = Math.max(catMap[cat].maxPct, s.pct);
         catMap[cat].subSectors.push(s.name);
         Object.keys(sectorLeaders).forEach(hy => {
-          if (hy.includes(s.name) || s.name.includes(hy) || catKeywordsMatch(cat, hy)) {
+          let matched = hy && (hy === s.name || hy.includes(s.name) || s.name.includes(hy));
+          if (!matched && hy && s.name.length >= 2) {
+            const p = s.name.length >= 3 ? s.name.slice(0, 3) : s.name;
+            const hyP = hy.length >= Math.min(hy.length, s.name.length) ? hy.slice(0, Math.min(hy.length, s.name.length)) : hy;
+            matched = hy.startsWith(p) || s.name.startsWith(hyP);
+          }
+          if (matched || catKeywordsMatch(cat, hy)) {
             sectorLeaders[hy].forEach(l => {
               if (!catLeaders[cat].find(x => x.code === l.code)) catLeaders[cat].push(l);
             });
           }
         });
+        // Also add API-provided leader for this sector
+        if (s.leaderName && s.leaderCode && !catLeaders[cat].find(x => x.code === s.leaderCode)) {
+          catLeaders[cat].push({ name: s.leaderName, code: s.leaderCode });
+        }
       });
       const mergedHeat = Object.values(catMap).map(c => {
         const avgPct = c.totalPct / c.count;
@@ -3178,28 +3248,43 @@ async function refreshMarketData() {
     if (todayD.sentiment || todayD.limitUp > 0) {
       const zt = todayD.limitUp;
       const pct = todayD.idx?.sh?.[1] || 0;
+      const dt = todayD.limitDown || 0;
       if (zt > 100 && pct > 0) {
         todayD.direction = '情绪回暖，可适当加仓主线龙头，持股待涨为主';
-      } else if (zt > 50 && pct > -1) {
+      } else if (zt > 80 && pct > -1) {
         todayD.direction = '情绪尚可，聚焦主线龙头低吸，控制仓位5成以内';
-      } else if (zt > 20 && pct > -2) {
+      } else if (zt > 50) {
+        todayD.direction = '涨停50+情绪分化，聚焦最强主线龙头低吸，控制仓位3-5成，设好止损';
+      } else if (zt > 20 && pct > -3) {
         todayD.direction = '情绪偏弱，以观望为主，轻仓试错龙头，设好止损';
+      } else if (dt > 100) {
+        todayD.direction = '情绪极差，跌停超百家，空仓等待，严守纪律不抄底';
       } else {
-        todayD.direction = '情绪极差，空仓等待，严守纪律不抄底';
+        todayD.direction = '情绪低迷，谨慎操作，空仓观望等待情绪企稳';
       }
     }
 
     // 4.9 生成热点题材汇总hotThemes
-    if (sectors.length > 0 && Object.keys(sectorLeaders).length > 0) {
+    if (sectors.length > 0) {
       const themeList = [];
       const usedSectors = new Set();
       sectors.slice(0, 20).forEach((s, idx) => {
         if (usedSectors.has(s.name)) return;
         const leaders = (() => {
-          const matchedHy = Object.keys(sectorLeaders).find(hy =>
-            hy.includes(s.name) || s.name.includes(hy));
+          // 1. Try zt pool leaders
+          let matchedHy = Object.keys(sectorLeaders).find(hy =>
+            hy && (hy === s.name || hy.includes(s.name) || s.name.includes(hy)));
+          if (!matchedHy && s.name.length >= 2) {
+            const p = s.name.length >= 3 ? s.name.slice(0, 3) : s.name;
+            matchedHy = Object.keys(sectorLeaders).find(hy =>
+              hy && (hy.startsWith(p) || s.name.startsWith(hy.slice(0, Math.min(hy.length, s.name.length)))));
+          }
           if (matchedHy && sectorLeaders[matchedHy] && sectorLeaders[matchedHy].length > 0) {
             return sectorLeaders[matchedHy].slice(0, 3).map(l => `${l.name}(${l.code})`).join('、');
+          }
+          // 2. Fallback to API leader (f204/f205)
+          if (s.leaderName && s.leaderCode) {
+            return `${s.leaderName}(${s.leaderCode})`;
           }
           return '';
         })();
@@ -3248,11 +3333,15 @@ async function refreshMarketData() {
 
 function generateStrategy(d) {
   const zt = typeof d.limitUp === 'number' ? d.limitUp : parseInt(d.limitUp);
+  const dt = typeof d.limitDown === 'number' ? d.limitDown : parseInt(d.limitDown) || 0;
   const sentiment = d.sentiment || '', theme = d.theme || '';
-  if (zt > 100 && sentiment === '强势') return `市场情绪强势（${zt}只涨停），主线${theme}，可持股待涨，关注补涨机会`;
-  if (zt > 50) return `涨停${zt}只情绪尚可，聚焦${theme}主线，轻仓参与龙头回调`;
-  if (zt > 20) return `涨停仅${zt}只情绪偏弱，控制仓位，观望为主，不追高`;
-  return `市场极度弱势（涨停${zt}只），空仓等待，严守纪律`;
+  const pct = d.idx?.sh?.[1] || 0;
+  if (zt > 100 && pct > 0) return `市场情绪强势（${zt}只涨停），主线${theme}，可持股待涨，关注补涨机会`;
+  if (zt > 80) return `涨停${zt}只情绪尚可，聚焦${theme}主线，轻仓参与龙头回调`;
+  if (zt > 50) return `涨停${zt}只情绪分化，聚焦${theme}最强主线龙头，控制仓位参与`;
+  if (zt > 20 && pct > -3) return `涨停仅${zt}只情绪偏弱，控制仓位，观望为主，不追高`;
+  if (dt > 100) return `市场恐慌（跌停${dt}只），空仓等待，严守纪律不抄底`;
+  return `市场弱势（涨停${zt}只），谨慎操作，空仓观望`;
 }
 
 function generateOvernightPlan(d, ztStocks) {

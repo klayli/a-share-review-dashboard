@@ -73,16 +73,17 @@ async function fetchZtPoolData() {
         data.data.pool.forEach(s => {
           totalZt++;
           if (s.zbc === 0) sealCount++;
+          const hyName = s.hybk || s.hy || '';
           const stockInfo = {
             name: s.n, code: s.c,
             time: typeof s.fbt === 'number' ? String(s.fbt).padStart(6, '0').replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') : '',
             seal: s.fund ? (s.fund / 10000).toFixed(0) + '万' : '—',
-            lbc: s.lbc || 0, hy: s.hy || ''
+            lbc: s.lbc || 0, hy: hyName
           };
           ztStocks[s.c] = stockInfo;
-          if (s.hy) {
-            if (!sectorLeaders[s.hy]) sectorLeaders[s.hy] = [];
-            sectorLeaders[s.hy].push(stockInfo);
+          if (hyName) {
+            if (!sectorLeaders[hyName]) sectorLeaders[hyName] = [];
+            sectorLeaders[hyName].push(stockInfo);
           }
         });
         ztCount = totalZt;
@@ -123,9 +124,15 @@ async function fetchTotalVolume() {
 }
 
 function findLeadersForSector(sectorName, sectorLeaders) {
-  const matchedHy = Object.keys(sectorLeaders).find(hy =>
-    hy.includes(sectorName) || sectorName.includes(hy)
+  let matchedHy = Object.keys(sectorLeaders).find(hy =>
+    hy && (hy === sectorName || hy.includes(sectorName) || sectorName.includes(hy))
   );
+  if (!matchedHy && sectorName.length >= 3) {
+    const prefix3 = sectorName.slice(0, 3);
+    matchedHy = Object.keys(sectorLeaders).find(hy =>
+      hy && (hy.startsWith(prefix3) || sectorName.startsWith(hy.slice(0, 3)))
+    );
+  }
   if (matchedHy && sectorLeaders[matchedHy] && sectorLeaders[matchedHy].length > 0) {
     return sectorLeaders[matchedHy].slice(0, 4).map(s => `${s.name}(${s.code})`).join(' · ');
   }
