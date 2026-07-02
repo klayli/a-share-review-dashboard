@@ -1,7 +1,14 @@
 {
-  "current": "v1.16.0",
+  "current": "v1.17.0",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.17.0",
+      "date": "2026-07-02 16:00（北京时间）",
+      "summary": "修复板块热力图API百分比解析bug（f3字段不再除以100），刷新后涨跌幅显示正确；板块龙头股从涨停池数据推导显示；版本说明移除明文密码；新增test测试账号（test/test）展示模拟数据，数据与admin完全隔离，显示测试模式标识；新增Cloudflare Worker后端支持交易日10:00/14:00/15:05定时自动同步市场数据；前端适配Worker API，不可用时降级为内置数据。",
+      "cache": "a-share-review-v20-20260702",
+      "deploy_url": "待预览确认后部署"
+    },
     {
       "version": "v1.16.0",
       "date": "2026-07-02 10:30（北京时间）",
@@ -12,7 +19,7 @@
     {
       "version": "v1.15.0",
       "date": "2026-07-02 02:22（北京时间）",
-      "summary": "登录系统（admin/admin123）+待办清单+纪念日功能；登录后数据自动解密；待办清单和纪念日首页最多显示5条+查看详情页；当日盈亏图表去重修复多条曲线问题；市场情绪数据刷新同步更新sectorHeat字段。",
+      "summary": "登录系统+待办清单+纪念日功能；登录后数据自动解密；待办清单和纪念日首页最多显示5条+查看详情页；当日盈亏图表去重修复多条曲线问题；市场情绪数据刷新同步更新sectorHeat字段。",
       "cache": "a-share-review-v18-20260702",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },

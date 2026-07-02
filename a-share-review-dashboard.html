@@ -694,9 +694,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.16.0';
-const APP_VERSION_DATE = '2026-07-02 10:30';
-const APP_RELEASE_NOTES = '查看全部按钮常驻显示+水平对齐；纪念日新增去除描述输入框，改为创建后点击✎编辑描述；面包屑导航改为显示全部栏目（首页/持仓总览/大盘情绪/待办清单/纪念日），支持点击任意栏目快捷跳转，后续新增卡片自动加入面包屑；修复三大指数（上证/深证/创业板）secid格式，确保实时数据正确更新。';
+const APP_VERSION = 'v1.17.0';
+const APP_VERSION_DATE = '2026-07-02 16:00';
+const APP_RELEASE_NOTES = '修复板块热力图API百分比解析bug（f3字段不再除以100），刷新后涨跌幅显示正确；板块龙头股从涨停池数据推导显示；版本说明移除明文密码；新增test测试账号（test/test）展示模拟数据，数据与admin完全隔离，显示测试模式标识；新增Cloudflare Worker后端支持交易日10:00/14:00/15:05定时自动同步市场数据；前端适配Worker API，不可用时降级为内置数据。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -827,8 +827,9 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.17.0', date:'2026-07-02 16:00', notes:'修复板块热力图API百分比解析bug（f3字段不再除以100），刷新后涨跌幅显示正确；板块龙头股从涨停池数据推导显示；版本说明移除明文密码；新增test测试账号（test/test）展示模拟数据，数据与admin完全隔离，显示测试模式标识；新增Cloudflare Worker后端支持交易日定时同步；前端适配Worker API并保留降级逻辑。' },
   { version:'v1.16.0', date:'2026-07-02 10:30', notes:'查看全部按钮常驻显示+水平对齐；纪念日新增去除描述输入框，改为创建后点击✎编辑描述；面包屑导航改为显示全部栏目（首页/持仓总览/大盘情绪/待办清单/纪念日），支持点击任意栏目快捷跳转，后续新增卡片自动加入面包屑；修复三大指数（上证/深证/创业板）secid格式，确保实时数据正确更新。' },
-  { version:'v1.15.0', date:'2026-07-02 02:22', notes:'登录系统（admin/admin123）+待办清单+纪念日功能；登录后数据自动解密；待办清单和纪念日首页最多显示5条+查看详情页；当日盈亏图表去重修复多条曲线问题；市场情绪数据刷新同步更新sectorHeat字段。' },
+  { version:'v1.15.0', date:'2026-07-02 02:22', notes:'登录系统+待办清单+纪念日功能；登录后数据自动解密；待办清单和纪念日首页最多显示5条+查看详情页；当日盈亏图表去重修复多条曲线问题；市场情绪数据刷新同步更新sectorHeat字段。' },
   { version:'v1.14.0', date:'2026-07-02 15:37', notes:'古诗词扩充至120首减少重复；大盘详情移除重复指数卡片；市场情绪数据API自动获取（板块排行/涨停池/成交额/封单）；规则推算策略+隔夜计划+热点汇总；定时30分钟自动更新+15:30自动保存至localStorage；网络请求异常处理优化（r.ok检查）；版本区域显示随机古诗词+UI美化；底部布局重排（版本号在上，免责声明在下）。' },
   { version:'v1.13.0', date:'2026-07-02 00:15', notes:'天气API换Open-Meteo修复HTML注入；顶部时间加粗加亮+农历天气美化标签；顶部编辑改input支持中文输入；数据更新时间统一对齐去掉北京时间；刷新按钮调用API更新基金净值+备选标的最新价；每日盈亏卡片移至持仓总览下方跟随Tab切换；备选标的更新（中船特气/新宙邦/沪硅产业）；首页卡片底部flex对齐。' },
   { version:'v1.12.0', date:'2026-07-01 17:03', notes:'新增手动全局刷新；顶部实时时间+农历+天气；股票详情弹窗统一支持；移除导出/导入配置；基金当日收益修复（T日显示0，历史保留API值）；持仓总览日收益Tab联动；解密弹窗文案修改。' },
@@ -1832,6 +1833,56 @@ async function loadPortfolioApi() {
   }
 }
 
+async function fetchDailyFromWorker(date) {
+  if (isTestUser()) return null;
+  try {
+    const url = `/api/daily/${date}.json?t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) {
+      if (res.status === 404) return null;
+      throw new Error(`Worker API ${res.status}`);
+    }
+    const data = await res.json();
+    if (data && !data.error) {
+      return data;
+    }
+    return null;
+  } catch (e) {
+    console.log('[Worker API] 不可用，使用内置数据:', e.message);
+    return null;
+  }
+}
+
+function mergeWorkerDailyData(workerData) {
+  if (!workerData) return false;
+  const today = todayText();
+  if (workerData.date !== today) return false;
+  let todayD = DAYS.find(d => d.date === today);
+  if (!todayD) {
+    todayD = { date: today };
+    DAYS.unshift(todayD);
+  }
+  if (workerData.idx) todayD.idx = workerData.idx;
+  if (workerData.sectorHeat) todayD.sectorHeat = workerData.sectorHeat;
+  if (workerData.topSectors) todayD.topSectors = workerData.topSectors;
+  if (workerData.heatMap) todayD.heatMap = workerData.heatMap;
+  if (typeof workerData.limitUp === 'number') todayD.limitUp = workerData.limitUp;
+  if (typeof workerData.limitDown === 'number') todayD.limitDown = workerData.limitDown;
+  if (workerData.sealRate) todayD.sealRate = workerData.sealRate;
+  if (workerData.volume) todayD.volume = workerData.volume;
+  if (workerData.sentiment) todayD.sentiment = workerData.sentiment;
+  if (workerData.theme) todayD.theme = workerData.theme;
+  if (workerData.sectorName) todayD.sectorName = workerData.sectorName;
+  if (workerData.strategy) todayD.strategy = workerData.strategy;
+  if (workerData.overnightPlan) todayD.overnightPlan = workerData.overnightPlan;
+  if (workerData.appendix) todayD.appendix = workerData.appendix;
+  if (workerData.updatedAt && !DATA_UPDATED_AT) {
+    DATA_UPDATED_AT = `Worker快照 ${workerData.updatedAt.slice(5, 16)}`;
+    API_STATUS = 'Worker API数据';
+  }
+  return true;
+}
+
 // ==================== CALC ====================
 function calcPnL(d) {
   const codes = Object.keys(HOLDINGS.shares);
@@ -1924,9 +1975,136 @@ let dataRevealed = false;
 
 // ==================== Auth System ====================
 const AUTH_ACCOUNTS = {
-  'admin': { password: 'admin123', name: '管理员' }
+  'admin': { password: 'admin123', name: '管理员', isTest: false },
+  'test': { password: 'test', name: '测试用户', isTest: true }
 };
 let currentUser = null;
+
+const ORIGINAL_HOLDINGS = {
+  cost: { ...HOLDINGS.cost },
+  shares: { ...HOLDINGS.shares },
+  names: { ...HOLDINGS.names }
+};
+const ORIGINAL_STOCK_INFO = { ...STOCK_INFO };
+const ORIGINAL_TRANSACTIONS = {
+  stocks: [...TRANSACTIONS.stocks],
+  funds: [...TRANSACTIONS.funds]
+};
+const ORIGINAL_FUND_PORTFOLIO = [...FUND_PORTFOLIO];
+
+const TEST_DATA = {
+  holdings: {
+    cost: { total: 50000.00, '600519': 1680.00, '000858': 158.50, '601318': 48.20 },
+    shares: { '600519': 10, '000858': 100, '601318': 500 },
+    names: { '600519': '贵州茅台', '000858': '五粮液', '601318': '中国平安' }
+  },
+  stockInfo: {
+    '600519': { name:'贵州茅台', price:'1725.00', prefix:'sh' },
+    '000858': { name:'五粮液', price:'165.80', prefix:'sz' },
+    '601318': { name:'中国平安', price:'51.30', prefix:'sh' },
+    '000001': { name:'平安银行', price:'12.85', prefix:'sz' },
+    '600036': { name:'招商银行', price:'38.42', prefix:'sh' }
+  },
+  transactions: {
+    stocks: [
+      { date:'2026-06-10', time:'09:35', code:'600519', name:'贵州茅台', side:'买入', price:1680.00, qty:10, amount:16800.00, note:'测试数据-白酒龙头建仓' },
+      { date:'2026-06-15', time:'10:20', code:'000858', name:'五粮液', side:'买入', price:158.50, qty:100, amount:15850.00, note:'测试数据-白酒板块配置' },
+      { date:'2026-06-20', time:'14:30', code:'601318', name:'中国平安', side:'买入', price:48.20, qty:500, amount:24100.00, note:'测试数据-金融板块配置' }
+    ],
+    funds: [
+      { date:'2026-06-01', time:'15:00', code:'110022', name:'易方达消费行业股票', side:'定投', price:3.2560, qty:307.06, amount:1000.00, note:'测试数据-消费基金定投' },
+      { date:'2026-06-15', time:'15:00', code:'161725', name:'招商中证白酒指数(LOF)A', side:'买入', price:1.0820, qty:924.21, amount:1000.00, note:'测试数据-白酒指数基金' }
+    ]
+  },
+  fundPortfolio: [
+    { code:'110022', name:'易方达消费行业股票', type:'股票型基金', account:'测试账户', unitCost:3.2560, latestNav:3.4120, navDate:'07-02', shares:307.06, available:307.06, holdingIncome:47.90, holdingYield:4.79, dailyIncome:12.28, amount:1047.90, strategy:'测试数据-消费行业主题基金，观察消费复苏趋势。' },
+    { code:'161725', name:'招商中证白酒指数(LOF)A', type:'指数型基金', account:'测试账户', unitCost:1.0820, latestNav:1.1250, navDate:'07-02', shares:924.21, available:924.21, holdingIncome:39.74, holdingYield:3.98, dailyIncome:8.32, amount:1039.74, strategy:'测试数据-白酒指数基金，跟踪白酒板块表现。' }
+  ],
+  days: [
+    {
+      date: '2026-07-02',
+      idx: { sh: { pct: 0.85, val: '3215.62' }, sz: { pct: 1.12, val: '10856.32' }, cyb: { pct: 1.45, val: '2198.76' } },
+      limitUp: 68, limitDown: 12, sealRate: '72%', volume: '约1.25万亿', sentiment: '偏强',
+      theme: '白酒+金融+消费', sectorName: '白酒·保险',
+      sectorHeat: [
+        { name:'白酒', pct:3.8, size:38, desc:'茅台领涨白酒板块', leaders:'贵州茅台(600519) · 五粮液(000858)' },
+        { name:'保险', pct:2.9, size:29, desc:'金融板块反弹', leaders:'中国平安(601318) · 中国人寿(601628)' },
+        { name:'银行', pct:1.5, size:20, desc:'权重护盘', leaders:'招商银行(600036)' },
+        { name:'消费', pct:2.1, size:25, desc:'消费复苏预期', leaders:'—' },
+        { name:'医药', pct:-0.8, size:16, desc:'小幅回调', leaders:'—' }
+      ],
+      topSectors: [
+        { name:'白酒', pct:3.8 }, { name:'保险', pct:2.9 }, { name:'消费', pct:2.1 }
+      ],
+      watchlist: [],
+      strategy: '测试数据：市场情绪偏强，白酒金融领涨，可适当关注消费板块机会。',
+      overnightPlan: '测试数据：关注白酒板块持续性，观察龙头股封单情况。',
+      appendix: '测试数据'
+    }
+  ]
+};
+
+function isTestUser() {
+  return currentUser && AUTH_ACCOUNTS[currentUser] && AUTH_ACCOUNTS[currentUser].isTest;
+}
+
+function applyTestData() {
+  Object.keys(HOLDINGS.cost).forEach(k => delete HOLDINGS.cost[k]);
+  Object.keys(HOLDINGS.shares).forEach(k => delete HOLDINGS.shares[k]);
+  Object.keys(HOLDINGS.names).forEach(k => delete HOLDINGS.names[k]);
+  Object.assign(HOLDINGS.cost, TEST_DATA.holdings.cost);
+  Object.assign(HOLDINGS.shares, TEST_DATA.holdings.shares);
+  Object.assign(HOLDINGS.names, TEST_DATA.holdings.names);
+
+  Object.keys(STOCK_INFO).forEach(k => delete STOCK_INFO[k]);
+  Object.assign(STOCK_INFO, TEST_DATA.stockInfo);
+
+  TRANSACTIONS.stocks = [...TEST_DATA.transactions.stocks];
+  TRANSACTIONS.funds = [...TEST_DATA.transactions.funds];
+
+  FUND_PORTFOLIO.length = 0;
+  FUND_PORTFOLIO.push(...TEST_DATA.fundPortfolio.map(f => ({...f})));
+
+  const today = todayText();
+  let todayD = DAYS.find(d => d.date === today);
+  if (!todayD) {
+    todayD = { date: today, ...TEST_DATA.days[0] };
+    DAYS.unshift(todayD);
+  }
+}
+
+function restoreOriginalData() {
+  Object.keys(HOLDINGS.cost).forEach(k => delete HOLDINGS.cost[k]);
+  Object.keys(HOLDINGS.shares).forEach(k => delete HOLDINGS.shares[k]);
+  Object.keys(HOLDINGS.names).forEach(k => delete HOLDINGS.names[k]);
+  Object.assign(HOLDINGS.cost, ORIGINAL_HOLDINGS.cost);
+  Object.assign(HOLDINGS.shares, ORIGINAL_HOLDINGS.shares);
+  Object.assign(HOLDINGS.names, ORIGINAL_HOLDINGS.names);
+
+  Object.keys(STOCK_INFO).forEach(k => delete STOCK_INFO[k]);
+  Object.assign(STOCK_INFO, ORIGINAL_STOCK_INFO);
+
+  TRANSACTIONS.stocks = [...ORIGINAL_TRANSACTIONS.stocks];
+  TRANSACTIONS.funds = [...ORIGINAL_TRANSACTIONS.funds];
+
+  FUND_PORTFOLIO.length = 0;
+  FUND_PORTFOLIO.push(...ORIGINAL_FUND_PORTFOLIO.map(f => ({...f})));
+}
+
+function updateTestModeBadge() {
+  let badge = document.getElementById('testModeBadge');
+  if (isTestUser()) {
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'testModeBadge';
+      badge.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;padding:6px 20px;border-radius:20px;font-size:0.85rem;font-weight:700;z-index:9999;box-shadow:0 4px 15px rgba(245,158,11,0.4);pointer-events:none;';
+      badge.textContent = '🧪 测试模式 - 模拟数据';
+      document.body.appendChild(badge);
+    }
+  } else {
+    if (badge) badge.remove();
+  }
+}
 
 function getAuthUser() {
   try {
@@ -1988,11 +2166,16 @@ function doLogin() {
     return;
   }
   if (AUTH_ACCOUNTS[user] && AUTH_ACCOUNTS[user].password === pass) {
+    restoreOriginalData();
     currentUser = user;
     dataRevealed = true;
+    if (isTestUser()) {
+      applyTestData();
+    }
     localStorage.setItem('dashboard_auth', JSON.stringify({ username: user }));
     closeLoginModal();
     updateAuthUI();
+    updateTestModeBadge();
     render();
     renderCharts();
     renderCalendar();
@@ -2002,10 +2185,12 @@ function doLogin() {
 }
 
 function doLogout() {
+  restoreOriginalData();
   currentUser = null;
   dataRevealed = false;
   localStorage.removeItem('dashboard_auth');
   updateAuthUI();
+  updateTestModeBadge();
   render();
   renderCharts();
   renderCalendar();
@@ -2015,8 +2200,12 @@ function initAuth() {
   currentUser = getAuthUser();
   if (currentUser) {
     dataRevealed = true;
+    if (isTestUser()) {
+      applyTestData();
+    }
   }
   updateAuthUI();
+  updateTestModeBadge();
 }
 
 // ==================== Todo List ====================
@@ -2577,41 +2766,11 @@ async function refreshMarketData() {
   let todayD = DAYS.find(d => d.date === today);
   if (!todayD) return;
   try {
-    // 1. 获取板块涨跌幅排行（概念板块+行业板块）
-    const sectorUrl = 'https://push2.eastmoney.com/api/qt/clist/get';
-    const sectors = [];
-    for (const fs of ['m:90+t:2', 'm:90+t:1']) {
-      try {
-        const r = await fetch(`${sectorUrl}?pn=1&pz=50&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f12,f14,f3,f10,f15&_=${Date.now()}`);
-        if (!r.ok) continue;
-        const data = await r.json();
-        if (data.data && data.data.diff) {
-          sectors.push(...data.data.diff.map(s => ({
-            code: s.f12, name: s.f14, pct: s.f3 / 100,
-            vol: s.f15, amount: s.f10
-          })));
-        }
-      } catch(e) {}
-      await new Promise(r => setTimeout(r, 500));
-    }
-    sectors.sort((a, b) => b.pct - a.pct);
-    if (sectors.length > 0) {
-      todayD.topSectors = sectors.slice(0, 10).map(s => ({ name: s.name, pct: s.pct }));
-      todayD.heatMap = sectors.slice(0, 30).map(s => ({ name: s.name, pct: s.pct, vol: s.vol }));
-      // 同步更新 sectorHeat（首页热力图和领涨板块使用此字段）
-      todayD.sectorHeat = sectors.slice(0, 30).map(s => ({
-        name: s.name, pct: s.pct,
-        size: Math.max(16, Math.min(46, Math.abs(s.pct) * 10)),
-        desc: '', leaders: ''
-      }));
-      todayD.theme = sectors.slice(0, 3).map(s => s.name).join('+');
-      todayD.sectorName = sectors.slice(0, 2).map(s => s.name).join('·');
-    }
-
-    // 2. 获取涨停池数据
+    // 1. 先获取涨停池数据（用于后续推导板块龙头股）
     const dateStr = today.replace(/-/g, '');
     let ztCount = 0, dtCount = 0, sealCount = 0, totalZt = 0;
     const ztStocks = {};
+    const sectorLeaders = {};
     try {
       const ztR = await fetch(`https://push2ex.eastmoney.com/getTopicZTPool?ut=7eea3edcaed734bea9c&dpt=wz.ztzt&Pageindex=0&Pagesize=500&sort=fbt:asc&date=${dateStr}&_=${Date.now()}`);
       if (ztR.ok) {
@@ -2620,12 +2779,17 @@ async function refreshMarketData() {
           ztData.data.pool.forEach(s => {
             totalZt++;
             if (s.zbc === 0) sealCount++;
-            ztStocks[s.c] = {
+            const stockInfo = {
               name: s.n, code: s.c,
               time: typeof s.fbt === 'number' ? String(s.fbt).padStart(6, '0').replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') : '',
               seal: s.fund ? (s.fund / 10000).toFixed(0) + '万' : '—',
               lbc: s.lbc || 0, hy: s.hy || ''
             };
+            ztStocks[s.c] = stockInfo;
+            if (s.hy) {
+              if (!sectorLeaders[s.hy]) sectorLeaders[s.hy] = [];
+              sectorLeaders[s.hy].push(stockInfo);
+            }
           });
           ztCount = totalZt;
         }
@@ -2638,6 +2802,47 @@ async function refreshMarketData() {
         if (dtData.data && dtData.data.pool) dtCount = dtData.data.pool.length;
       }
     } catch(e) {}
+
+    // 2. 获取板块涨跌幅排行（概念板块+行业板块）
+    const sectorUrl = 'https://push2.eastmoney.com/api/qt/clist/get';
+    const sectors = [];
+    for (const fs of ['m:90+t:2', 'm:90+t:1']) {
+      try {
+        const r = await fetch(`${sectorUrl}?pn=1&pz=50&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f12,f14,f3,f10,f15&_=${Date.now()}`);
+        if (!r.ok) continue;
+        const data = await r.json();
+        if (data.data && data.data.diff) {
+          sectors.push(...data.data.diff.map(s => ({
+            code: s.f12, name: s.f14, pct: s.f3,
+            vol: s.f15, amount: s.f10
+          })));
+        }
+      } catch(e) {}
+      await new Promise(r => setTimeout(r, 500));
+    }
+    sectors.sort((a, b) => b.pct - a.pct);
+    if (sectors.length > 0) {
+      function findLeadersForSector(sectorName) {
+        const matchedHy = Object.keys(sectorLeaders).find(hy => hy.includes(sectorName) || sectorName.includes(hy));
+        if (matchedHy && sectorLeaders[matchedHy] && sectorLeaders[matchedHy].length > 0) {
+          return sectorLeaders[matchedHy].slice(0, 4).map(s => `${s.name}(${s.code})`).join(' · ');
+        }
+        return '';
+      }
+      todayD.topSectors = sectors.slice(0, 10).map(s => ({ name: s.name, pct: s.pct }));
+      todayD.heatMap = sectors.slice(0, 30).map(s => ({ name: s.name, pct: s.pct, vol: s.vol }));
+      todayD.sectorHeat = sectors.slice(0, 30).map(s => {
+        const leaders = findLeadersForSector(s.name);
+        return {
+          name: s.name, pct: s.pct,
+          size: Math.max(16, Math.min(46, Math.abs(s.pct) * 10)),
+          desc: leaders ? `${s.pct >= 0 ? '上涨' : '下跌'}${Math.abs(s.pct).toFixed(2)}%` : '',
+          leaders: leaders || (s.pct >= 0 ? '领涨股' : '领跌股')
+        };
+      });
+      todayD.theme = sectors.slice(0, 3).map(s => s.name).join('+');
+      todayD.sectorName = sectors.slice(0, 2).map(s => s.name).join('·');
+    }
 
     todayD.limitUp = ztCount || todayD.limitUp;
     todayD.limitDown = dtCount || todayD.limitDown;
@@ -2711,7 +2916,7 @@ function generateAppendix(d) {
   if (d.theme) lines.push(`当日主题：${d.theme}`);
   if (d.sectorName) lines.push(`主线板块：${d.sectorName}`);
   if (d.topSectors && d.topSectors.length > 0) {
-    lines.push(`领涨板块：${d.topSectors.slice(0, 5).map(s => s.name + ' +' + (s.pct * 100).toFixed(2) + '%').join('、')}`);
+    lines.push(`领涨板块：${d.topSectors.slice(0, 5).map(s => s.name + ' +' + s.pct.toFixed(2) + '%').join('、')}`);
   }
   return lines.join('\n');
 }
@@ -3491,8 +3696,10 @@ async function initApp() {
   FUND_PORTFOLIO.forEach(f => { f.dailyIncome = 0; });
   ensureTodayData();
   await loadPortfolioApi();
-  // 默认选择最新交易日（今天优先，否则选DAYS中最后一天）
   const today = todayText();
+  const workerData = await fetchDailyFromWorker(today);
+  mergeWorkerDailyData(workerData);
+  // 默认选择最新交易日（今天优先，否则选DAYS中最后一天）
   const hasToday = DAYS.some(d => d.date === today);
   currentDate = hasToday ? today : (DAYS.length > 0 ? DAYS[DAYS.length - 1].date : currentDate);
   renderDateButtons();
@@ -3507,8 +3714,35 @@ async function initApp() {
   updateHeaderClock();
   setInterval(updateHeaderClock, 1000);
   setInterval(fetchWeather, 600000);
+  scheduleWorkerAutoRefresh();
 }
 initApp();
+
+function scheduleWorkerAutoRefresh() {
+  function checkRefresh() {
+    const now = new Date();
+    const day = now.getDay();
+    if (day < 1 || day > 5) return;
+    const h = now.getHours();
+    const m = now.getMinutes();
+    const currentTime = h * 60 + m;
+    const triggers = [10*60, 14*60, 15*60+5];
+    for (const t of triggers) {
+      if (Math.abs(currentTime - t) < 3) {
+        const today = todayText();
+        fetchDailyFromWorker(today).then(data => {
+          if (data && mergeWorkerDailyData(data)) {
+            render();
+            renderCharts();
+            renderCalendar();
+          }
+        });
+        break;
+      }
+    }
+  }
+  setInterval(checkRefresh, 60000);
+}
 
 // ==================== CHARTS (Pure SVG) ====================
 
