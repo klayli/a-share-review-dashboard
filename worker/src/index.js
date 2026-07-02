@@ -31,40 +31,9 @@ async function fetchWithTimeout(url, options = {}, timeout = 10000) {
   }
 }
 
-async function fetchIndexData() {
-  const indices = [
-    { secid: '1.000001', name: 'sh' },
-    { secid: '0.399001', name: 'sz' },
-    { secid: '0.399006', name: 'cyb' }
-  ];
-  const result = {};
-  for (const idx of indices) {
-    try {
-      const url = `https://push2.eastmoney.com/api/qt/stock/get?secid=${idx.secid}&fields=f43,f44,f45,f46,f47,f48,f50,f51,f52,f57,f58,f60,f107,f116,f117,f168,f169,f170&_=${Date.now()}`;
-      const resp = await fetchWithTimeout(url, { headers: EASTMONEY_HEADERS }, 8000);
-      if (resp.ok) {
-        const data = await resp.json();
-        if (data.data) {
-          const d = data.data;
-          const price = d.f43 / 100;
-          const pct = d.f170 / 100;
-          result[idx.name] = {
-            val: price.toFixed(2),
-            pct: parseFloat(pct.toFixed(2))
-          };
-        }
-      }
-    } catch (e) {
-      console.warn(`Failed to fetch index ${idx.secid}:`, e);
-    }
-  }
-  return result;
-}
-
 async function fetchSectorData() {
   const sectorUrl = 'https://push2.eastmoney.com/api/qt/clist/get';
   const sectors = [];
-  const sectorLeaders = {};
   for (const fs of ['m:90+t:2', 'm:90+t:1']) {
     try {
       const url = `${sectorUrl}?pn=1&pz=50&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f12,f14,f3,f10,f15&_=${Date.now()}`;
@@ -86,7 +55,7 @@ async function fetchSectorData() {
     await new Promise(r => setTimeout(r, 300));
   }
   sectors.sort((a, b) => b.pct - a.pct);
-  return { sectors, sectorLeaders };
+  return sectors;
 }
 
 async function fetchZtPoolData() {
@@ -187,8 +156,7 @@ function generateOvernightPlan(theme, ztStocks) {
 
 async function collectDailyData() {
   const today = formatDate(new Date());
-  const idx = await fetchIndexData();
-  const { sectors } = await fetchSectorData();
+  const sectors = await fetchSectorData();
   const { ztStocks, sectorLeaders, ztCount, dtCount, sealCount, totalZt } = await fetchZtPoolData();
   const volume = await fetchTotalVolume();
   const sealRate = totalZt > 0 ? (sealCount / totalZt * 100).toFixed(0) + '%' : '—';
@@ -202,7 +170,7 @@ async function collectDailyData() {
     return {
       name: s.name, pct: s.pct,
       size: Math.max(16, Math.min(46, Math.abs(s.pct) * 10)),
-      desc: leaders ? `${s.pct >= 0 ? '上涨' : '下跌'}${Math.abs(s.pct).toFixed(2)}%` : '',
+      desc: s.pct >= 0 ? '上涨' + Math.abs(s.pct).toFixed(2) + '%' : '下跌' + Math.abs(s.pct).toFixed(2) + '%',
       leaders: leaders || (s.pct >= 0 ? '领涨股' : '领跌股')
     };
   });
@@ -222,7 +190,6 @@ async function collectDailyData() {
   const appendix = lines.join('\n');
   return {
     date: today,
-    idx,
     sectorHeat,
     topSectors,
     heatMap,

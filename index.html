@@ -695,8 +695,8 @@ function updateHeaderClock() {
 
 // ==================== DATA ====================
 const APP_VERSION = 'v1.17.0';
-const APP_VERSION_DATE = '2026-07-02 16:00';
-const APP_RELEASE_NOTES = '修复板块热力图API百分比解析bug（f3字段不再除以100），刷新后涨跌幅显示正确；板块龙头股从涨停池数据推导显示；版本说明移除明文密码；新增test测试账号（test/test）展示模拟数据，数据与admin完全隔离，显示测试模式标识；新增Cloudflare Worker后端支持交易日10:00/14:00/15:05定时自动同步市场数据；前端适配Worker API，不可用时降级为内置数据。';
+const APP_VERSION_DATE = '2026-07-02 08:52';
+const APP_RELEASE_NOTES = '修复板块热力图API百分比解析bug（f3字段不再除以100），刷新后涨跌幅显示正确；修复三大指数实时数据刷新格式兼容问题；板块龙头股从涨停池数据推导显示；版本说明移除明文密码；新增test测试账号（test/test）展示模拟数据，数据与admin完全隔离，显示测试模式标识；新增Cloudflare Worker后端支持交易日定时自动同步市场数据；前端适配Worker API，不可用时降级为内置数据。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -827,7 +827,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
-  { version:'v1.17.0', date:'2026-07-02 16:00', notes:'修复板块热力图API百分比解析bug（f3字段不再除以100），刷新后涨跌幅显示正确；板块龙头股从涨停池数据推导显示；版本说明移除明文密码；新增test测试账号（test/test）展示模拟数据，数据与admin完全隔离，显示测试模式标识；新增Cloudflare Worker后端支持交易日定时同步；前端适配Worker API并保留降级逻辑。' },
+  { version:'v1.17.0', date:'2026-07-02 08:52', notes:'修复三大指数实时数据刷新：添加fltt=2参数、基于昨收价(f60)计算涨跌幅、新增新浪JSONP备用数据源；修复ensureTodayData不再深拷贝昨日板块数据避免混淆；盘前时段显示等待开盘状态，交易时段(9:30-15:00)才更新涨停/情绪数据；修正TEST_DATA中7月2日错误占位指数值；refreshMarketData完成后自动触发页面重渲染；版本发布时间修正为实际时间。' },
   { version:'v1.16.0', date:'2026-07-02 10:30', notes:'查看全部按钮常驻显示+水平对齐；纪念日新增去除描述输入框，改为创建后点击✎编辑描述；面包屑导航改为显示全部栏目（首页/持仓总览/大盘情绪/待办清单/纪念日），支持点击任意栏目快捷跳转，后续新增卡片自动加入面包屑；修复三大指数（上证/深证/创业板）secid格式，确保实时数据正确更新。' },
   { version:'v1.15.0', date:'2026-07-02 02:22', notes:'登录系统+待办清单+纪念日功能；登录后数据自动解密；待办清单和纪念日首页最多显示5条+查看详情页；当日盈亏图表去重修复多条曲线问题；市场情绪数据刷新同步更新sectorHeat字段。' },
   { version:'v1.14.0', date:'2026-07-02 15:37', notes:'古诗词扩充至120首减少重复；大盘详情移除重复指数卡片；市场情绪数据API自动获取（板块排行/涨停池/成交额/封单）；规则推算策略+隔夜计划+热点汇总；定时30分钟自动更新+15:30自动保存至localStorage；网络请求异常处理优化（r.ok检查）；版本区域显示随机古诗词+UI美化；底部布局重排（版本号在上，免责声明在下）。' },
@@ -1692,6 +1692,7 @@ let FUND_PORTFOLIO = [
 ];
 
 let DATA_UPDATED_AT = '';
+let IDX_LIVE = null;
 
 function renderSummarySection(stats, d, compact) {
   const s = stats[summaryTab];
@@ -1859,10 +1860,9 @@ function mergeWorkerDailyData(workerData) {
   if (workerData.date !== today) return false;
   let todayD = DAYS.find(d => d.date === today);
   if (!todayD) {
-    todayD = { date: today };
+    todayD = { date: today, idx: { sh: [0, 0], sz: [0, 0], cy: [0, 0] } };
     DAYS.unshift(todayD);
   }
-  if (workerData.idx) todayD.idx = workerData.idx;
   if (workerData.sectorHeat) todayD.sectorHeat = workerData.sectorHeat;
   if (workerData.topSectors) todayD.topSectors = workerData.topSectors;
   if (workerData.heatMap) todayD.heatMap = workerData.heatMap;
@@ -1876,7 +1876,7 @@ function mergeWorkerDailyData(workerData) {
   if (workerData.strategy) todayD.strategy = workerData.strategy;
   if (workerData.overnightPlan) todayD.overnightPlan = workerData.overnightPlan;
   if (workerData.appendix) todayD.appendix = workerData.appendix;
-  if (workerData.updatedAt && !DATA_UPDATED_AT) {
+  if (workerData.updatedAt) {
     DATA_UPDATED_AT = `Worker快照 ${workerData.updatedAt.slice(5, 16)}`;
     API_STATUS = 'Worker API数据';
   }
@@ -2023,23 +2023,15 @@ const TEST_DATA = {
   days: [
     {
       date: '2026-07-02',
-      idx: { sh: { pct: 0.85, val: '3215.62' }, sz: { pct: 1.12, val: '10856.32' }, cyb: { pct: 1.45, val: '2198.76' } },
-      limitUp: 68, limitDown: 12, sealRate: '72%', volume: '约1.25万亿', sentiment: '偏强',
-      theme: '白酒+金融+消费', sectorName: '白酒·保险',
-      sectorHeat: [
-        { name:'白酒', pct:3.8, size:38, desc:'茅台领涨白酒板块', leaders:'贵州茅台(600519) · 五粮液(000858)' },
-        { name:'保险', pct:2.9, size:29, desc:'金融板块反弹', leaders:'中国平安(601318) · 中国人寿(601628)' },
-        { name:'银行', pct:1.5, size:20, desc:'权重护盘', leaders:'招商银行(600036)' },
-        { name:'消费', pct:2.1, size:25, desc:'消费复苏预期', leaders:'—' },
-        { name:'医药', pct:-0.8, size:16, desc:'小幅回调', leaders:'—' }
-      ],
-      topSectors: [
-        { name:'白酒', pct:3.8 }, { name:'保险', pct:2.9 }, { name:'消费', pct:2.1 }
-      ],
+      idx: { sh: [4112.45, 0.00], sz: [16119.17, 0.00], cy: [4260.72, 0.00] },
+      limitUp: 0, limitDown: 0, sealRate: '—', volume: '—', sentiment: '—',
+      theme: '等待开盘', sectorName: '—',
+      sectorHeat: [],
+      topSectors: [],
       watchlist: [],
-      strategy: '测试数据：市场情绪偏强，白酒金融领涨，可适当关注消费板块机会。',
-      overnightPlan: '测试数据：关注白酒板块持续性，观察龙头股封单情况。',
-      appendix: '测试数据'
+      strategy: '盘前数据，等待9:30开盘后自动刷新。',
+      overnightPlan: '盘前观察中。',
+      appendix: '盘前'
     }
   ]
 };
@@ -2069,7 +2061,13 @@ function applyTestData() {
   let todayD = DAYS.find(d => d.date === today);
   if (!todayD) {
     todayD = { date: today, ...TEST_DATA.days[0] };
+    todayD.price = { '600519': 1725.00, '000858': 165.80, '601318': 51.30 };
+    todayD.prev = { '600519': 1680.00, '000858': 158.50, '601318': 48.20 };
     DAYS.unshift(todayD);
+  } else {
+    Object.keys(TEST_DATA.days[0]).forEach(k => {
+      if (k !== 'date') todayD[k] = TEST_DATA.days[0][k];
+    });
   }
 }
 
@@ -2172,6 +2170,7 @@ function doLogin() {
     if (isTestUser()) {
       applyTestData();
     }
+    ensureTodayData();
     localStorage.setItem('dashboard_auth', JSON.stringify({ username: user }));
     closeLoginModal();
     updateAuthUI();
@@ -2179,6 +2178,8 @@ function doLogin() {
     render();
     renderCharts();
     renderCalendar();
+    refreshLivePnL();
+    refreshMarketData();
   } else {
     errEl.textContent = '账号或密码错误';
   }
@@ -2473,23 +2474,39 @@ function ensureTodayData() {
   if (day < 1 || day > 5) return; // 周末不自动创建
   const latest = latestDay();
   if (!latest) return;
-  const todayData = JSON.parse(JSON.stringify(latest));
-  todayData.date = today;
-  todayData.weekday = getWeekdayText();
-  todayData.prev = { ...latest.price };
-  todayData.theme = latest.theme || '';
-  todayData.themeDesc = latest.themeDesc || '';
-  todayData.sectorName = latest.sectorName || '';
-  todayData.summary = '交易日实时数据，盘中自动更新';
-  todayData.limitUp = latest.limitUp || 0;
-  todayData.limitDown = latest.limitDown || 0;
-  todayData.sealRate = latest.sealRate || '';
-  todayData.ud = latest.ud || '';
-  todayData.volume = latest.volume || '';
-  todayData.direction = latest.direction || '';
-  todayData.earnEffect = latest.earnEffect || '';
-  todayData.sentiment = latest.sentiment || '';
-  todayData.strength = latest.strength || '';
+  // 以昨收价作为今日指数起点，涨跌幅初始化为0（等待盘中实时更新）
+  const todayData = {
+    date: today,
+    weekday: getWeekdayText(),
+    idx: {
+      sh: [latest.idx.sh[0], 0],
+      sz: [latest.idx.sz[0], 0],
+      cy: [latest.idx.cy[0], 0]
+    },
+    price: {},
+    prev: { ...latest.price },
+    theme: '等待开盘',
+    themeDesc: '',
+    sectorName: '—',
+    summary: '交易日实时数据，盘中自动更新',
+    limitUp: 0,
+    limitDown: 0,
+    sealRate: '—',
+    ud: '',
+    volume: '—',
+    direction: '',
+    earnEffect: '',
+    sentiment: '—',
+    strength: '',
+    sectorHeat: [],
+    topSectors: [],
+    heatMap: [],
+    watchlist: [],
+    hotThemes: [],
+    strategy: '盘前数据，等待9:30开盘后自动刷新。',
+    overnightPlan: '盘前观察中。',
+    appendix: '盘前'
+  };
   DAYS.push(todayData);
   currentDate = today;
   // 为新交易日重置实时曲线数据
@@ -2654,7 +2671,6 @@ function loadSinaQuotes(codes) {
 }
 
 async function refreshLivePnL() {
-  // 不再限制交易时段，任何时间都可刷新（便于测试和回显）
   const today = todayText();
   let todayData = DAYS.find(d => d.date === today);
   if (!todayData) {
@@ -2663,90 +2679,146 @@ async function refreshLivePnL() {
   }
   if (!todayData) return;
   try {
-    // 1. 刷新三大指数实时数据（使用东方财富批量接口）
-    const idxCodes = { '1.000001': 'sh', '0.399001': 'sz', '0.399006': 'cy' };
+    // 1. 刷新三大指数实时数据（优先新浪JSONP，CORS友好；东财fetch作为备用）
+    const sinaIdxList = [
+      { sym: 'sh000001', key: 'sh' },
+      { sym: 'sz399001', key: 'sz' },
+      { sym: 'sz399006', key: 'cy' }
+    ];
+    const eastmoneyIdxList = [
+      { secid: '1.000001', key: 'sh' },
+      { secid: '0.399001', key: 'sz' },
+      { secid: '0.399006', key: 'cy' }
+    ];
+    IDX_LIVE = {};
     try {
-      const idxFields = 'f43,f57,f60,f170';
-      for (const [secid, key] of Object.entries(idxCodes)) {
-        try {
-          const r = await fetch(`https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=${idxFields}&_=${Date.now()}`);
-          if (!r.ok) continue;
-          const data = await r.json();
-          if (data.rc === 0 && data.data) {
-            const d = data.data;
-            // 指数价格 f43/f60 单位是"分"，需要除以100得到真实点数
-            const point = d.f43 ? d.f43 / 100 : 0;
-            const pct = d.f170 ? d.f170 / 100 : 0;
-            if (point > 0) {
-              todayData.idx[key] = [point, pct];
+      // 优先使用新浪财经JSONP（script标签不受CORS限制，与个股行情方案一致）
+      let sinaOk = false;
+      try {
+        const sinaSymbols = sinaIdxList.map(s => s.sym).join(',');
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = `https://hq.sinajs.cn/list=${sinaSymbols}&_=${Date.now()}`;
+          script.charset = 'gbk';
+          script.async = true;
+          script.onload = () => {
+            let count = 0;
+            sinaIdxList.forEach(({ sym, key }) => {
+              const raw = window['hq_str_' + sym];
+              if (!raw) return;
+              const parts = raw.split(',');
+              if (parts.length >= 4) {
+                const prevClose = parseFloat(parts[2]);
+                const price = parseFloat(parts[3]);
+                if (price > 0 && prevClose > 0) {
+                  const pct = ((price - prevClose) / prevClose) * 100;
+                  todayData.idx[key] = [Number(price.toFixed(2)), Number(pct.toFixed(2))];
+                  IDX_LIVE[key] = [Number(price.toFixed(2)), Number(pct.toFixed(2))];
+                  count++;
+                }
+              }
+              try { delete window['hq_str_' + sym]; } catch(e) { window['hq_str_' + sym] = null; }
+            });
+            script.remove();
+            if (count >= 3) { sinaOk = true; resolve(); }
+            else reject(new Error('sina partial: ' + count));
+          };
+          script.onerror = () => { script.remove(); reject(new Error('sina network error')); };
+          document.body.appendChild(script);
+          setTimeout(() => { script.remove(); reject(new Error('sina timeout')); }, 8000);
+        });
+      } catch(e) {}
+
+      // 新浪失败时，尝试东方财富API（可能被CORS阻止，但在部分环境可用）
+      if (!sinaOk) {
+        for (const { secid, key } of eastmoneyIdxList) {
+          if (IDX_LIVE[key]) continue;
+          try {
+            const url = `https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f57,f60,f170&fltt=2&invt=2&_=${Date.now()}`;
+            const r = await fetch(url);
+            if (!r.ok) continue;
+            const data = await r.json();
+            if (data.rc === 0 && data.data) {
+              const d = data.data;
+              const point = d.f43 || 0;
+              const prevClose = d.f60 || 0;
+              if (point > 0 && prevClose > 0) {
+                const pct = ((point - prevClose) / prevClose) * 100;
+                todayData.idx[key] = [Number(point.toFixed(2)), Number(pct.toFixed(2))];
+                IDX_LIVE[key] = [Number(point.toFixed(2)), Number(pct.toFixed(2))];
+              }
             }
-          }
-        } catch(e) {}
-        await new Promise(resolve => setTimeout(resolve, 300));
+          } catch(e) {}
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
       }
-      // 指数数据已更新，同步更新 DATA_UPDATED_AT
       const idxNow = new Date();
       DATA_UPDATED_AT = `${idxNow.getFullYear()}-${pad2(idxNow.getMonth()+1)}-${pad2(idxNow.getDate())} ${pad2(idxNow.getHours())}:${pad2(idxNow.getMinutes())}:${pad2(idxNow.getSeconds())}`;
     } catch(e) {}
 
-    // 2. 刷新个股/ETF实时价格
-    const codes = Object.keys(HOLDINGS.shares);
-    let quotes;
-    try {
-      const prevPrices = todayData.prev || {};
-      quotes = await loadEastmoneyQuotes(codes, prevPrices);
-      if (Object.keys(quotes).length === 0) throw new Error('东财数据为空');
-    } catch (e) {
-      quotes = await loadSinaQuotes(codes);
-    }
-    codes.forEach(code => {
-      const q = quotes[code];
-      if (!q) return;
-      todayData.price[code] = q.price;
-      todayData.prev = todayData.prev || {};
-      todayData.prev[code] = q.prevClose;
-      if (STOCK_INFO[code]) STOCK_INFO[code].price = q.price.toFixed(3);
-    });
-
-    // 2.5 刷新备选标的（watchlist）的最新价
-    const watchCodes = DAYS.flatMap(dd => (dd.watchlist || []).map(w => w.code)).filter(c => c && STOCK_INFO[c] && STOCK_INFO[c].price === '—');
-    const uniqueWatchCodes = [...new Set(watchCodes)];
-    if (uniqueWatchCodes.length > 0) {
+    // 2. 刷新个股/ETF实时价格（仅在已登录且有持仓数据时执行）
+    const codes = Object.keys(HOLDINGS.shares || {});
+    if (codes.length > 0 && dataRevealed) {
+      if (!todayData.price) todayData.price = {};
+      if (!todayData.prev) todayData.prev = {};
+      let quotes;
       try {
-        const wq = await loadEastmoneyQuotes(uniqueWatchCodes, {});
-        uniqueWatchCodes.forEach(code => {
-          if (wq[code]) STOCK_INFO[code].price = wq[code].price.toFixed(3);
-        });
-      } catch(e) {
+        const prevPrices = todayData.prev || {};
+        quotes = await loadEastmoneyQuotes(codes, prevPrices);
+        if (Object.keys(quotes).length === 0) throw new Error('东财数据为空');
+      } catch (e) {
         try {
-          const wq2 = await loadSinaQuotes(uniqueWatchCodes);
-          uniqueWatchCodes.forEach(code => {
-            if (wq2[code]) STOCK_INFO[code].price = wq2[code].price.toFixed(3);
-          });
-        } catch(e2) {}
+          quotes = await loadSinaQuotes(codes);
+        } catch(e2) {
+          quotes = {};
+        }
       }
-    }
+      codes.forEach(code => {
+        const q = quotes[code];
+        if (!q) return;
+        todayData.price[code] = q.price;
+        todayData.prev[code] = q.prevClose;
+        if (STOCK_INFO[code]) STOCK_INFO[code].price = q.price.toFixed(3);
+      });
 
-    // 更新 INTRADAY_PNL：计算证券+基金总盈亏
-    const fundDaily = FUND_PORTFOLIO.reduce((s, f) => s + Number(f.dailyIncome || 0), 0);
-    const stockCodes = Object.keys(HOLDINGS.shares);
-    const stockMv = stockCodes.reduce((s, c) => s + HOLDINGS.shares[c] * todayData.price[c], 0);
-    const prevMv = stockCodes.reduce((s, c) => s + HOLDINGS.shares[c] * (todayData.prev[c] || todayData.price[c]), 0);
-    const totalPnl = (stockMv - prevMv) + fundDaily;
+      // 2.5 刷新备选标的（watchlist）的最新价
+      const watchCodes = DAYS.flatMap(dd => (dd.watchlist || []).map(w => w.code)).filter(c => c && STOCK_INFO[c] && STOCK_INFO[c].price === '—');
+      const uniqueWatchCodes = [...new Set(watchCodes)];
+      if (uniqueWatchCodes.length > 0) {
+        try {
+          const wq = await loadEastmoneyQuotes(uniqueWatchCodes, {});
+          uniqueWatchCodes.forEach(code => {
+            if (wq[code]) STOCK_INFO[code].price = wq[code].price.toFixed(3);
+          });
+        } catch(e) {
+          try {
+            const wq2 = await loadSinaQuotes(uniqueWatchCodes);
+            uniqueWatchCodes.forEach(code => {
+              if (wq2[code]) STOCK_INFO[code].price = wq2[code].price.toFixed(3);
+            });
+          } catch(e2) {}
+        }
+      }
 
-    const nowTime = timeText();
-    const existingIdx = INTRADAY_PNL.findIndex(p => p.time === nowTime);
-    if (existingIdx >= 0) {
-      INTRADAY_PNL[existingIdx].value = totalPnl;
-    } else {
-      INTRADAY_PNL.push({ time: nowTime, value: totalPnl });
-      // 持久化 intraday 数据到 localStorage，用于回显
-      try { localStorage.setItem('intradayPnl_' + today, JSON.stringify(INTRADAY_PNL)); } catch(e) {}
+      // 更新 INTRADAY_PNL：计算证券+基金总盈亏
+      const fundDaily = FUND_PORTFOLIO.reduce((s, f) => s + Number(f.dailyIncome || 0), 0);
+      const stockCodes = Object.keys(HOLDINGS.shares);
+      const stockMv = stockCodes.reduce((s, c) => s + (HOLDINGS.shares[c] || 0) * (todayData.price[c] || 0), 0);
+      const prevMv = stockCodes.reduce((s, c) => s + (HOLDINGS.shares[c] || 0) * (todayData.prev[c] || todayData.price[c] || 0), 0);
+      const totalPnl = (stockMv - prevMv) + fundDaily;
+
+      const nowTime = timeText();
+      const existingIdx = INTRADAY_PNL.findIndex(p => p.time === nowTime);
+      if (existingIdx >= 0) {
+        INTRADAY_PNL[existingIdx].value = totalPnl;
+      } else {
+        INTRADAY_PNL.push({ time: nowTime, value: totalPnl });
+        try { localStorage.setItem('intradayPnl_' + today, JSON.stringify(INTRADAY_PNL)); } catch(e) {}
+      }
+      const seen = {};
+      INTRADAY_PNL.forEach(p => { seen[p.time] = p.value; });
+      INTRADAY_PNL = Object.keys(seen).sort().map(t => ({ time: t, value: seen[t] }));
     }
-    // 去重：相同时间只保留最后一条，按时间排序
-    const seen = {};
-    INTRADAY_PNL.forEach(p => { seen[p.time] = p.value; });
-    INTRADAY_PNL = Object.keys(seen).sort().map(t => ({ time: t, value: seen[t] }));
 
     const now2 = new Date();
     lastLiveUpdateText = `${now2.getFullYear()}-${pad2(now2.getMonth()+1)}-${pad2(now2.getDate())} ${pad2(now2.getHours())}:${pad2(now2.getMinutes())}:${pad2(now2.getSeconds())}`;
@@ -2756,7 +2828,12 @@ async function refreshLivePnL() {
       renderCalendar();
     }
   } catch (err) {
+    console.error('[refreshLivePnL] error:', err);
     lastLiveUpdateText = `刷新失败 ${timeText()}`;
+    if (currentDate === today) {
+      render();
+      renderCharts();
+    }
   }
 }
 
@@ -2821,6 +2898,11 @@ async function refreshMarketData() {
       await new Promise(r => setTimeout(r, 500));
     }
     sectors.sort((a, b) => b.pct - a.pct);
+    // 判断是否在交易时段（9:30-15:00）
+    const nowH = new Date().getHours();
+    const nowM = new Date().getMinutes();
+    const isMarketHours = (nowH > 9 || (nowH === 9 && nowM >= 30)) && nowH < 15;
+
     if (sectors.length > 0) {
       function findLeadersForSector(sectorName) {
         const matchedHy = Object.keys(sectorLeaders).find(hy => hy.includes(sectorName) || sectorName.includes(hy));
@@ -2844,16 +2926,19 @@ async function refreshMarketData() {
       todayD.sectorName = sectors.slice(0, 2).map(s => s.name).join('·');
     }
 
-    todayD.limitUp = ztCount || todayD.limitUp;
-    todayD.limitDown = dtCount || todayD.limitDown;
-    todayD.sealRate = totalZt > 0 ? (sealCount / totalZt * 100).toFixed(0) + '%' : todayD.sealRate;
-    if (ztCount > 100) todayD.sentiment = '强势';
-    else if (ztCount > 50) todayD.sentiment = '偏强';
-    else if (ztCount > 20) todayD.sentiment = '一般';
-    else todayD.sentiment = '偏弱';
+    // 涨停/跌停/封板率/情绪：仅在交易时段且API返回有效数据时更新
+    if (isMarketHours && ztCount > 0) {
+      todayD.limitUp = ztCount;
+      todayD.limitDown = dtCount;
+      todayD.sealRate = totalZt > 0 ? (sealCount / totalZt * 100).toFixed(0) + '%' : todayD.sealRate;
+      if (ztCount > 100) todayD.sentiment = '强势';
+      else if (ztCount > 50) todayD.sentiment = '偏强';
+      else if (ztCount > 20) todayD.sentiment = '一般';
+      else todayD.sentiment = '偏弱';
+    }
 
     // 3. 更新 watchlist 涨停时间和封单
-    if (todayD.watchlist && todayD.watchlist.length > 0) {
+    if (todayD.watchlist && todayD.watchlist.length > 0 && Object.keys(ztStocks).length > 0) {
       todayD.watchlist.forEach(w => {
         if (w.code && ztStocks[w.code]) {
           w.time = ztStocks[w.code].time || w.time;
@@ -2867,7 +2952,7 @@ async function refreshMarketData() {
       let totalVol = 0;
       for (const secid of ['1.000001', '0.399001']) {
         try {
-          const vr = await fetch(`https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f47&_=${Date.now()}`);
+          const vr = await fetch(`https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f47&fltt=2&invt=2&_=${Date.now()}`);
           if (vr.ok) {
             const vd = await vr.json();
             if (vd.data && vd.data.f47) totalVol += vd.data.f47;
@@ -2878,11 +2963,19 @@ async function refreshMarketData() {
       if (totalVol > 0) todayD.volume = '约' + (totalVol / 100000000).toFixed(2) + '万亿';
     } catch(e) {}
 
-    // 5-7. 推算策略/隔夜计划/热点汇总
-    todayD.strategy = generateStrategy(todayD);
-    todayD.overnightPlan = generateOvernightPlan(todayD, ztStocks);
-    todayD.appendix = generateAppendix(todayD);
+    // 5-7. 推算策略/隔夜计划/热点汇总（仅在有板块数据时更新）
+    if (sectors.length > 0) {
+      todayD.strategy = generateStrategy(todayD);
+      todayD.overnightPlan = generateOvernightPlan(todayD, ztStocks);
+      todayD.appendix = generateAppendix(todayD);
+    }
     console.log('[市场数据] 自动更新完成:', new Date().toLocaleTimeString());
+    // 触发页面重渲染
+    if (currentDate === today) {
+      render();
+      renderCharts();
+      renderCalendar();
+    }
   } catch(e) {
     console.warn('[市场数据] 自动更新失败:', e);
   }
