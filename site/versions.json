@@ -1,13 +1,20 @@
 {
-  "current": "v1.10.0",
+  "current": "v1.16.0",
   "rollback_supported": true,
   "versions": [
     {
-      "version": "v1.10.0",
-      "date": "2026-07-01 10:30（北京时间）",
-      "summary": "新增页面路由系统：首页、持仓详情、大盘情绪三页分离；数据加密保护；持仓页与市场页独立展示；图表和交易记录按全部/证券/基金Tab联动过滤；新交易日实时收益自动计算；交易时段定时刷新（9:30-15:15每10秒）。",
-      "cache": "a-share-review-v17-20260701",
-      "deploy_url": "待预览确认后部署"
+      "version": "v1.16.0",
+      "date": "2026-07-02 10:30（北京时间）",
+      "summary": "查看全部按钮常驻显示+水平对齐；纪念日新增去除描述输入框，改为创建后点击✎编辑描述；面包屑导航改为显示全部栏目（首页/持仓总览/大盘情绪/待办清单/纪念日），支持点击任意栏目快捷跳转，后续新增卡片自动加入面包屑；修复三大指数（上证/深证/创业板）secid格式，确保实时数据正确更新。",
+      "cache": "a-share-review-v19-20260702",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
+    {
+      "version": "v1.15.0",
+      "date": "2026-07-02 02:22（北京时间）",
+      "summary": "登录系统（admin/admin123）+待办清单+纪念日功能；登录后数据自动解密；待办清单和纪念日首页最多显示5条+查看详情页；当日盈亏图表去重修复多条曲线问题；市场情绪数据刷新同步更新sectorHeat字段。",
+      "cache": "a-share-review-v18-20260702",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.9.8",

@@ -332,7 +332,11 @@
   .home-card .card-arrow { text-align:center; color:var(--yellow); font-size:.9rem; margin-top:14px; padding:8px 12px; background:var(--yellow-bg); border:1px solid var(--yellow); border-radius:8px; font-weight:600; cursor:pointer; transition:all .2s; }
   .home-card .card-arrow:hover { background:var(--yellow); color:#000; }
   .page-nav { display:flex; gap:8px; margin-bottom:16px; align-items:center; }
-  .page-nav .breadcrumb { color:var(--text-dim); font-size:.82rem; margin-left:auto; }
+  .page-nav .breadcrumb { color:var(--text-dim); font-size:.82rem; margin-left:auto; display:flex; align-items:center; gap:2px; flex-wrap:wrap; }
+  .page-nav .breadcrumb a { color:var(--text-dim); cursor:pointer; text-decoration:none; padding:2px 6px; border-radius:4px; transition:all 0.2s; }
+  .page-nav .breadcrumb a:hover { color:var(--text); background:var(--card); }
+  .page-nav .breadcrumb .crumb-sep { color:var(--text-dim); opacity:0.5; margin:0 2px; }
+  .page-nav .breadcrumb .crumb-current { color:var(--text); font-weight:500; padding:2px 6px; }
   .page-nav-btn { padding:8px 16px; background:var(--card); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.88rem; cursor:pointer; }
   .page-nav-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
 
@@ -470,8 +474,23 @@
   .anni-info { flex:1; }
   .anni-name { font-size:0.88rem; font-weight:600; }
   .anni-desc { font-size:0.78rem; color:var(--text-dim); margin-top:2px; }
+  .anni-actions { display:flex; gap:2px; flex-shrink:0; }
+  .anni-edit { color:var(--text-dim); cursor:pointer; font-size:0.95rem; padding:2px 6px; border-radius:4px; transition:all 0.2s; }
+  .anni-edit:hover { color:var(--yellow); }
   .anni-del { color:var(--text-dim); cursor:pointer; font-size:1.1rem; padding:2px 6px; border-radius:4px; flex-shrink:0; transition:all 0.2s; }
   .anni-del:hover { color:#ff5a5f; }
+  .anni-desc-placeholder { font-size:0.76rem; color:var(--text-dim); margin-top:3px; cursor:pointer; opacity:0.6; transition:opacity 0.2s; }
+  .anni-desc-placeholder:hover { opacity:1; }
+  .anni-desc-edit { display:flex; gap:6px; margin-top:4px; align-items:center; }
+  .anni-desc-edit input {
+    flex:1; background:var(--bg); border:1px solid var(--yellow); border-radius:6px;
+    padding:4px 8px; color:var(--text); font-size:0.76rem; outline:none;
+  }
+  .anni-desc-edit button {
+    background:var(--yellow); color:#000; border:none; border-radius:6px; padding:4px 10px;
+    font-size:0.72rem; font-weight:600; cursor:pointer; white-space:nowrap;
+  }
+  .anni-desc-edit button.cancel { background:var(--card); color:var(--text-dim); border:1px solid var(--border); }
   .anni-countdown {
     text-align:center; font-size:0.72rem; color:var(--text-dim); margin-top:8px; padding:6px;
     background:rgba(255,214,0,0.05); border-radius:6px;
@@ -484,7 +503,6 @@
   }
   .anni-add-bar input:focus, .anni-add-bar select:focus { border-color:var(--yellow); }
   .anni-add-bar input.anni-name-in { flex:1; min-width:120px; }
-  .anni-add-bar input.anni-desc-in { flex:1; min-width:100px; }
   .anni-add-bar button {
     background:var(--yellow); color:#000; border:none; border-radius:10px; padding:8px 16px;
     font-size:0.82rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:opacity 0.2s;
@@ -676,9 +694,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.15.0';
-const APP_VERSION_DATE = '2026-07-02 02:22';
-const APP_RELEASE_NOTES = '登录系统（admin/admin123）+待办清单+纪念日功能；登录后数据自动解密；待办清单和纪念日首页最多显示5条+查看详情页；当日盈亏图表去重修复多条曲线问题；市场情绪数据刷新同步更新sectorHeat字段。';;
+const APP_VERSION = 'v1.16.0';
+const APP_VERSION_DATE = '2026-07-02 10:30';
+const APP_RELEASE_NOTES = '查看全部按钮常驻显示+水平对齐；纪念日新增去除描述输入框，改为创建后点击✎编辑描述；面包屑导航改为显示全部栏目（首页/持仓总览/大盘情绪/待办清单/纪念日），支持点击任意栏目快捷跳转，后续新增卡片自动加入面包屑；修复三大指数（上证/深证/创业板）secid格式，确保实时数据正确更新。';;
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -809,6 +827,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.16.0', date:'2026-07-02 10:30', notes:'查看全部按钮常驻显示+水平对齐；纪念日新增去除描述输入框，改为创建后点击✎编辑描述；面包屑导航改为显示全部栏目（首页/持仓总览/大盘情绪/待办清单/纪念日），支持点击任意栏目快捷跳转，后续新增卡片自动加入面包屑；修复三大指数（上证/深证/创业板）secid格式，确保实时数据正确更新。' },
   { version:'v1.15.0', date:'2026-07-02 02:22', notes:'登录系统（admin/admin123）+待办清单+纪念日功能；登录后数据自动解密；待办清单和纪念日首页最多显示5条+查看详情页；当日盈亏图表去重修复多条曲线问题；市场情绪数据刷新同步更新sectorHeat字段。' },
   { version:'v1.14.0', date:'2026-07-02 15:37', notes:'古诗词扩充至120首减少重复；大盘详情移除重复指数卡片；市场情绪数据API自动获取（板块排行/涨停池/成交额/封单）；规则推算策略+隔夜计划+热点汇总；定时30分钟自动更新+15:30自动保存至localStorage；网络请求异常处理优化（r.ok检查）；版本区域显示随机古诗词+UI美化；底部布局重排（版本号在上，免责声明在下）。' },
   { version:'v1.13.0', date:'2026-07-02 00:15', notes:'天气API换Open-Meteo修复HTML注入；顶部时间加粗加亮+农历天气美化标签；顶部编辑改input支持中文输入；数据更新时间统一对齐去掉北京时间；刷新按钮调用API更新基金净值+备选标的最新价；每日盈亏卡片移至持仓总览下方跟随Tab切换；备选标的更新（中船特气/新宙邦/沪硅产业）；首页卡片底部flex对齐。' },
@@ -1758,6 +1777,21 @@ function goMarket() { currentPage = 'market'; render(); }
 function goTodoDetail() { currentPage = 'todoDetail'; render(); }
 function goAnniDetail() { currentPage = 'anniDetail'; render(); }
 
+// Breadcrumb navigation: all sections shown, current highlighted, others clickable
+const BREADCRUMB_SECTIONS = [
+  { key: 'home', label: '首页', action: 'goHome()' },
+  { key: 'holdings', label: '持仓总览', action: 'goHoldings()' },
+  { key: 'market', label: '大盘情绪', action: 'goMarket()' },
+  { key: 'todoDetail', label: '待办清单', action: 'goTodoDetail()' },
+  { key: 'anniDetail', label: '纪念日', action: 'goAnniDetail()' },
+];
+function buildBreadcrumbs(currentPage) {
+  return BREADCRUMB_SECTIONS.map(s => {
+    if (s.key === currentPage) return `<span class="crumb-current">${s.label}</span>`;
+    return `<a onclick="${s.action}">${s.label}</a>`;
+  }).join('<span class="crumb-sep">›</span>');
+}
+
 async function loadPortfolioApi() {
   try {
     const res = await fetch(`${DATA_API}?v=${APP_VERSION}&t=${Date.now()}`, { cache:'no-store' });
@@ -2067,19 +2101,16 @@ function saveAnniversaries(list) {
 
 function addAnniversary() {
   const nameInput = document.getElementById('anniNameInput');
-  const descInput = document.getElementById('anniDescInput');
   const monthSel = document.getElementById('anniMonthSelect');
   const daySel = document.getElementById('anniDaySelect');
   const name = nameInput.value.trim();
-  const desc = descInput.value.trim();
   const month = parseInt(monthSel.value);
   const day = parseInt(daySel.value);
   if (!name || !month || !day) return;
   const list = getAnniversaries();
-  list.push({ id: Date.now(), name: name, desc: desc, month: month, day: day });
+  list.push({ id: Date.now(), name: name, desc: '', month: month, day: day });
   saveAnniversaries(list);
   nameInput.value = '';
-  descInput.value = '';
   renderAnniversary();
 }
 
@@ -2087,6 +2118,37 @@ function deleteAnniversary(id) {
   let list = getAnniversaries();
   list = list.filter(a => a.id !== id);
   saveAnniversaries(list);
+  renderAnniversary();
+}
+
+function showAnniDescEditor(id) {
+  const list = getAnniversaries();
+  const item = list.find(a => a.id === id);
+  if (!item) return;
+  const info = document.getElementById('anniInfo_' + id);
+  if (!info) return;
+  info.innerHTML = `
+    <div class="anni-name">${escapeHtml(item.name)}</div>
+    <div class="anni-desc-edit">
+      <input type="text" id="anniDescEdit_${id}" value="${escapeHtml(item.desc || '')}" placeholder="添加描述...">
+      <button onclick="saveAnniDesc(${id})">保存</button>
+      <button class="cancel" onclick="renderAnniversary()">取消</button>
+    </div>
+  `;
+  const input = document.getElementById('anniDescEdit_' + id);
+  if (input) { input.focus(); input.select(); }
+}
+
+function saveAnniDesc(id) {
+  const input = document.getElementById('anniDescEdit_' + id);
+  if (!input) return;
+  const desc = input.value.trim();
+  const list = getAnniversaries();
+  const item = list.find(a => a.id === id);
+  if (item) {
+    item.desc = desc;
+    saveAnniversaries(list);
+  }
   renderAnniversary();
 }
 
@@ -2124,11 +2186,14 @@ function renderAnniversary() {
           <div class="anni-md">${monthNames[a.month] || a.month}月${a.day}日</div>
           <div class="anni-cd">还有${days}天</div>
         </div>
-        <div class="anni-info">
+        <div class="anni-info" id="anniInfo_${a.id}">
           <div class="anni-name">${escapeHtml(a.name)}</div>
-          ${a.desc ? `<div class="anni-desc">${escapeHtml(a.desc)}</div>` : ''}
+          ${a.desc ? `<div class="anni-desc" onclick="showAnniDescEditor(${a.id})">${escapeHtml(a.desc)}</div>` : `<div class="anni-desc-placeholder" onclick="showAnniDescEditor(${a.id})">+ 添加描述</div>`}
         </div>
-        <span class="anni-del" onclick="deleteAnniversary(${a.id})">×</span>
+        <div class="anni-actions">
+          <span class="anni-edit" onclick="showAnniDescEditor(${a.id})" title="编辑描述">✎</span>
+          <span class="anni-del" onclick="deleteAnniversary(${a.id})" title="删除">×</span>
+        </div>
       </div>
     `;
   }).join('');
@@ -2149,7 +2214,6 @@ function renderAnniAddBar() {
   for (let d = 1; d <= 31; d++) dayOpts += `<option value="${d}">${d}日</option>`;
   bar.innerHTML = `
     <input class="anni-name-in" id="anniNameInput" type="text" placeholder="纪念日名称">
-    <input class="anni-desc-in" id="anniDescInput" type="text" placeholder="描述（可选）">
     <select id="anniMonthSelect">${monthOpts}</select>
     <select id="anniDaySelect">${dayOpts}</select>
     <button onclick="addAnniversary()">添加</button>
@@ -2411,7 +2475,7 @@ async function refreshLivePnL() {
   if (!todayData) return;
   try {
     // 1. 刷新三大指数实时数据（使用东方财富批量接口）
-    const idxCodes = { 'sh000001': 'sh', 'sz399001': 'sz', 'sz399006': 'cy' };
+    const idxCodes = { '1.000001': 'sh', '0.399001': 'sz', '0.399006': 'cy' };
     try {
       const idxFields = 'f43,f57,f60,f170';
       for (const [secid, key] of Object.entries(idxCodes)) {
@@ -2904,7 +2968,8 @@ function renderHome() {
   const idx = DAYS.findIndex(day => day.date === currentDate);
   const prevDay = idx > 0 ? DAYS[idx - 1] : null;
 
-  let html = '<div class="home-grid">';
+  let html = `<div class="page-nav"><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>`;
+  html += '<div class="home-grid">';
 
   // Card 1: 持仓总览
   html += `<div class="home-card"><div class="home-card-body"><h2>持仓总览</h2>`;
@@ -2938,7 +3003,6 @@ function renderHome() {
   if (currentUser) {
     const todos = getTodos();
     const doneCount = todos.filter(t => t.done).length;
-    const hasMore = todos.length > 5;
     html += `<div class="home-card"><div class="home-card-body">
       <h2>待办清单 <span class="tag tag-blue" style="font-size:.72rem">${AUTH_ACCOUNTS[currentUser]?.name || currentUser}</span></h2>
       <div class="todo-add-bar">
@@ -2947,18 +3011,17 @@ function renderHome() {
       </div>
       <div id="todoListContainer" data-mode="home"></div>
       <div id="todoSummary" class="update-time">${todos.length > 0 ? `共 ${todos.length} 项 · 已完成 ${doneCount} 项` : ''}</div>
-      ${hasMore ? `<div class="card-arrow" onclick="goTodoDetail()">查看全部 (${todos.length}) →</div>` : ''}
+      <div class="card-arrow" onclick="goTodoDetail()">查看全部 (${todos.length}) →</div>
     </div></div>`;
 
     // Card 4: 纪念日（登录后显示）
     const anniList = getAnniversaries();
-    const hasMoreAnni = anniList.length > 5;
     html += `<div class="home-card"><div class="home-card-body">
       <h2>纪念日</h2>
       <div class="anni-add-bar" id="anniAddBar"></div>
       <div id="anniListContainer" data-mode="home"></div>
       <div id="anniCountdown" class="anni-countdown"></div>
-      ${hasMoreAnni ? `<div class="card-arrow" onclick="goAnniDetail()">查看全部 (${anniList.length}) →</div>` : ''}
+      <div class="card-arrow" onclick="goAnniDetail()">查看全部 (${anniList.length}) →</div>
     </div></div>`;
   }
 
@@ -2977,7 +3040,7 @@ function renderTodoDetail() {
   if (!currentUser) { goHome(); return; }
   const todos = getTodos();
   const doneCount = todos.filter(t => t.done).length;
-  const html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">待办清单</span></div>
+  const html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>
     <div class="section">
       <h2>待办清单 <span class="tag tag-blue" style="font-size:.72rem">${AUTH_ACCOUNTS[currentUser]?.name || currentUser}</span></h2>
       <div class="update-time">${todos.length > 0 ? `共 ${todos.length} 项 · 已完成 ${doneCount} 项` : ''}</div>
@@ -3042,7 +3105,7 @@ function deleteTodoDetail(id) {
 function renderAnniDetail() {
   if (!currentUser) { goHome(); return; }
   const list = getAnniversaries();
-  const html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">纪念日</span></div>
+  const html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>
     <div class="section">
       <h2>纪念日</h2>
       <div class="anni-add-bar" id="anniAddBar"></div>
@@ -3058,7 +3121,7 @@ function renderMarket() {
   const d = DAYS.find(d => d.date === currentDate);
   if (!d) return;
 
-  let html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">大盘情绪</span></div>`;
+  let html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>`;
 
   // === 当日数据快照 ===
   html += `<div class="section">
@@ -3224,7 +3287,7 @@ function renderHoldings() {
     intradayBadge = `${currentDate}｜历史数据`;
   }
 
-  let html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">持仓总览</span></div>`;
+  let html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>`;
 
   // === 持仓总览（全部/证券/基金 Tab 切换）===
   html += renderSummarySection(stats, d);
