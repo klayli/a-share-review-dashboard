@@ -700,9 +700,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.20.0';
-const APP_VERSION_DATE = '2026-07-03 00:35';
-const APP_RELEASE_NOTES = '热点题材原因智能生成：附录·当日热点题材汇总新增驱动因素+龙头表现自动描述（如"避险情绪升温+大宗商品涨价催化，赤峰黄金涨停领涨"），23个细分板块驱动模板库，连板数/涨停时间/封单额自动分析，样式升级为圆角卡片+涨跌幅+区分主线/活跃标签。';
+const APP_VERSION = 'v1.21.0';
+const APP_VERSION_DATE = '2026-07-03 00:52';
+const APP_RELEASE_NOTES = 'UI体验优化：备选标的限制显示3个；附录·当日热点题材汇总默认显示前6条，其余可点击展开/收起；个股涨跌比按A股习惯涨红(#ff1744)跌绿(#00c853)着色；明日一句话策略包含具体推荐股票（名称(代码) N板→板块格式）。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -833,6 +833,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.21.0', date:'2026-07-03 00:52', notes:'UI体验优化：备选标的限制显示3个；热点题材默认显示前6条+展开收起；个股涨跌比涨红跌绿着色；明日策略包含具体推荐股票（名称(代码) N板→板块）。' },
   { version:'v1.20.0', date:'2026-07-03 00:25', notes:'热点题材原因智能生成：附录·当日热点题材汇总新增驱动因素+龙头表现自动描述（如"避险情绪升温+大宗商品涨价催化，赤峰黄金涨停领涨"）；23个细分板块驱动模板库，连板数/涨停时间/封单额自动分析；样式升级为圆角卡片+涨跌幅+区分主线/活跃标签。' },
   { version:'v1.19.1', date:'2026-07-02 19:55', notes:'修复大盘情绪详情页数据不显示核心bug：涨停池API字段名hy→hybk修复（导致所有板块龙头归集为空）；板块龙头匹配增加前缀模糊匹配（hybk返回4字截断名如"汽车零部"）；ensureTodayData()增加已有数据回填逻辑；跌停池Pagesize修正为500。' },
   { version:'v1.19.0', date:'2026-07-02 19:46', notes:'补全大盘情绪详情页全部数据：个股涨跌比/赚钱效应/操作方向/备选标的/隔夜计划/热点汇总均通过API实时计算；板块热力图按大类(医药/银行/煤炭/有色等20类)合并，显示龙头股可点击弹窗；动态注册涨停股到STOCK_INFO。' },
@@ -935,6 +936,25 @@ function stockPrefix(code) {
   if (/^(60|68|8)/.test(code)) return 'sh';
   if (/^(00|30|15|12|16)/.test(code)) return 'sz';
   return 'sh';
+}
+
+function formatUd(ud) {
+  if (!ud) return '—';
+  const upColor = '#ff1744';
+  const downColor = '#00c853';
+  let up, down, flat;
+  if (typeof ud === 'string') {
+    const parts = ud.split(':').map(s => s.trim());
+    if (parts.length < 2) return ud;
+    up = parts[0]; down = parts[1]; flat = parts[2];
+  } else {
+    up = ud.up; down = ud.down; flat = ud.flat;
+  }
+  let html = `<span style="color:${upColor};font-weight:700">${up}</span> : <span style="color:${downColor};font-weight:700">${down}</span>`;
+  if (flat && (typeof flat === 'number' ? flat > 0 : flat !== '0')) {
+    html += ` : <span style="color:var(--text-dim);font-weight:600">${flat}</span>`;
+  }
+  return html;
 }
 
 function linkStocks(text) {
@@ -2558,7 +2578,7 @@ function ensureTodayData() {
     leader: '—',
     sectorStrength: '',
     sectorReason: '',
-    ud: '—',
+    ud: { up: 0, down: 0, flat: 0 },
     earnEffect: '—',
     direction: '等待开盘后自动生成',
     overnight: '盘前观察中。',
@@ -3112,7 +3132,7 @@ async function refreshMarketData() {
       }
     } catch(e) {}
     if (upCount > 0 || downCount > 0) {
-      todayD.ud = `${upCount} : ${downCount}` + (flatCount > 0 ? ` : ${flatCount}` : '');
+      todayD.ud = { up: upCount, down: downCount, flat: flatCount };
       const totalUdp = upCount + downCount;
       const upRatio = totalUdp > 0 ? (upCount / totalUdp) : 0;
       if (upRatio > 0.7) todayD.earnEffect = `很好（${(upRatio*100).toFixed(0)}%个股上涨，普涨行情）`;
@@ -3212,16 +3232,17 @@ async function refreshMarketData() {
       }
     }
 
-    // 4.7 生成备选标的（从涨停池龙头中自动选取连板/主线龙头）
+    // 4.7 生成备选标的（从涨停池龙头中自动选取连板/主线龙头，仅选3个）
     if (Object.keys(ztStocks).length > 0) {
       const lbcSorted = Object.values(ztStocks).sort((a, b) => b.lbc - a.lbc);
       const topThemes = (todayD.theme || '').split('+');
       const autoWatch = [];
       // 优先连板高标
       lbcSorted.slice(0, 3).forEach(s => {
-        if (s.lbc >= 2 && !autoWatch.find(w => w.code === s.code)) {
+        if (s.lbc >= 2 && !autoWatch.find(w => w.code === s.code) && autoWatch.length < 3) {
           autoWatch.push({
             code: s.code,
+            lbc: s.lbc,
             sector: s.hy || topThemes[0] || '主线',
             time: s.time || '—',
             seal: s.seal || '—',
@@ -3231,21 +3252,24 @@ async function refreshMarketData() {
           });
         }
       });
-      // 主线龙头首板
-      const topLeaders = Object.keys(sectorLeaders).slice(0, 3).flatMap(hy => sectorLeaders[hy].slice(0, 1));
-      topLeaders.forEach(s => {
-        if (s.lbc === 1 && !autoWatch.find(w => w.code === s.code) && autoWatch.length < 5) {
-          autoWatch.push({
-            code: s.code,
-            sector: s.hy || '主线',
-            time: s.time || '—',
-            seal: s.seal || '—',
-            pure: true,
-            pureNote: '主线首板龙头',
-            strategy: '关注次日溢价及连板可能性，高开太多不追'
-          });
-        }
-      });
+      // 主线龙头首板补充到3个
+      if (autoWatch.length < 3) {
+        const topLeaders = Object.keys(sectorLeaders).slice(0, 5).flatMap(hy => sectorLeaders[hy].slice(0, 1));
+        topLeaders.forEach(s => {
+          if (s.lbc === 1 && !autoWatch.find(w => w.code === s.code) && autoWatch.length < 3) {
+            autoWatch.push({
+              code: s.code,
+              lbc: s.lbc,
+              sector: s.hy || '主线',
+              time: s.time || '—',
+              seal: s.seal || '—',
+              pure: true,
+              pureNote: '主线首板龙头',
+              strategy: '关注次日溢价及连板可能性，高开太多不追'
+            });
+          }
+        });
+      }
       if (autoWatch.length > 0 && (!todayD.watchlist || todayD.watchlist.length === 0)) {
         todayD.watchlist = autoWatch;
       }
@@ -3449,12 +3473,32 @@ function generateStrategy(d) {
   const dt = typeof d.limitDown === 'number' ? d.limitDown : parseInt(d.limitDown) || 0;
   const sentiment = d.sentiment || '', theme = d.theme || '';
   const pct = d.idx?.sh?.[1] || 0;
-  if (zt > 100 && pct > 0) return `市场情绪强势（${zt}只涨停），主线${theme}，可持股待涨，关注补涨机会`;
-  if (zt > 80) return `涨停${zt}只情绪尚可，聚焦${theme}主线，轻仓参与龙头回调`;
-  if (zt > 50) return `涨停${zt}只情绪分化，聚焦${theme}最强主线龙头，控制仓位参与`;
-  if (zt > 20 && pct > -3) return `涨停仅${zt}只情绪偏弱，控制仓位，观望为主，不追高`;
-  if (dt > 100) return `市场恐慌（跌停${dt}只），空仓等待，严守纪律不抄底`;
-  return `市场弱势（涨停${zt}只），谨慎操作，空仓观望`;
+  const watchStocks = (d.watchlist || []).slice(0, 3);
+  const watchRefs = watchStocks.map(w => {
+    const info = STOCK_INFO[w.code];
+    const name = info ? info.name : w.code;
+    let lbc = w.lbc;
+    if (!lbc) {
+      if (w.pureNote === '连板高标') lbc = 3;
+      else if (w.pureNote === '二板晋级') lbc = 2;
+      else lbc = 1;
+    }
+    return `${name}(${w.code}) ${lbc}板→${w.sector}`;
+  }).join('、');
+  let base;
+  if (zt > 100 && pct > 0) base = `市场情绪强势（${zt}只涨停），主线${theme}，可持股待涨，关注补涨机会`;
+  else if (zt > 80 && pct > -1) base = `涨停${zt}只情绪尚可，聚焦${theme}主线，轻仓参与龙头回调`;
+  else if (zt > 80) base = `涨停${zt}只结构性分化，指数大跌但局部热点活跃，聚焦${theme}最强主线龙头低吸`;
+  else if (zt > 50) base = `涨停${zt}只情绪分化，聚焦${theme}最强主线龙头，控制仓位参与`;
+  else if (zt > 20 && pct > -3) base = `涨停仅${zt}只情绪偏弱，控制仓位，观望为主，不追高`;
+  else if (dt > 100) base = `市场恐慌（跌停${dt}只），空仓等待，严守纪律不抄底`;
+  else base = `市场弱势（涨停${zt}只），谨慎操作，空仓观望`;
+  if (watchRefs) {
+    base += `；重点关注：${watchRefs}；控制仓位5成以内，严格9:30-10:00买入窗口。`;
+  } else {
+    base += '。';
+  }
+  return base;
 }
 
 function generateOvernightPlan(d, ztStocks) {
@@ -3884,6 +3928,33 @@ function renderAnniDetail() {
   renderAnniversary();
 }
 
+function renderThemeCard(t, hidden) {
+  const pctStr = `${t.pct >= 0 ? '+' : ''}${t.pct.toFixed(2)}%`;
+  const pctColor = t.pct >= 0 ? 'var(--green)' : 'var(--red)';
+  const badgeClass = t.badge === '主线' ? 'badge-hot' : t.badge === '活跃' ? 'badge-active' : '';
+  const cls = 'theme ' + (hidden ? 'theme-extra ' : '') + (t.dim ? 'dim' : '');
+  return `<div class="${cls.trim()}"${hidden ? ' style="display:none"' : ''}>
+    <div class="tn"><span class="rank">${t.rank}</span>${t.name}<span class="pct" style="color:${pctColor}">${pctStr}</span>${t.badge ? '<span class="badge ' + badgeClass + '">' + t.badge + '</span>' : ''}</div>
+    <div class="td">${t.desc}</div>
+    <div class="ts">${linkStocks(t.stocks)}</div>
+  </div>`;
+}
+
+function toggleThemesMore(btn) {
+  const section = btn.closest('.section');
+  const extras = section.querySelectorAll('.theme-extra');
+  const expanded = btn.dataset.expanded === '1';
+  if (expanded) {
+    extras.forEach(el => el.style.display = 'none');
+    btn.textContent = `展开其余${extras.length}个题材 ▼`;
+    btn.dataset.expanded = '0';
+  } else {
+    extras.forEach(el => el.style.display = '');
+    btn.textContent = '收起 ▲';
+    btn.dataset.expanded = '1';
+  }
+}
+
 function renderMarket() {
   const d = DAYS.find(d => d.date === currentDate);
   if (!d) return;
@@ -3914,7 +3985,7 @@ function renderMarket() {
     <div class="info-item"><div class="label">跌停家数</div><div class="value"><span style="color:#00c853">${typeof d.limitDown === 'number' && d.limitDown > 0 ? d.limitDown + '只' : '—'}</span></div></div>
     <div class="info-item"><div class="label">封板率</div><div class="value">${d.sealRate}</div></div>
     <div class="info-item"><div class="label">高标情绪</div><div class="value">${d.sentiment && d.sentiment !== '—' ? `<span class="tag tag-${d.sentiment.includes('回暖') || d.sentiment === '强势' ? 'green' : d.sentiment === '差' || d.sentiment === '偏弱' ? 'red' : 'yellow'}">${d.sentiment}</span>` : '—'}</div></div>
-    <div class="info-item"><div class="label">个股涨跌比</div><div class="value">${d.ud}</div></div>
+    <div class="info-item"><div class="label">个股涨跌比</div><div class="value">${formatUd(d.ud)}</div></div>
     <div class="info-item"><div class="label">赚钱效应</div><div class="value">${d.earnEffect}</div></div>
   </div>`;
 
@@ -3961,12 +4032,13 @@ function renderMarket() {
     }).join('')}
   </div></div>`;
 
-  // === 备选标的 ===
+  // === 备选标的（仅显示3个）===
   html += `<div class="section"><h2>备选标的</h2>`;
   if (d.watchlist && d.watchlist.length > 0) {
+    const watchShow = d.watchlist.slice(0, 3);
     html += `<div class="tbl-wrap watch-table"><table>
       <thead><tr><th>代码</th><th>名称</th><th>最新价</th><th>板块</th><th>涨停时间</th><th>封单</th><th>概念正宗</th><th>明日策略</th></tr></thead>
-      <tbody>${d.watchlist.map(w => `<tr>
+      <tbody>${watchShow.map(w => `<tr>
         <td>${w.code}</td>
         <td style="font-weight:600">${stockTag(w.code, {price:false})}</td>
         <td>${STOCK_INFO[w.code] ? '¥' + STOCK_INFO[w.code].price : '—'}</td>
@@ -3989,7 +4061,7 @@ function renderMarket() {
     html += `<div class="watch-matrix"><table>
       <tbody>${watchRows.map(row => `<tr>
         <td>${row.label}</td>
-        ${d.watchlist.map(w => `<td class="wm-value">${row.value(w)}</td>`).join('')}
+        ${watchShow.map(w => `<td class="wm-value">${row.value(w)}</td>`).join('')}
       </tr>`).join('')}</tbody>
     </table></div>`;
   } else {
@@ -4022,16 +4094,17 @@ function renderMarket() {
   // === 附录 ===
   html += `<div class="section"><h2>附录 · 当日热点题材汇总</h2><div class="themes">`;
   if (d.hotThemes && d.hotThemes.length > 0) {
-    d.hotThemes.forEach(t => {
-      const pctStr = `${t.pct >= 0 ? '+' : ''}${t.pct.toFixed(2)}%`;
-      const pctColor = t.pct >= 0 ? 'var(--green)' : 'var(--red)';
-      const badgeClass = t.badge === '主线' ? 'badge-hot' : t.badge === '活跃' ? 'badge-active' : '';
-      html += `<div class="theme ${t.dim ? 'dim' : ''}">
-        <div class="tn"><span class="rank">${t.rank}</span>${t.name}<span class="pct" style="color:${pctColor}">${pctStr}</span>${t.badge ? '<span class="badge ' + badgeClass + '">' + t.badge + '</span>' : ''}</div>
-        <div class="td">${t.desc}</div>
-        <div class="ts">${linkStocks(t.stocks)}</div>
-      </div>`;
+    const themesShow = d.hotThemes.slice(0, 6);
+    const themesMore = d.hotThemes.slice(6);
+    themesShow.forEach(t => {
+      html += renderThemeCard(t);
     });
+    if (themesMore.length > 0) {
+      themesMore.forEach(t => {
+        html += renderThemeCard(t, true);
+      });
+      html += `<div style="grid-column:1/-1;text-align:center;margin-top:4px"><button class="btn-more" onclick="toggleThemesMore(this)" style="background:var(--card-hover);color:var(--blue);border:1px solid var(--border);border-radius:8px;padding:6px 24px;cursor:pointer;font-size:0.85rem;transition:all 0.2s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">展开其余${themesMore.length}个题材 ▼</button></div>`;
+    }
   } else {
     html += `<div class="info-item" style="color:var(--text-dim)">盘前数据，等待9:30开盘后自动更新热点题材。</div>`;
   }
