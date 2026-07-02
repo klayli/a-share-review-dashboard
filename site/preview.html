@@ -694,9 +694,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.18.0';
-const APP_VERSION_DATE = '2026-07-02 19:21';
-const APP_RELEASE_NOTES = '修复大盘情绪/持仓总览卡片点击无响应（onclick从card-arrow移至整个home-card）；修复涨停/跌停数不显示（ut参数被截断导致API返回null，跌停endpoint错误getTopicZTPool→getTopicDTPool）。';
+const APP_VERSION = 'v1.18.1';
+const APP_VERSION_DATE = '2026-07-02 19:28';
+const APP_RELEASE_NOTES = '修复大盘情绪详情页无法打开的问题：renderMarket()中d.drivers.map()因ensureTodayData()缺少drivers/leader/sectorBadge/sectorStrength/sectorReason/overnight等字段导致TypeError崩溃；补全新交易日初始化默认字段，renderMarket增加null-safety防御，refreshMarketData自动填充板块驱动/龙头/强度等数据。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -827,6 +827,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.18.1', date:'2026-07-02 19:28', notes:'修复大盘情绪详情页无法打开：renderMarket()中d.drivers.map()因ensureTodayData()缺字段崩溃；补全新交易日默认字段(drivers/leader/sectorBadge等)，renderMarket加null-safety防御，refreshMarketData自动填充板块驱动/龙头/强度。' },
   { version:'v1.18.0', date:'2026-07-02 19:21', notes:'修复大盘情绪/持仓总览卡片点击无响应（onclick从card-arrow移至整个home-card）；修复涨停/跌停数不显示（ut参数被截断导致API返回null，跌停endpoint错误getTopicZTPool→getTopicDTPool）。' },
   { version:'v1.17.0', date:'2026-07-02 18:59', notes:'三大指数实时数据刷新修复：优先新浪JSONP(无CORS)、东财备用，基于昨收价计算涨跌幅；ensureTodayData新交易日初始化为盘前状态；交易时段统一用北京时间(UTC+8)判断，解决时区偏差；盘前涨停数为0不覆盖，收盘后仍可获取当日统计；refreshMarketData自动渲染；页面加载即刷新市场数据。' },
   { version:'v1.16.0', date:'2026-07-02 10:30', notes:'查看全部按钮常驻显示+水平对齐；纪念日新增去除描述输入框，改为创建后点击✎编辑描述；面包屑导航改为显示全部栏目（首页/持仓总览/大盘情绪/待办清单/纪念日），支持点击任意栏目快捷跳转，后续新增卡片自动加入面包屑；修复三大指数（上证/深证/创业板）secid格式，确保实时数据正确更新。' },
@@ -2511,6 +2512,12 @@ function ensureTodayData() {
     heatMap: [],
     watchlist: [],
     hotThemes: [],
+    drivers: [],
+    sectorBadge: '',
+    leader: '—',
+    sectorStrength: '',
+    sectorReason: '',
+    overnight: '盘前观察中。',
     strategy: '盘前数据，等待9:30开盘后自动刷新。',
     overnightPlan: '盘前观察中。',
     appendix: '盘前'
@@ -2914,6 +2921,16 @@ async function refreshMarketData() {
       });
       todayD.theme = sectors.slice(0, 3).map(s => s.name).join('+');
       todayD.sectorName = sectors.slice(0, 2).map(s => s.name).join('·');
+      const topSectorName = sectors[0]?.name || '';
+      const topLeaders = findLeadersForSector(topSectorName);
+      todayD.sectorBadge = todayD.sectorBadge || (sectors[0]?.pct >= 3 ? '领涨主线' : sectors[0]?.pct > 0 ? '活跃板块' : '');
+      todayD.drivers = todayD.drivers?.length ? todayD.drivers : [
+        topSectorName + (sectors[0]?.pct >= 0 ? '板块领涨' : '板块领跌'),
+        '实时数据自动更新中'
+      ];
+      todayD.leader = topLeaders || '—';
+      todayD.sectorStrength = todayD.sectorStrength || (sectors[0]?.pct >= 5 ? '强' : sectors[0]?.pct >= 2 ? '一般' : '弱');
+      todayD.sectorReason = todayD.sectorReason || `板块涨幅${Number(sectors[0]?.pct || 0).toFixed(2)}%，${topLeaders ? '有涨停龙头带动' : '暂无明显龙头'}`;
     }
 
     // 涨停/跌停/封板率/情绪：交易日API返回有效数据时即更新（收盘后API仍返回当日统计）
@@ -3438,9 +3455,10 @@ function renderMarket() {
 
   html += `<div class="info-row market-compact">
     <div class="info-item"><div class="label">成交额</div><div class="value">${d.volume}</div></div>
-    <div class="info-item"><div class="label">涨停家数</div><div class="value"><span class="hl-yellow">${d.limitUp ? d.limitUp + '只' : '—'}</span></div></div>
+    <div class="info-item"><div class="label">涨停家数</div><div class="value"><span class="hl-yellow" style="color:#ff5a5f">${typeof d.limitUp === 'number' && d.limitUp > 0 ? d.limitUp + '只' : '—'}</span></div></div>
+    <div class="info-item"><div class="label">跌停家数</div><div class="value"><span style="color:#00c853">${typeof d.limitDown === 'number' && d.limitDown > 0 ? d.limitDown + '只' : '—'}</span></div></div>
     <div class="info-item"><div class="label">封板率</div><div class="value">${d.sealRate}</div></div>
-    <div class="info-item"><div class="label">高标情绪</div><div class="value"><span class="tag tag-${d.sentiment.includes('回暖') ? 'green' : d.sentiment === '差' ? 'red' : 'yellow'}">${d.sentiment}</span></div></div>
+    <div class="info-item"><div class="label">高标情绪</div><div class="value">${d.sentiment && d.sentiment !== '—' ? `<span class="tag tag-${d.sentiment.includes('回暖') || d.sentiment === '强势' ? 'green' : d.sentiment === '差' || d.sentiment === '偏弱' ? 'red' : 'yellow'}">${d.sentiment}</span>` : '—'}</div></div>
     <div class="info-item"><div class="label">个股涨跌比</div><div class="value">${d.ud}</div></div>
     <div class="info-item"><div class="label">赚钱效应</div><div class="value">${d.earnEffect}</div></div>
   </div>`;
@@ -3450,17 +3468,19 @@ function renderMarket() {
   html += `</div>`;
 
   // === 今日主线板块 ===
+  if (d.drivers && d.drivers.length > 0) {
   html += `<div class="section"><h2>今日主线板块</h2>
     <div class="sector">
-      <div class="sname">${d.sectorName} <span class="badge badge-hot">${d.sectorBadge}</span></div>
+      <div class="sname">${d.sectorName || '—'}${d.sectorBadge ? ' <span class="badge badge-hot">' + d.sectorBadge + '</span>' : ''}</div>
       <h3 style="color:var(--yellow);margin-bottom:4px">驱动消息</h3>
       <ul>${d.drivers.map(dr => `<li>${dr}</li>`).join('')}</ul>
       <div class="leader">
-        <strong>板块龙头：</strong>${linkStocks(d.leader)}<br>
-        <strong>板块强度：</strong><span class="hl-${d.sectorStrength === '强' ? 'green' : d.sectorStrength === '弱' ? 'red' : 'yellow'}">${d.sectorStrength}</span> — ${linkStocks(d.sectorReason)}
+        <strong>板块龙头：</strong>${linkStocks(d.leader || '—')}<br>
+        <strong>板块强度：</strong>${d.sectorStrength ? `<span class="hl-${d.sectorStrength === '强' || d.sectorStrength === '极强' ? 'green' : d.sectorStrength === '弱' ? 'red' : 'yellow'}">${d.sectorStrength}</span>` : '—'}${d.sectorReason ? ' — ' + linkStocks(d.sectorReason) : ''}
       </div>
     </div>
   </div>`;
+  }
 
   // === 板块热力图 ===
   const heatItems = ((d.sectorHeat && d.sectorHeat.length) ? d.sectorHeat : [{ name:'暂无热力数据', pct:0, size:20, desc:'当前日期未记录行业涨跌幅', leaders:'—' }])
@@ -3523,7 +3543,7 @@ function renderMarket() {
   html += `</div>`;
 
   // === 隔夜单计划 ===
-  html += `<div class="section"><h2>隔夜单计划</h2><div class="info-item">${d.overnight}</div></div>`;
+  html += `<div class="section"><h2>隔夜单计划</h2><div class="info-item">${d.overnight || d.overnightPlan || '—'}</div></div>`;
 
   // === 明日操作纪律 ===
   html += `<div class="section"><h2>明日操作纪律</h2>
@@ -3546,13 +3566,17 @@ function renderMarket() {
 
   // === 附录 ===
   html += `<div class="section"><h2>附录 · 当日热点题材汇总</h2><div class="themes">`;
-  d.hotThemes.forEach(t => {
-    html += `<div class="theme ${t.dim ? 'dim' : ''}">
-      <div class="tn"><span class="rank">${t.rank}</span>${t.name} ${t.badge ? '<span class="badge badge-hot">' + t.badge + '</span>' : ''}</div>
-      <div class="td">${t.desc}</div>
-      <div class="ts">${linkStocks(t.stocks)}</div>
-    </div>`;
-  });
+  if (d.hotThemes && d.hotThemes.length > 0) {
+    d.hotThemes.forEach(t => {
+      html += `<div class="theme ${t.dim ? 'dim' : ''}">
+        <div class="tn"><span class="rank">${t.rank}</span>${t.name} ${t.badge ? '<span class="badge badge-hot">' + t.badge + '</span>' : ''}</div>
+        <div class="td">${t.desc}</div>
+        <div class="ts">${linkStocks(t.stocks)}</div>
+      </div>`;
+    });
+  } else {
+    html += `<div class="info-item" style="color:var(--text-dim)">盘前数据，等待9:30开盘后自动更新热点题材。</div>`;
+  }
   html += `</div></div>`;
 
   document.getElementById('content').innerHTML = html;

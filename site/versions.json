@@ -1,7 +1,14 @@
 {
-  "current": "v1.18.0",
+  "current": "v1.18.1",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.18.1",
+      "date": "2026-07-02 19:28（北京时间）",
+      "summary": "修复大盘情绪详情页无法打开：renderMarket()中d.drivers.map()因ensureTodayData()缺少drivers/leader/sectorBadge/sectorStrength/sectorReason/overnight字段导致TypeError崩溃；补全新交易日初始化默认字段，renderMarket增加null-safety防御，refreshMarketData自动填充板块驱动/龙头/强度数据。",
+      "cache": "a-share-review-v22-20260702",
+      "deploy_url": "待预览确认后部署"
+    },
     {
       "version": "v1.18.0",
       "date": "2026-07-02 19:21（北京时间）",
