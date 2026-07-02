@@ -65,7 +65,7 @@ async function fetchZtPoolData() {
   const sectorLeaders = {};
   let ztCount = 0, dtCount = 0, sealCount = 0, totalZt = 0;
   try {
-    const url = `https://push2ex.eastmoney.com/getTopicZTPool?ut=7eea3edcaed734bea9c&dpt=wz.ztzt&Pageindex=0&Pagesize=500&sort=fbt:asc&date=${dateStr}&_=${Date.now()}`;
+    const url = `https://push2ex.eastmoney.com/getTopicZTPool?ut=7eea3edcaed734bea9cbfc24409ed989&dpt=wz.ztzt&Pageindex=0&Pagesize=500&sort=fbt:asc&date=${dateStr}&_=${Date.now()}`;
     const resp = await fetchWithTimeout(url, { headers: EASTMONEY_HEADERS }, 10000);
     if (resp.ok) {
       const data = await resp.json();
@@ -92,7 +92,7 @@ async function fetchZtPoolData() {
     console.warn('Failed to fetch ZT pool:', e);
   }
   try {
-    const url = `https://push2ex.eastmoney.com/getTopicZTPool?ut=7eea3edcaed734bea9c&dpt=wz.dtzt&Pageindex=0&Pagesize=500&sort=fbt:asc&date=${dateStr}&_=${Date.now()}`;
+    const url = `https://push2ex.eastmoney.com/getTopicDTPool?ut=7eea3edcaed734bea9cbfc24409ed989&dpt=wz.ztzt&Pageindex=0&Pagesize=500&sort=fund:asc&date=${dateStr}&_=${Date.now()}`;
     const resp = await fetchWithTimeout(url, { headers: EASTMONEY_HEADERS }, 8000);
     if (resp.ok) {
       const data = await resp.json();
@@ -159,6 +159,37 @@ async function collectDailyData() {
   const sectors = await fetchSectorData();
   const { ztStocks, sectorLeaders, ztCount, dtCount, sealCount, totalZt } = await fetchZtPoolData();
   const volume = await fetchTotalVolume();
+
+  // 获取全市场涨跌家数
+  let upCount = 0, downCount = 0, flatCount = 0;
+  try {
+    for (const secid of ['1.000001', '0.399001']) {
+      try {
+        const url = `https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f104,f105,f106&fltt=2&invt=2&_=${Date.now()}`;
+        const resp = await fetchWithTimeout(url, { headers: EASTMONEY_HEADERS }, 6000);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.data) {
+            if (typeof data.data.f104 === 'number') upCount += data.data.f104;
+            if (typeof data.data.f105 === 'number') downCount += data.data.f105;
+            if (typeof data.data.f106 === 'number') flatCount += data.data.f106;
+          }
+        }
+      } catch (e) {}
+      await new Promise(r => setTimeout(r, 200));
+    }
+  } catch (e) { console.warn('Failed to fetch up/down counts:', e); }
+  const udStr = (upCount > 0 || downCount > 0) ? `${upCount} : ${downCount}${flatCount > 0 ? ' : ' + flatCount : ''}` : '';
+  let earnEffect = '';
+  if (upCount > 0 || downCount > 0) {
+    const total = upCount + downCount;
+    const ratio = total > 0 ? upCount / total : 0;
+    if (ratio > 0.6) earnEffect = '很好';
+    else if (ratio > 0.45) earnEffect = '一般';
+    else if (ratio > 0.3) earnEffect = '较差';
+    else earnEffect = '很差';
+  }
+
   const sealRate = totalZt > 0 ? (sealCount / totalZt * 100).toFixed(0) + '%' : '—';
   const sentiment = generateSentiment(ztCount);
   const theme = sectors.slice(0, 3).map(s => s.name).join('+');
@@ -176,8 +207,45 @@ async function collectDailyData() {
   });
   const strategy = generateStrategy(ztCount, theme, sentiment);
   const overnightPlan = generateOvernightPlan(theme, ztStocks);
+  // 生成drivers
+  const drivers = [];
+  if (theme) drivers.push(`${theme}板块异动领涨`);
+  if (ztCount > 0) drivers.push(`全市场共${ztCount}只涨停，情绪${sentiment}`);
+  // 生成direction
+  let direction = '';
+  if (ztCount > 0) {
+    if (ztCount > 100) direction = '情绪回暖，可适当加仓主线龙头，持股待涨为主';
+    else if (ztCount > 50) direction = '情绪尚可，聚焦主线龙头低吸，控制仓位5成以内';
+    else if (ztCount > 20) direction = '情绪偏弱，以观望为主，轻仓试错龙头，设好止损';
+    else direction = '情绪极差，空仓等待，严守纪律不抄底';
+  }
+  // 生成hotThemes
+  const hotThemes = sectors.slice(0, 12).map((s, idx) => {
+    const matchedHy = Object.keys(sectorLeaders).find(hy => hy.includes(s.name) || s.name.includes(hy));
+    const leaders = matchedHy && sectorLeaders[matchedHy] ? sectorLeaders[matchedHy].slice(0, 3).map(l => `${l.name}(${l.code})`).join('、') : '';
+    return {
+      rank: idx + 1,
+      name: s.name,
+      desc: `${s.pct >= 0 ? '+' : ''}${s.pct.toFixed(2)}%${leaders ? '，龙头带动' : ''}`,
+      stocks: leaders || '—',
+      badge: idx < 3 ? '主线' : idx < 8 ? '活跃' : '',
+      dim: idx >= 10
+    };
+  });
+  // 生成备选标的（从连板高标中选）
+  const watchlist = [];
+  const lbcSorted = Object.values(ztStocks).filter(s => s.lbc >= 2).sort((a, b) => b.lbc - a.lbc).slice(0, 5);
+  lbcSorted.forEach(s => {
+    watchlist.push({
+      code: s.code, sector: s.hy || '主线',
+      time: s.time || '—', seal: s.seal || '—',
+      pure: s.lbc >= 3, pureNote: s.lbc >= 3 ? '连板高标' : '二板晋级',
+      strategy: s.lbc >= 3 ? '观察高标断板反包机会，不追高' : '若竞价超预期可关注换手板机会'
+    });
+  });
   const lines = [];
   if (volume) lines.push(`成交额：${volume}`);
+  if (udStr) lines.push(`个股涨跌比：${udStr}`);
   lines.push(`涨停家数：${ztCount || '—'}只`);
   lines.push(`跌停家数：${dtCount || '—'}只`);
   lines.push(`封板率：${sealRate}`);
@@ -200,6 +268,17 @@ async function collectDailyData() {
     sentiment,
     theme,
     sectorName,
+    drivers,
+    leader: sectorHeat.length > 0 ? sectorHeat[0].leaders : '',
+    sectorBadge: sectors[0] && sectors[0].pct >= 3 ? '领涨主线' : sectors[0] && sectors[0].pct > 0 ? '活跃板块' : '',
+    sectorStrength: sentiment === '强势' ? '强' : sentiment === '偏强' ? '一般' : '弱',
+    sectorReason: sectors[0] ? `板块涨幅${sectors[0].pct.toFixed(2)}%` : '',
+    ud: udStr,
+    earnEffect,
+    direction,
+    watchlist,
+    hotThemes,
+    overnight: overnightPlan,
     strategy,
     overnightPlan,
     appendix,

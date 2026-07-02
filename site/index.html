@@ -694,9 +694,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.18.1';
-const APP_VERSION_DATE = '2026-07-02 19:28';
-const APP_RELEASE_NOTES = '修复大盘情绪详情页无法打开的问题：renderMarket()中d.drivers.map()因ensureTodayData()缺少drivers/leader/sectorBadge/sectorStrength/sectorReason/overnight等字段导致TypeError崩溃；补全新交易日初始化默认字段，renderMarket增加null-safety防御，refreshMarketData自动填充板块驱动/龙头/强度等数据。';
+const APP_VERSION = 'v1.19.0';
+const APP_VERSION_DATE = '2026-07-02 19:46';
+const APP_RELEASE_NOTES = '补全大盘情绪详情页缺失数据：个股涨跌比(从f104/f105/f106接口获取)、赚钱效应(按上涨比例分级)、明日操作方向(基于涨停数+大盘涨跌生成)、备选标的(从涨停池连板高标自动选取)、隔夜单计划(从连板梯队生成)、热点题材汇总(从板块+龙头自动生成)；板块热力图按大类合并(医药/银行/煤炭/有色/电力/电子半导体/计算机等20个大类)，大类显示「大类」标识+细分板块数量；板块龙头股动态注册到STOCK_INFO，支持点击弹窗查看K线详情；同步修复Worker的ut参数截断和跌停endpoint错误，Worker数据新增drivers/leader/ud/earnEffect/direction/watchlist/hotThemes字段。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -827,6 +827,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.19.0', date:'2026-07-02 19:46', notes:'补全大盘情绪详情页全部数据：个股涨跌比/赚钱效应/操作方向/备选标的/隔夜计划/热点汇总均通过API实时计算；板块热力图按大类(医药/银行/煤炭/有色等20类)合并，显示龙头股可点击弹窗；动态注册涨停股到STOCK_INFO。' },
   { version:'v1.18.1', date:'2026-07-02 19:28', notes:'修复大盘情绪详情页无法打开：renderMarket()中d.drivers.map()因ensureTodayData()缺字段崩溃；补全新交易日默认字段(drivers/leader/sectorBadge等)，renderMarket加null-safety防御，refreshMarketData自动填充板块驱动/龙头/强度。' },
   { version:'v1.18.0', date:'2026-07-02 19:21', notes:'修复大盘情绪/持仓总览卡片点击无响应（onclick从card-arrow移至整个home-card）；修复涨停/跌停数不显示（ut参数被截断导致API返回null，跌停endpoint错误getTopicZTPool→getTopicDTPool）。' },
   { version:'v1.17.0', date:'2026-07-02 18:59', notes:'三大指数实时数据刷新修复：优先新浪JSONP(无CORS)、东财备用，基于昨收价计算涨跌幅；ensureTodayData新交易日初始化为盘前状态；交易时段统一用北京时间(UTC+8)判断，解决时区偏差；盘前涨停数为0不覆盖，收盘后仍可获取当日统计；refreshMarketData自动渲染；页面加载即刷新市场数据。' },
@@ -1875,8 +1876,55 @@ function mergeWorkerDailyData(workerData) {
   if (workerData.sentiment) todayD.sentiment = workerData.sentiment;
   if (workerData.theme) todayD.theme = workerData.theme;
   if (workerData.sectorName) todayD.sectorName = workerData.sectorName;
+  if (workerData.drivers) todayD.drivers = workerData.drivers;
+  if (workerData.leader) todayD.leader = workerData.leader;
+  if (workerData.sectorBadge) todayD.sectorBadge = workerData.sectorBadge;
+  if (workerData.sectorStrength) todayD.sectorStrength = workerData.sectorStrength;
+  if (workerData.sectorReason) todayD.sectorReason = workerData.sectorReason;
+  if (workerData.ud) todayD.ud = workerData.ud;
+  if (workerData.earnEffect) todayD.earnEffect = workerData.earnEffect;
+  if (workerData.direction) todayD.direction = workerData.direction;
+  if (workerData.watchlist && workerData.watchlist.length > 0 && (!todayD.watchlist || todayD.watchlist.length === 0)) {
+    workerData.watchlist.forEach(w => {
+      if (w.code && !STOCK_INFO[w.code]) {
+        const prefix = w.code.startsWith('6') || w.code.startsWith('9') ? '1' : '0';
+        STOCK_INFO[w.code] = { name: w.code, prefix, price: '—' };
+      }
+    });
+    todayD.watchlist = workerData.watchlist;
+  }
+  // 动态注册hotThemes中的股票到STOCK_INFO
+  if (workerData.hotThemes && workerData.hotThemes.length > 0) {
+    workerData.hotThemes.forEach(t => {
+      if (t.stocks) {
+        const codes = t.stocks.match(/\d{6}/g) || [];
+        codes.forEach(code => {
+          if (!STOCK_INFO[code]) {
+            const nameMatch = t.stocks.match(new RegExp(`([^、·\\s]+)\\(${code}\\)`));
+            const name = nameMatch ? nameMatch[1] : code;
+            const prefix = code.startsWith('6') || code.startsWith('9') ? '1' : '0';
+            STOCK_INFO[code] = { name, prefix, price: '—' };
+          }
+        });
+      }
+    });
+  }
+  if (workerData.hotThemes && workerData.hotThemes.length > 0 && (!todayD.hotThemes || todayD.hotThemes.length === 0)) todayD.hotThemes = workerData.hotThemes;
+  // 注册leader中的股票
+  if (workerData.leader) {
+    const codes = workerData.leader.match(/\d{6}/g) || [];
+    codes.forEach(code => {
+      if (!STOCK_INFO[code]) {
+        const nameMatch = workerData.leader.match(new RegExp(`([^·\\s]+)\\(${code}\\)`));
+        const name = nameMatch ? nameMatch[1] : code;
+        const prefix = code.startsWith('6') || code.startsWith('9') ? '1' : '0';
+        STOCK_INFO[code] = { name, prefix, price: '—' };
+      }
+    });
+  }
   if (workerData.strategy) todayD.strategy = workerData.strategy;
   if (workerData.overnightPlan) todayD.overnightPlan = workerData.overnightPlan;
+  if (workerData.overnight) todayD.overnight = workerData.overnight;
   if (workerData.appendix) todayD.appendix = workerData.appendix;
   if (workerData.updatedAt) {
     DATA_UPDATED_AT = `Worker快照 ${workerData.updatedAt.slice(5, 16)}`;
@@ -2520,7 +2568,10 @@ function ensureTodayData() {
     overnight: '盘前观察中。',
     strategy: '盘前数据，等待9:30开盘后自动刷新。',
     overnightPlan: '盘前观察中。',
-    appendix: '盘前'
+    appendix: '盘前',
+    ud: '—',
+    earnEffect: '—',
+    direction: '等待开盘后自动生成'
   };
   DAYS.push(todayData);
   currentDate = today;
@@ -2857,6 +2908,11 @@ async function refreshMarketData() {
               lbc: s.lbc || 0, hy: s.hy || ''
             };
             ztStocks[s.c] = stockInfo;
+            // 动态注册涨停股到STOCK_INFO使linkStocks可点击
+            if (!STOCK_INFO[s.c]) {
+              const prefix = s.c.startsWith('6') || s.c.startsWith('9') ? '1' : '0';
+              STOCK_INFO[s.c] = { name: s.n, prefix, price: '—' };
+            }
             if (s.hy) {
               if (!sectorLeaders[s.hy]) sectorLeaders[s.hy] = [];
               sectorLeaders[s.hy].push(stockInfo);
@@ -2975,10 +3031,207 @@ async function refreshMarketData() {
       if (totalVol > 0) todayD.volume = '约' + (totalVol / 100000000).toFixed(2) + '万亿';
     } catch(e) {}
 
+    // 4.5 获取全市场涨跌家数
+    let upCount = 0, downCount = 0, flatCount = 0;
+    try {
+      const udR = await fetch(`https://push2delay.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f104,f105,f106&secids=1.000001,0.399001&_=${Date.now()}`);
+      if (udR.ok) {
+        const udData = await udR.json();
+        if (udData.data && udData.data.diff) {
+          udData.data.diff.forEach(item => {
+            if (typeof item.f104 === 'number') upCount += item.f104;
+            if (typeof item.f105 === 'number') downCount += item.f105;
+            if (typeof item.f106 === 'number') flatCount += item.f106;
+          });
+        }
+      }
+    } catch(e) {}
+    if (upCount > 0 || downCount > 0) {
+      todayD.ud = `${upCount} : ${downCount}` + (flatCount > 0 ? ` : ${flatCount}` : '');
+      const totalUdp = upCount + downCount;
+      const upRatio = totalUdp > 0 ? (upCount / totalUdp) : 0;
+      if (upRatio > 0.6) todayD.earnEffect = '很好';
+      else if (upRatio > 0.45) todayD.earnEffect = '一般';
+      else if (upRatio > 0.3) todayD.earnEffect = '较差';
+      else todayD.earnEffect = '很差';
+    }
+
+    // 4.6 板块大类映射（用于热力图合并）
+    const SECTOR_CATEGORIES = [
+      { key: '医药', keywords: ['医药','医疗','医美','中药','生物','疫苗','医院','制药','医疗器械','药房'] },
+      { key: '银行', keywords: ['银行'] },
+      { key: '煤炭', keywords: ['煤炭','焦炭'] },
+      { key: '有色', keywords: ['黄金','贵金属','有色','铜','铝','钨','稀土','锂矿','小金属'] },
+      { key: '石油石化', keywords: ['石油','石化','油气','油田','燃气'] },
+      { key: '电力', keywords: ['电力','火电','水电','核电','绿电','光伏','风电'] },
+      { key: '钢铁', keywords: ['钢铁','特钢'] },
+      { key: '地产建筑', keywords: ['房地产','地产','建筑','建材','水泥','装修','物业'] },
+      { key: '汽车', keywords: ['汽车','新能源车','整车','零部件','汽车配件','汽配'] },
+      { key: '食品饮料', keywords: ['白酒','酿酒','食品','饮料','乳业','啤酒','调味品','零食','养殖','饲料','鸡肉','猪肉','水产','食用菌'] },
+      { key: '纺织服装', keywords: ['纺织','服装','印染','辅料','涤纶','粘胶','鞋类','化妆','化妆品'] },
+      { key: '电子半导体', keywords: ['半导体','芯片','集成电路','电子','元器件','PCB','消费电子','光学','面板','LED'] },
+      { key: '计算机', keywords: ['计算机','软件','云计算','信创','数据','人工智能','AI','网络安全','操作系统','数字媒体','营销','广告'] },
+      { key: '通信', keywords: ['通信','5G','6G','光纤','运营商','卫星'] },
+      { key: '传媒', keywords: ['传媒','游戏','影视','出版','教育'] },
+      { key: '机械军工', keywords: ['军工','航天','航空','船舶','兵器','机床','机械','机器人','自动化'] },
+      { key: '化工', keywords: ['化工','氟化工','磷化工','化学','化纤','钛白粉','聚氨酯'] },
+      { key: '交通运输', keywords: ['航运','港口','物流','快递','航空','机场','铁路','公路'] },
+      { key: '农林牧渔', keywords: ['农业','种业','种植','林业','渔业','农药','化肥'] },
+      { key: '大金融', keywords: ['证券','券商','保险','信托','期货','多元金融'] },
+    ];
+    function categorizeSector(name) {
+      for (const cat of SECTOR_CATEGORIES) {
+        for (const kw of cat.keywords) {
+          if (name.includes(kw)) return cat.key;
+        }
+      }
+      return null;
+    }
+    // 将细分板块按大类合并
+    if (sectors.length > 0) {
+      function catKeywordsMatch(catName, hyName) {
+        const cat = SECTOR_CATEGORIES.find(c => c.key === catName);
+        if (!cat) return false;
+        return cat.keywords.some(kw => hyName.includes(kw) || kw.includes(hyName));
+      }
+      const catMap = {};
+      const catLeaders = {};
+      sectors.slice(0, 80).forEach(s => {
+        const cat = categorizeSector(s.name);
+        if (!cat) return;
+        if (!catMap[cat]) {
+          catMap[cat] = { name: cat, totalPct: 0, count: 0, maxPct: -Infinity, subSectors: [] };
+          catLeaders[cat] = [];
+        }
+        catMap[cat].totalPct += s.pct;
+        catMap[cat].count++;
+        catMap[cat].maxPct = Math.max(catMap[cat].maxPct, s.pct);
+        catMap[cat].subSectors.push(s.name);
+        Object.keys(sectorLeaders).forEach(hy => {
+          if (hy.includes(s.name) || s.name.includes(hy) || catKeywordsMatch(cat, hy)) {
+            sectorLeaders[hy].forEach(l => {
+              if (!catLeaders[cat].find(x => x.code === l.code)) catLeaders[cat].push(l);
+            });
+          }
+        });
+      });
+      const mergedHeat = Object.values(catMap).map(c => {
+        const avgPct = c.totalPct / c.count;
+        const leaders = catLeaders[c.name].slice(0, 3).map(s => `${s.name}(${s.code})`).join(' · ');
+        return {
+          name: c.name,
+          pct: Number(avgPct.toFixed(2)),
+          size: Math.max(20, Math.min(50, Math.abs(avgPct) * 12 + c.count * 1.5)),
+          desc: `含${c.count}个细分板块，领涨${c.subSectors.slice(0,2).join('/')}`,
+          leaders: leaders || (avgPct >= 0 ? '领涨股' : '领跌股'),
+          isCategory: true,
+          subCount: c.count
+        };
+      }).sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
+      if (mergedHeat.length > 0) {
+        todayD.sectorHeat = mergedHeat;
+        // heatMap 也用大类合并版
+        todayD.heatMap = mergedHeat.slice(0, 15).map(h => ({ name: h.name, pct: h.pct, vol: 0 }));
+      }
+    }
+
+    // 4.7 生成备选标的（从涨停池龙头中自动选取连板/主线龙头）
+    if (Object.keys(ztStocks).length > 0) {
+      const lbcSorted = Object.values(ztStocks).sort((a, b) => b.lbc - a.lbc);
+      const topThemes = (todayD.theme || '').split('+');
+      const autoWatch = [];
+      // 优先连板高标
+      lbcSorted.slice(0, 3).forEach(s => {
+        if (s.lbc >= 2 && !autoWatch.find(w => w.code === s.code)) {
+          autoWatch.push({
+            code: s.code,
+            sector: s.hy || topThemes[0] || '主线',
+            time: s.time || '—',
+            seal: s.seal || '—',
+            pure: s.lbc >= 3,
+            pureNote: s.lbc >= 3 ? '连板高标' : s.lbc === 2 ? '二板晋级' : '首板',
+            strategy: s.lbc >= 3 ? '观察高标断板反包机会，不追高' : '若竞价超预期可关注换手板机会'
+          });
+        }
+      });
+      // 主线龙头首板
+      const topLeaders = Object.keys(sectorLeaders).slice(0, 3).flatMap(hy => sectorLeaders[hy].slice(0, 1));
+      topLeaders.forEach(s => {
+        if (s.lbc === 1 && !autoWatch.find(w => w.code === s.code) && autoWatch.length < 5) {
+          autoWatch.push({
+            code: s.code,
+            sector: s.hy || '主线',
+            time: s.time || '—',
+            seal: s.seal || '—',
+            pure: true,
+            pureNote: '主线首板龙头',
+            strategy: '关注次日溢价及连板可能性，高开太多不追'
+          });
+        }
+      });
+      if (autoWatch.length > 0 && (!todayD.watchlist || todayD.watchlist.length === 0)) {
+        todayD.watchlist = autoWatch;
+      }
+    }
+
+    // 4.8 生成明日操作方向
+    if (todayD.sentiment || todayD.limitUp > 0) {
+      const zt = todayD.limitUp;
+      const pct = todayD.idx?.sh?.[1] || 0;
+      if (zt > 100 && pct > 0) {
+        todayD.direction = '情绪回暖，可适当加仓主线龙头，持股待涨为主';
+      } else if (zt > 50 && pct > -1) {
+        todayD.direction = '情绪尚可，聚焦主线龙头低吸，控制仓位5成以内';
+      } else if (zt > 20 && pct > -2) {
+        todayD.direction = '情绪偏弱，以观望为主，轻仓试错龙头，设好止损';
+      } else {
+        todayD.direction = '情绪极差，空仓等待，严守纪律不抄底';
+      }
+    }
+
+    // 4.9 生成热点题材汇总hotThemes
+    if (sectors.length > 0 && Object.keys(sectorLeaders).length > 0) {
+      const themeList = [];
+      const usedSectors = new Set();
+      sectors.slice(0, 20).forEach((s, idx) => {
+        if (usedSectors.has(s.name)) return;
+        const leaders = (() => {
+          const matchedHy = Object.keys(sectorLeaders).find(hy =>
+            hy.includes(s.name) || s.name.includes(hy));
+          if (matchedHy && sectorLeaders[matchedHy] && sectorLeaders[matchedHy].length > 0) {
+            return sectorLeaders[matchedHy].slice(0, 3).map(l => `${l.name}(${l.code})`).join('、');
+          }
+          return '';
+        })();
+        const rank = idx + 1;
+        const badge = rank <= 3 ? '主线' : rank <= 8 ? '活跃' : '';
+        themeList.push({
+          rank,
+          name: s.name,
+          desc: `${s.pct >= 0 ? '+' : ''}${s.pct.toFixed(2)}%${leaders ? '，龙头带动' : ''}`,
+          stocks: leaders || '—',
+          badge: badge || '',
+          dim: rank > 10
+        });
+        usedSectors.add(s.name);
+      });
+      if (themeList.length > 0 && (!todayD.hotThemes || todayD.hotThemes.length === 0)) {
+        todayD.hotThemes = themeList.slice(0, 12);
+      }
+    }
+
     // 5-7. 推算策略/隔夜计划/热点汇总（仅在有板块数据时更新）
     if (sectors.length > 0) {
+      todayD.drivers = todayD.drivers?.length ? todayD.drivers : (() => {
+        const drvs = [];
+        if (todayD.theme) drvs.push(`${todayD.theme}板块异动领涨`);
+        if (todayD.limitUp > 0) drvs.push(`全市场共${todayD.limitUp}只涨停，情绪${todayD.sentiment || '—'}`);
+        drvs.push('实时数据自动更新中');
+        return drvs;
+      })();
       todayD.strategy = generateStrategy(todayD);
       todayD.overnightPlan = generateOvernightPlan(todayD, ztStocks);
+      todayD.overnight = todayD.overnightPlan;
       todayD.appendix = generateAppendix(todayD);
     }
     console.log('[市场数据] 自动更新完成:', new Date().toLocaleTimeString());
@@ -3492,13 +3745,13 @@ function renderMarket() {
       const bd = item.pct >= 0 ? 'rgba(255,23,68,0.45)' : 'rgba(0,200,83,0.45)';
       const grow = Math.max(item.size || Math.abs(item.pct) * 10, 16);
       const basis = Math.max(16, Math.min(46, grow * 0.62));
-      return `<div class="tree-cell" tabindex="0" style="--grow:${grow};--basis:${basis}%;background:${bg};border-color:${bd}" title="${item.name} ${sign(item.pct)}${fmt(item.pct)}%｜${item.desc}">
-        <div class="hn">${item.name}</div>
+      return `<div class="tree-cell${item.isCategory ? ' cat-cell' : ''}" tabindex="0" style="--grow:${grow};--basis:${basis}%;background:${bg};border-color:${bd}" title="${item.name} ${sign(item.pct)}${fmt(item.pct)}%｜${item.desc}">
+        <div class="hn">${item.name}${item.isCategory ? ' <span class="badge" style="font-size:.6em;vertical-align:middle;opacity:.7">大类</span>' : ''}</div>
         <div class="hp ${cls(item.pct)}">${sign(item.pct)}${fmt(item.pct)}%</div>
         <div class="heat-desc">${item.desc}</div>
         <div class="leader-line">龙头：${linkStocks(item.leaders || '—')}</div>
         <div class="tree-tip">
-          <div><strong>${item.name}</strong> ${sign(item.pct)}${fmt(item.pct)}%</div>
+          <div><strong>${item.name}</strong> ${sign(item.pct)}${fmt(item.pct)}%${item.isCategory ? '（' + item.subCount + '个细分板块）' : ''}</div>
           <div>${item.desc}</div>
           <div>龙头：${linkStocks(item.leaders || '—')}</div>
         </div>
