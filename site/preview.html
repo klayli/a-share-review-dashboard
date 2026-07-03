@@ -60,16 +60,19 @@
   }
   .theme-toggle:hover { border-color:var(--yellow); color:var(--yellow); }
 
-  /* 财神像 - 卡通财神样式 */
-  .caishen-icon { cursor:pointer; user-select:none; animation: caishenFloat 3s ease-in-out infinite; filter: drop-shadow(0 0 10px rgba(255,214,0,0.5)); transition: transform .2s; line-height:1; display:flex; align-items:center; justify-content:center; width:52px; height:52px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #ffe066, #ffd700 40%, #e6b800 80%); border:3px solid #c41e3a; position:relative; }
-  .caishen-icon::before { content:'财'; position:absolute; font-size:1.5rem; font-weight:900; color:#c41e3a; font-family:"STKaiti","KaiTi","SimKai",serif; text-shadow:0 1px 2px rgba(0,0,0,0.2); top:50%; left:50%; transform:translate(-50%,-45%); }
-  .caishen-icon::after { content:''; position:absolute; top:-8px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:14px solid transparent; border-right:14px solid transparent; border-bottom:12px solid #c41e3a; }
-  .caishen-icon .cs-hat { position:absolute; top:-4px; left:50%; transform:translateX(-50%); width:30px; height:10px; background:linear-gradient(180deg,#ffd700,#daa520); border-radius:4px 4px 0 0; border:1.5px solid #c41e3a; border-bottom:none; }
-  .caishen-icon:hover { animation-play-state: paused; transform: scale(1.15); }
-  .caishen-icon.bounce { animation: caishenBounce .5s ease; }
-  @keyframes caishenFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-  @keyframes caishenBounce { 0% { transform: scale(1); } 30% { transform: scale(1.3) rotate(-8deg); } 60% { transform: scale(0.95) rotate(4deg); } 100% { transform: scale(1) rotate(0); } }
-  @media (max-width:768px) { .caishen-icon { width:44px; height:44px; } .caishen-icon::before { font-size:1.25rem; } }
+  /* 金元宝icon - 点击弹出股市祝福语 */
+  .ingot-icon { cursor:pointer; user-select:none; animation: ingotFloat 3s ease-in-out infinite; filter: drop-shadow(0 0 12px rgba(255,214,0,0.6)); transition: transform .2s; line-height:1; position:relative; width:56px; height:44px; display:flex; align-items:center; justify-content:center; }
+  .ingot-icon .ingot-body { position:relative; width:48px; height:30px; background:linear-gradient(180deg,#fff3a3 0%,#ffd700 25%,#daa520 60%,#b8860b 100%); border-radius:6px 6px 14px 14px/6px 6px 18px 18px; border:2px solid #8b6914; box-shadow:inset 0 -4px 8px rgba(139,105,20,0.4), inset 0 3px 6px rgba(255,255,255,0.5); }
+  .ingot-icon .ingot-body::before { content:''; position:absolute; top:-10px; left:50%; transform:translateX(-50%); width:28px; height:14px; background:linear-gradient(180deg,#fff8c4 0%,#ffd700 40%,#daa520 100%); border:2px solid #8b6914; border-bottom:none; border-radius:14px 14px 2px 2px; box-shadow:inset 0 2px 4px rgba(255,255,255,0.6); }
+  .ingot-icon .ingot-body::after { content:'金'; position:absolute; top:50%; left:50%; transform:translate(-50%,-20%); font-size:.85rem; font-weight:900; color:#8b4513; font-family:"STKaiti","KaiTi","SimKai",serif; text-shadow:0 1px 1px rgba(255,255,255,0.5); z-index:2; }
+  .ingot-icon:hover { animation-play-state:paused; transform:scale(1.18); }
+  .ingot-icon.bounce { animation:ingotBounce .5s ease; }
+  @keyframes ingotFloat { 0%,100%{transform:translateY(0) rotate(-3deg);} 50%{transform:translateY(-6px) rotate(3deg);} }
+  @keyframes ingotBounce { 0%{transform:scale(1) rotate(0);} 30%{transform:scale(1.35) rotate(-15deg);} 60%{transform:scale(0.9) rotate(10deg);} 100%{transform:scale(1) rotate(0);} }
+  @media (max-width:768px){ .ingot-icon{width:48px;height:38px;} .ingot-icon .ingot-body{width:40px;height:25px;} .ingot-icon .ingot-body::before{width:22px;height:11px;top:-8px;} .ingot-icon .ingot-body::after{font-size:.72rem;} }
+  .ingot-toast { position:fixed; top:80px; left:50%; transform:translateX(-50%) translateY(-20px); background:linear-gradient(135deg,#c41e3a,#8b0000); color:#ffd700; padding:14px 28px; border-radius:12px; font-size:1.1rem; font-weight:700; font-family:"STKaiti","KaiTi","SimKai",serif; z-index:10000; box-shadow:0 8px 30px rgba(196,30,58,0.5),0 0 20px rgba(255,215,0,0.3); border:2px solid #ffd700; white-space:nowrap; pointer-events:none; opacity:0; transition:all .4s cubic-bezier(.34,1.56,.64,1); }
+  .ingot-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .ingot-toast::after { content:''; position:absolute; bottom:-10px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:10px solid transparent; border-right:10px solid transparent; border-top:10px solid #8b0000; }
 
   .section { margin-bottom:28px; }
 
@@ -645,7 +648,7 @@
     </div>
     <div id="headerSub" style="color:var(--text-dim);font-size:0.88rem;margin-top:4px;"></div>
   </div>
-  <div class="caishen-icon" id="caishenIcon" onclick="caishenClick()" title="财神到！好运连连！"></div>
+  <div class="ingot-icon" id="ingotIcon" onclick="ingotClick()" title="点我领取今日好运！"><div class="ingot-body"></div></div>
   <div class="date-picker">
     <div id="dateButtons"></div>
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">切换亮色</button>
@@ -813,9 +816,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.27.0';
-const APP_VERSION_DATE = '2026-07-03 17:00';
-const APP_RELEASE_NOTES = '早报模块多项优化：新增🎯今日核心关注两列要点模块；新闻来源可点击跳转；修复A股icon国旗emoji显示为CN问题（改为📈），港股改为🏛；财神icon改为金色圆形卡通样式（红边+财字+官帽）；补充6月23日-7月1日共9天历史早报数据。';
+const APP_VERSION = 'v1.28.0';
+const APP_VERSION_DATE = '2026-07-03 17:30';
+const APP_RELEASE_NOTES = '财神像升级为金元宝icon（CSS绘制船形金锭，带"金"字+金色渐变+左右摇摆浮动动画）；点击金元宝弹出红金配色toast，随机展示股市祝福语（词库38条：股市长红/涨停不断/牛气冲天/日进斗金等）；修复v1.27.0版本说明中(1)(2)序号与版本号视觉重复问题，改用•符号。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -946,7 +949,8 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
-  { version:'v1.27.0', date:'2026-07-03 17:00', notes:'早报模块多项优化：(1)新增🎯今日核心关注两列要点模块（锚点导航首位）；(2)新闻来源Sources支持超链接跳转；(3)修复A股/港股国旗emoji显示为CN/HK文字问题，改为📈/🏛通用符号；(4)财神icon重做为金色圆形卡通样式（红边+楷体"财"字+红色官帽）；(5)补充6/23-7/1共9天历史早报数据（含周末特刊）。' },
+  { version:'v1.28.0', date:'2026-07-03 17:30', notes:'财神像升级为金元宝icon：• CSS绘制船形金锭造型，金色渐变+楷体"金"字+左右摇摆浮动动画；• 点击金元宝弹出红金配色toast气泡，随机展示38条股市祝福语（股市长红/涨停不断/牛气冲天/日进斗金/财源滚滚等），每次点击随机不同；• 修复v1.27.0版本说明中(1)(2)(3)数字序号与版本号视觉混淆问题，统一改用•分隔。' },
+  { version:'v1.27.0', date:'2026-07-03 17:00', notes:'早报模块多项优化：• 新增🎯今日核心关注两列要点模块（锚点导航首位）；• 新闻来源Sources支持超链接跳转；• 修复A股/港股国旗emoji显示为CN/HK文字问题，改为📈/🏛通用符号；• 财神icon重做为金色圆形卡通样式（红边+楷体"财"字+红色官帽）；• 补充6/23-7/1共9天历史早报数据（含周末特刊）。' },
   { version:'v1.26.0', date:'2026-07-03 15:30', notes:'全面升级金融市场早报模块，按参考页面完善字段结构：新增核心概览指数卡片、美股板块带涨跌点数、A股板块带领涨领跌/成交额、港股要点、宏观数据表格（前值/预期/实际）、外汇商品双表格+分析、加密货币表格+要点、公司新闻带分类标签（重磅/行业/政策/市场/国债/能源）、经济日历带星级+流动性提示、市场展望分四大市场、数据来源列表；新增锚点导航栏；完善首页早报卡片摘要显示。' },
   { version:'v1.25.0', date:'2026-07-03 12:10', notes:'新增动态财神像icon（页面顶部中间，带浮动/发光动画，点击有弹跳效果）；新增金融市场早报卡片及详情模块（隔夜外盘、要闻精选、今日关注、新股申购、财经日历、机构观点）；新增面包屑"早报"入口；UI与现有深色/亮色主题兼容。' },
   { version:'v1.24.0', date:'2026-07-03 11:30', notes:'新增用户2233账号，该账号不显示纪念日卡片、详情及面包屑导航；版本更新说明对2233账号显示精简内容。' },
@@ -4471,12 +4475,41 @@ function handleTitleClick() {
     openLoginModal();
   }
 }
-function caishenClick() {
-  const el = document.getElementById('caishenIcon');
+const INGOT_BLESSINGS = [
+  '股市长红，财源滚滚！', '日进斗金，涨停不断！', '牛气冲天，账户长红！',
+  '恭喜发财，红包拿来！', '金玉满堂，财运亨通！', '一路飘红，盆满钵满！',
+  '牛市常伴，收益翻倍！', '招财进宝，好运连连！', '股神附体，百发百中！',
+  '紫气东来，涨势如虹！', '财源广进，富贵逼人！', '点石成金，手到擒来！',
+  '天天涨停，夜夜数钱！', '财运当头，一本万利！', '金元宝砸中你，今日必涨！',
+  '开市大吉，万事亨通！', '牛市在途，持仓必赚！', '八方来财，四季平安！',
+  '福禄双全，红利满仓！', '买入即涨，卖出最高！', '神机妙算，稳赚不赔！',
+  '龙腾虎跃，红盘报收！', '财神眷顾，势不可挡！', '春风得意，财运全开！',
+  '红运当头，势如破竹！', '大吉大利，今晚数钱！', '买在低点，卖在高点！',
+  '满仓涨停，收益长虹！', '财星高照，长红不止！', '腰缠万贯，富贵吉祥！',
+  '步步高升，财源不断！', '金牛奋蹄，势不可挡！', '股票天天涨，钞票数不完！',
+  '金鳞岂是池中物，一遇牛市便化龙！', '持仓都是十倍股，账户余额翻几番！',
+  '好运爆棚，中签不断！', '主力给你抬轿子，躺赢涨停板！',
+  '今天也是被财神爷眷顾的一天！', 'K线一路向北，财富自由在望！'
+];
+let ingotToastTimer = null;
+function ingotClick() {
+  const el = document.getElementById('ingotIcon');
   el.classList.remove('bounce');
   void el.offsetWidth;
   el.classList.add('bounce');
   setTimeout(() => el.classList.remove('bounce'), 600);
+  const msg = INGOT_BLESSINGS[Math.floor(Math.random() * INGOT_BLESSINGS.length)];
+  let toast = document.getElementById('ingotToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'ingotToast';
+    toast.className = 'ingot-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  if (ingotToastTimer) clearTimeout(ingotToastTimer);
+  requestAnimationFrame(() => { toast.classList.add('show'); });
+  ingotToastTimer = setTimeout(() => { toast.classList.remove('show'); }, 2200);
 }
 function saveHeaderCustom(el) {
   const text = el.value.trim();
