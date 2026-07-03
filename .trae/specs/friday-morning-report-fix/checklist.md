@@ -1,0 +1,17 @@
+- [ ] Checkpoint 1: MORNING_REPORTS['2026-07-03']存在且weekday为'周五'
+- [ ] Checkpoint 2: coreIndices中上证指数chg为+0.77（与DAYS数组一致）
+- [ ] Checkpoint 3: aShare板块描述超跌反弹而非暴跌，涨停120家
+- [ ] Checkpoint 4: hkStock恒生科技指数chg为+3.23而非-0.40
+- [ ] Checkpoint 5: coreFocus反映周五核心事件（超跌反弹、非农爆冷、黄金V型反转等）
+- [ ] Checkpoint 6: coreAlert更新为周五收盘后提示
+- [ ] Checkpoint 7: news板块包含周五相关新闻
+- [ ] Checkpoint 8: calendar更新为下周（7月6日周一）经济日历
+- [ ] Checkpoint 9: outlook为周末/下周一视角
+- [ ] Checkpoint 10: APP_VERSION更新为v1.32.2
+- [ ] Checkpoint 11: VERSION_HISTORY包含v1.32.2条目
+- [ ] Checkpoint 12: versions.json同步更新
+- [ ] Checkpoint 13: 文件同步到site/index.html、site/preview.html、index.html
+- [ ] Checkpoint 14: 本地HTTP服务器可访问，首页早报卡片上证指数为+0.77%绿色
+- [ ] Checkpoint 15: 点击进入早报详情页无JavaScript错误
+- [ ] Checkpoint 16: 控制台无TypeError等错误
+- [ ] Checkpoint 17: 未执行wrangler deploy或git push（仅本地预览）
