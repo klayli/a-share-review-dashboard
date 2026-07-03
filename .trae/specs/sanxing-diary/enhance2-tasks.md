@@ -1,0 +1,137 @@
+# 三省日记增强2 - 实现计划
+
+## [ ] Task 1: 数据层重构 - 多AI配置+精确时间
+- **Priority**: high
+- **Depends On**: None
+- **Description**:
+  - 重构AI配置存储：从单个`ai_config_${user}`改为`ai_configs_${user}`（数组）+ `ai_active_config_${user}`（当前选中ID）
+  - 配置项结构：`{id: timestamp, name: string, baseUrl: string, apiKey: string, model: string, styleSample: string}`
+  - 添加数据迁移函数`migrateAIConfig()`：读取旧的单配置，迁移为数组中第一个配置（name:"默认配置"），写入新key，删除旧key（或保留兼容）
+  - 修改getAIConfig()：返回当前激活的配置对象（向后兼容：仍返回{baseUrl, apiKey, model, styleSample, name, id}）
+  - 新增getAIConfigs()：返回所有配置数组
+  - 新增saveAIConfigs(configs, activeId)：保存所有配置和当前激活ID
+  - 新增setActiveAIConfig(id)：切换当前激活配置
+  - 新增deleteAIConfig(id)：删除指定配置（至少保留1个）
+  - 新增addAIConfig(config)：添加新配置，返回新配置id
+  - 修改saveAIConfig(config)：更新当前激活的配置（保持向后兼容）
+  - 修改getStyleSamples()：从当前激活配置读取
+  - 修改saveStyleSamples(text)：保存到当前激活配置
+  - 修改日记date字段格式：`todayText()`保持YYYY-MM-DD，新增`nowDateTimeStr()`返回YYYY-MM-DD HH:mm；addDiaryFromHome中date字段改用精确时间格式（传入的date如果是YYYY-MM-DD格式则拼接当前HH:mm）
+  - 添加旧日记数据迁移：遍历旧日记，如果date长度<=10（只有日期），用createdAt时间补充HH:mm
+  - todayText()和nowDateTimeStr()用本地时区
+- **Acceptance Criteria Addressed**: AC-4, AC-5
+- **Test Requirements**:
+  - `programmatic` TR-1.1: 旧单配置自动迁移为第一个配置项，name="默认配置"
+  - `programmatic` TR-1.2: getAIConfig()返回当前激活配置，字段完整
+  - `programmatic` TR-1.3: 旧日记date字段自动补充时间
+  - `programmatic` TR-1.4: addAIConfig/deleteAIConfig/setActiveAIConfig功能正确
+  - `programmatic` TR-1.5: 新日记date格式为"YYYY-MM-DD HH:mm"
+
+## [ ] Task 2: AI设置弹窗重构（多配置管理UI）
+- **Priority**: high
+- **Depends On**: Task 1
+- **Description**:
+  - 修改aiConfigModal弹窗HTML结构：
+    - 顶部添加配置标签栏：横向排列所有配置名称按钮，当前选中的高亮（如黄色边框/背景），点击切换
+    - 标签栏右侧添加"+ 新增"按钮和"🗑️ 删除"按钮
+    - 在API Key字段之前添加"AI名称"输入框（id="aiConfigName"）
+  - 重写openAIConfig()函数：
+    - 读取所有配置，渲染标签栏
+    - 当前激活配置高亮
+    - 点击标签调用switchAIConfig(id)切换表单
+    - "+ 新增"按钮：创建新配置（默认填充DeepSeek模板），自动切换到新配置，name输入框聚焦
+    - "🗑️ 删除"按钮：删除当前配置（至少1个时禁用或提示），切换到第一个配置
+    - 表单字段绑定：name/baseUrl/apiKey/model/styleSamples编辑时实时（或失焦时）保存到当前配置
+  - fillAIProvider(index)修改：一键填充后更新name为服务商名称，自动保存到当前配置
+  - saveAIConfigFromModal()修改：确保保存当前配置（因为现在实时保存，此按钮可以改为"关闭"或者也做一次保存）
+  - testAIConnection()：从表单当前值读取，无需修改逻辑
+- **Acceptance Criteria Addressed**: AC-1, AC-6
+- **Test Requirements**:
+  - `human-judgement` TR-2.1: 标签栏显示所有配置名称，当前选中高亮
+  - `human-judgement` TR-2.2: 点击标签切换表单内容
+  - `human-judgement` TR-2.3: 新增/删除配置工作正常
+  - `programmatic` TR-2.4: 编辑表单字段后切换再切回，值不丢失
+  - `human-judgement` TR-2.5: AI名称输入框可用，修改后标签栏名称同步更新
+
+## [ ] Task 3: 详情页AI名称回显
+- **Priority**: high
+- **Depends On**: Task 1
+- **Description**:
+  - 修改renderSanxingDetail()中`.diary-add-actions`区域HTML
+  - 将actions改为flex布局，左右两侧：左侧放AI润色+保存日记按钮，右侧放AI名称回显
+  - 右侧添加元素：`<span class="diary-current-ai">🤖 当前：${config.name || '未配置'}</span>`
+  - 样式：.diary-current-ai使用较小字体（.85rem），颜色var(--text-dim)，与按钮垂直居中
+  - 如果当前无有效API Key，显示"🤖 未配置AI"并可点击打开AI设置（或者不加点击功能，保持简洁）
+  - AI名称回显随AI配置切换实时更新：切换配置后重新render或更新该元素
+  - 考虑在openAIConfig/closeAIConfig/config变化后，更新页面上的AI名称显示
+- **Acceptance Criteria Addressed**: AC-2
+- **Test Requirements**:
+  - `human-judgement` TR-3.1: "保存日记"右侧显示当前AI名称
+  - `human-judgement` TR-3.2: 切换AI配置后名称同步更新
+  - `programmatic` TR-3.3: 未配置Key时显示"未配置"
+
+## [ ] Task 4: 批量删除功能
+- **Priority**: high
+- **Depends On**: None
+- **Description**:
+  - 修改renderDiaryListDetail()：
+    - 列表顶部（日记统计信息行或单独一行）添加批量操作栏：`<label><input type="checkbox" id="diarySelectAll" onchange="toggleAllDiaries(this.checked)"> 全选</label> <button class="btn-small btn-danger" onclick="batchDeleteDiaries()" id="batchDeleteBtn" disabled>🗑️ 批量删除</button> <span id="selectedCount" style="color:var(--text-dim);font-size:.8rem"></span>`
+    - 每篇日记的diary-header左侧添加复选框：`<input type="checkbox" class="diary-checkbox" data-id="${d.id}" onchange="updateSelectedCount()">`
+    - 复选框样式与页面风格一致
+  - 实现toggleAllDiaries(checked)：全选/取消全选所有日记复选框，更新选中计数
+  - 实现updateSelectedCount()：统计已勾选数量，更新按钮状态（0个时disabled）和计数文字
+  - 实现batchDeleteDiaries()：获取所有勾选的id，confirm提示"确定删除选中的X篇日记吗？"，确认后批量调用deleteDiary(id)，然后renderDiaryListDetail()
+  - 首页卡片不需要批量删除功能（仅展示摘要）
+- **Acceptance Criteria Addressed**: AC-3
+- **Test Requirements**:
+  - `programmatic` TR-4.1: 勾选复选框后批量删除按钮可用
+  - `programmatic` TR-4.2: 批量删除后对应日记从localStorage移除
+  - `human-judgement` TR-4.3: 全选/取消全选工作正常
+  - `human-judgement` TR-4.4: 有确认提示防止误删
+
+## [ ] Task 5: 时间格式精确到时分
+- **Priority**: high
+- **Depends On**: Task 1
+- **Description**:
+  - 添加nowDateTimeStr()函数：返回当前日期时间"YYYY-MM-DD HH:mm"格式（本地时区）
+  - 修改addDiaryFromHome(text, date)：
+    - 如果传入了date参数（来自日期选择器，格式为YYYY-MM-DD），拼接当前时分，变为"YYYY-MM-DD HH:mm"
+    - 如果没传入date，使用nowDateTimeStr()
+  - 修改renderDiaryListDetail()中日期显示：直接显示d.date（已经包含时分）
+  - 修改首页renderDiaryListHome()中日期显示：d.date已经包含时分，但摘要中可以显示"MM-DD HH:mm"格式更简洁（或直接显示完整d.date）
+  - 修改日记排序：因为date格式现在统一为"YYYY-MM-DD HH:mm"，字符串比较仍然正确（同日期下时分也能正确排序）
+  - 修改copyAllDiary/downloadOriginal/downloadPolished中的日期显示：保持使用d.date
+  - 修改下载文件名中的日期：替换":"为"-"以避免Windows文件名非法字符（如"三省_2026-07-03-20-50_原文.txt"）
+  - editDiary(id)加载日记到编辑区时：dateInput.value只取日期部分（YYYY-MM-DD），因为input[type=date]不支持时分
+  - 首页卡片快捷添加（addDiaryHome/addDiaryHomePolish）：不需要传date参数，使用nowDateTimeStr()自动填充
+- **Acceptance Criteria Addressed**: AC-4, AC-5
+- **Test Requirements**:
+  - `programmatic` TR-5.1: 新保存的日记date格式含时分
+  - `programmatic` TR-5.2: 下载文件名中":"被替换为"-"
+  - `human-judgement` TR-5.3: 列表中日期显示正确
+  - `human-judgement` TR-5.4: 编辑已有日记时日期选择器正确回填日期
+
+## [ ] Task 6: CSS样式与版本更新
+- **Priority**: high
+- **Depends On**: Task 2-5
+- **Description**:
+  - 添加新CSS样式：
+    - `.ai-config-tabs`: 配置标签栏flex布局，gap:6px，margin-bottom:12px，padding-bottom:10px，border-bottom:1px solid var(--border)
+    - `.ai-config-tab`: 标签按钮样式，padding:6px 14px，border-radius:8px，border:1px solid var(--border)，background:var(--card)，cursor:pointer，font-size:.85rem，color:var(--text-dim)
+    - `.ai-config-tab.active`: 激活标签，border-color:var(--yellow)，background:rgba(245,158,11,0.12)，color:var(--yellow)，font-weight:600
+    - `.ai-config-tab-actions`: 标签栏右侧按钮组，margin-left:auto，display:flex，gap:4px
+    - `.diary-add-actions`: 改为display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px
+    - `.diary-current-ai`: font-size:.82rem;color:var(--text-dim);display:flex;align-items:center;gap:4px
+    - `.diary-batch-bar`: display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 12px;background:var(--card-hover);border-radius:8px;font-size:.85rem
+    - `.diary-batch-bar .btn-danger`: opacity:.7;
+    - `.diary-batch-bar .btn-danger:disabled` { opacity:.4; cursor:not-allowed; }
+    - `.diary-header`: 改为display:flex;align-items:center;gap:8px;（在左侧添加复选框）
+    - `.diary-checkbox`: width:16px;height:16px;cursor:pointer;accent-color:var(--yellow)
+  - 更新版本号为v1.32.0
+  - 更新APP_VERSION_DATE、APP_RELEASE_NOTES、VERSION_HISTORY
+  - 更新versions.json
+  - 同步文件到site/和index.html
+- **Test Requirements**:
+  - `programmatic` TR-6.1: JS语法无错误
+  - `programmatic` TR-6.2: 文件同步完成
+  - `human-judgement` TR-6.3: 深色/亮色主题下所有新UI正常显示
