@@ -645,9 +645,12 @@
   .diary-original { background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); }
   .diary-polished { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); }
   .diary-label { font-weight:600; font-size:.82rem; margin-bottom:8px; color:var(--text-dim); }
-  .diary-content { font-size:.9rem; line-height:1.7; color:var(--text); white-space:pre-wrap; word-break:break-word; }
   .diary-placeholder { color:var(--text-dim); font-style:italic; }
-  .diary-polished-actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .diary-editable { width:100%; min-height:60px; border:none; background:transparent; color:inherit; font:inherit; font-size:.9rem; line-height:1.7; resize:vertical; padding:4px; outline:none; border-radius:4px; box-sizing:border-box; white-space:pre-wrap; word-break:break-word; }
+  .diary-editable:focus { background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.3); padding:3px; }
+  .diary-original .diary-editable:focus { background:rgba(59,130,246,0.06); border-color:rgba(59,130,246,0.3); }
+  .diary-polished .diary-editable:focus { background:rgba(245,158,11,0.06); border-color:rgba(245,158,11,0.3); }
+  .diary-content-actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
   .diary-empty { text-align:center; padding:40px 20px; color:var(--text-dim); }
   .diary-add-area { margin-bottom:20px; padding:16px; background:var(--card); border:1px solid var(--border); border-radius:12px; }
   .diary-add-area input[type="date"] { padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); margin-bottom:10px; }
@@ -688,6 +691,16 @@
   #aiConfigModal .modal-foot { margin-top:8px; text-align:right; }
   #aiConfigModal .btn-save { background:var(--yellow); color:#000; border:none; border-radius:8px; padding:10px 24px; font-size:.95rem; font-weight:700; cursor:pointer; transition:opacity .2s; }
   #aiConfigModal .btn-save:hover { opacity:.85; }
+
+  .ai-providers { margin-bottom:16px; padding:12px; background:var(--card-hover); border-radius:10px; border:1px solid var(--border); }
+  .ai-providers-title { font-weight:700; font-size:.88rem; margin-bottom:10px; color:var(--yellow); }
+  .ai-provider-item { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--card); border-radius:8px; margin-bottom:6px; gap:8px; }
+  .ai-provider-name { font-weight:600; font-size:.85rem; color:var(--text); }
+  .ai-provider-desc { font-size:.75rem; color:var(--text-dim); margin-top:2px; }
+  .ai-provider-btns { display:flex; gap:4px; flex-shrink:0; }
+  .btn-link { text-decoration:none; display:inline-flex; align-items:center; color:var(--blue); border-color:var(--blue); }
+  .btn-link:hover { background:rgba(59,130,246,0.1); }
+  .ai-providers-tip { font-size:.75rem; color:var(--text-dim); margin-top:8px; text-align:center; }
 </style>
 </head>
 <body>
@@ -781,6 +794,7 @@
       <div class="modal-title">AI 润色设置</div>
       <button class="modal-close" onclick="closeAIConfig()">关闭</button>
     </div>
+    <div class="ai-providers" id="aiProvidersContainer"></div>
     <div class="form-field">
       <label>Base URL</label>
       <input type="text" id="aiBaseUrl" placeholder="https://api.deepseek.com/v1">
@@ -904,9 +918,15 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.30.0';
-const APP_VERSION_DATE = '2026-07-03 19:30';
-const APP_RELEASE_NOTES = '新增"三省"日记功能：首页快捷录入卡片；详情页双栏对比展示原文与AI润色内容；支持OpenAI兼容API（DeepSeek等）AI文本润色；支持上传个人文风样本让AI模仿写作风格；一键复制/下载TXT同步到"一本日记"App；面包屑新增"三省"入口；样式与待办清单保持一致。';
+const APP_VERSION = 'v1.31.0';
+const APP_VERSION_DATE = '2026-07-03 20:00';
+const APP_RELEASE_NOTES = 'AI配置新增免费服务商推荐（DeepSeek/智谱GLM/硅基流动一键填充配置）；原文和润色文区域均改为可编辑文本框，失焦自动保存；原文区域新增独立复制/下载按钮；复制下载按钮区分原文/润色/全部三种操作。';
+
+const AI_PROVIDERS = [
+  { name: 'DeepSeek', desc: '新用户免费500万token，中文能力强', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', url: 'https://platform.deepseek.com/' },
+  { name: '智谱AI (GLM)', desc: 'GLM-4-Flash永久免费', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash', url: 'https://open.bigmodel.cn/' },
+  { name: '硅基流动 (SiliconFlow)', desc: '免费DeepSeek-V3/Qwen等模型', baseUrl: 'https://api.siliconflow.cn/v1', model: 'deepseek-ai/DeepSeek-V3', url: 'https://cloud.siliconflow.cn/' }
+];
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -1414,6 +1434,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.31.0', date:'2026-07-03 20:00', notes:'AI配置新增免费服务商推荐（DeepSeek/智谱GLM/硅基流动一键填充配置）；原文和润色文区域均改为可编辑文本框，失焦自动保存；原文区域新增独立复制/下载按钮；复制下载按钮区分原文/润色/全部三种操作。' },
   { version:'v1.30.0', date:'2026-07-03 19:30', notes:'新增"三省"日记功能：首页新增快捷录入卡片展示最近6篇日记；详情页支持完整编辑和双栏对比展示原文与AI润色内容；支持OpenAI兼容API（DeepSeek等）AI文本润色；支持上传个人文风样本让AI模仿写作风格；提供一键复制Markdown/下载TXT文件便捷同步到"一本日记"App；面包屑导航新增"三省"入口；样式交互与待办清单保持一致，兼容深色/亮色主题和移动端。' },
   { version:'v1.29.0', date:'2026-07-03 18:00', notes:'金元宝祝福语词库扩充至500条，涵盖成语俗语、俏皮话、网络梗、经典祝福等多种风格；古诗词名句扩充至500首，覆盖诗经楚辞至明清诗词各朝代经典；去除v1.27.0/v1.28.0版本说明中的•圆点序号，统一使用分号分隔。' },
   { version:'v1.28.0', date:'2026-07-03 17:30', notes:'财神像升级为金元宝icon：CSS绘制船形金锭造型，金色渐变+楷体"金"字+左右摇摆浮动动画；点击金元宝弹出红金配色toast气泡，随机展示股市祝福语，每次点击随机不同。' },
@@ -6656,16 +6677,21 @@ function renderDiaryListDetail() {
         <div class="diary-compare">
           <div class="diary-original">
             <div class="diary-label">✏️ 原始内容</div>
-            <div class="diary-content">${escapeHtml(d.original)}</div>
+            <textarea class="diary-editable" placeholder="记录你的所思所感..." onblur="saveDiaryOriginal(this, ${d.id})">${escapeHtml(d.original)}</textarea>
+            <div class="diary-content-actions">
+              <button class="btn-small" onclick="copyOriginal(${d.id})">📋 复制原文</button>
+              <button class="btn-small" onclick="downloadOriginal(${d.id})">📥 下载原文</button>
+            </div>
           </div>
           <div class="diary-polished">
             <div class="diary-label">✨ AI润色</div>
-            <div class="diary-content">${d.polished ? escapeHtml(d.polished) : '<span class="diary-placeholder">点击下方"AI润色"生成润色内容</span>'}</div>
-            <div class="diary-polished-actions">
+            <textarea class="diary-editable" placeholder="${d.polished ? '' : '点击\'AI润色\'生成润色内容，或直接在此输入...'}" onblur="saveDiaryPolished(this, ${d.id})">${d.polished ? escapeHtml(d.polished) : ''}</textarea>
+            <div class="diary-content-actions">
               ${d.polished ? `<button class="btn-small" onclick="adoptPolished(${d.id})">✓ 采纳为原文</button>
               <button class="btn-small" onclick="polishDiary(${d.id})">🔄 重新润色</button>` : `<button class="btn-small" onclick="polishDiary(${d.id})">✨ AI润色</button>`}
-              <button class="btn-small" onclick="copyDiary(${d.id})">📋 复制</button>
-              <button class="btn-small" onclick="downloadDiary(${d.id})">📥 下载</button>
+              <button class="btn-small" onclick="copyPolished(${d.id})">📋 复制润色</button>
+              <button class="btn-small" onclick="downloadPolished(${d.id})">📥 下载润色</button>
+              <button class="btn-small" onclick="copyAllDiary(${d.id})">📋 复制全部</button>
             </div>
           </div>
         </div>
@@ -6744,11 +6770,36 @@ function openAIConfig() {
   const modal = document.getElementById('aiConfigModal');
   const config = getAIConfig();
   const samples = getStyleSamples();
+  const container = document.getElementById('aiProvidersContainer');
+  container.innerHTML = `
+    <div class="ai-providers-title">🚀 推荐免费服务商（注册即可获取免费API Key）</div>
+    ${AI_PROVIDERS.map((p,i) => `
+      <div class="ai-provider-item">
+        <div class="ai-provider-info">
+          <div class="ai-provider-name">${p.name}</div>
+          <div class="ai-provider-desc">${p.desc}</div>
+        </div>
+        <div class="ai-provider-btns">
+          <button class="btn-small" onclick="fillAIProvider(${i})">一键填充</button>
+          <a href="${p.url}" target="_blank" rel="noopener" class="btn-small btn-link">获取Key ↗</a>
+        </div>
+      </div>
+    `).join('')}
+    <div class="ai-providers-tip">💡 注册后在控制台创建API Key，填入下方即可使用AI润色功能</div>
+  `;
   document.getElementById('aiBaseUrl').value = config.baseUrl;
   document.getElementById('aiApiKey').value = config.apiKey;
   document.getElementById('aiModel').value = config.model;
   document.getElementById('aiStyleSamples').value = samples;
   modal.classList.add('active');
+}
+
+function fillAIProvider(index) {
+  const p = AI_PROVIDERS[index];
+  if (!p) return;
+  document.getElementById('aiBaseUrl').value = p.baseUrl;
+  document.getElementById('aiModel').value = p.model;
+  showToast("已填充"+p.name+"配置，请填入API Key");
 }
 
 function closeAIConfig() {
@@ -6876,6 +6927,7 @@ async function polishDiary(id) {
   if (result) {
     updateDiary(id, { polished: result });
     renderDiaryListDetail();
+    renderDiaryListHome();
     showToast('润色完成');
   }
 }
@@ -6886,6 +6938,7 @@ function adoptPolished(id) {
   if (!diary || !diary.polished) return;
   updateDiary(id, { original: diary.polished });
   renderDiaryListDetail();
+  renderDiaryListHome();
   showToast('已采纳润色内容');
 }
 
@@ -6898,39 +6951,115 @@ function formatDiaryContent(diary) {
   return content;
 }
 
-function copyDiary(id) {
-  const diaries = getDiaries();
-  const diary = diaries.find(d => d.id === id);
-  if (!diary) return;
-  const formatted = formatDiaryContent(diary);
-  navigator.clipboard.writeText(formatted).then(() => {
-    showToast('已复制！打开一本日记粘贴即可 🎉');
-  }).catch(() => {
+function copyToClipboard(text) {
+  return navigator.clipboard.writeText(text).catch(() => {
     const textarea = document.createElement('textarea');
-    textarea.value = formatted;
+    textarea.value = text;
     document.body.appendChild(textarea);
     textarea.select();
     document.execCommand('copy');
     document.body.removeChild(textarea);
-    showToast('已复制！打开一本日记粘贴即可 🎉');
   });
 }
 
-function downloadDiary(id) {
+function copyOriginal(id) {
   const diaries = getDiaries();
   const diary = diaries.find(d => d.id === id);
   if (!diary) return;
-  const content = formatDiaryContent(diary);
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  copyToClipboard(diary.original).then(() => {
+    showToast("原文已复制 📋");
+  });
+}
+
+function downloadOriginal(id) {
+  const diaries = getDiaries();
+  const diary = diaries.find(d => d.id === id);
+  if (!diary) return;
+  const blob = new Blob([diary.original], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = '三省_' + diary.date + '.txt';
+  a.download = '三省_' + diary.date + '_原文.txt';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  showToast('TXT文件已下载 📥');
+  showToast("原文已下载 📥");
+}
+
+function copyPolished(id) {
+  const diaries = getDiaries();
+  const diary = diaries.find(d => d.id === id);
+  if (!diary) return;
+  if (!diary.polished) {
+    showToast("暂无润色内容");
+    return;
+  }
+  copyToClipboard(diary.polished).then(() => {
+    showToast("润色内容已复制 📋");
+  });
+}
+
+function downloadPolished(id) {
+  const diaries = getDiaries();
+  const diary = diaries.find(d => d.id === id);
+  if (!diary) return;
+  if (!diary.polished) {
+    showToast("暂无润色内容");
+    return;
+  }
+  const blob = new Blob([diary.polished], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '三省_' + diary.date + '_润色.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("润色内容已下载 📥");
+}
+
+function copyAllDiary(id) {
+  const diaries = getDiaries();
+  const diary = diaries.find(d => d.id === id);
+  if (!diary) return;
+  const formatted = formatDiaryContent(diary);
+  copyToClipboard(formatted).then(() => {
+    showToast("完整日记已复制，打开一本日记粘贴即可 🎉");
+  });
+}
+
+let _lastOriginalValues = {};
+let _lastPolishedValues = {};
+
+function saveDiaryOriginal(textarea, id) {
+  const value = textarea.value.trim();
+  if (_lastOriginalValues[id] === value) return;
+  _lastOriginalValues[id] = value;
+  const diaries = getDiaries();
+  const diary = diaries.find(d => d.id === id);
+  if (!diary) return;
+  if (diary.original === value) return;
+  updateDiary(id, { original: value });
+  renderDiaryListHome();
+  showToast("原文已保存");
+}
+
+function saveDiaryPolished(textarea, id) {
+  const value = textarea.value.trim();
+  if (_lastPolishedValues[id] === value) return;
+  _lastPolishedValues[id] = value;
+  const diaries = getDiaries();
+  const diary = diaries.find(d => d.id === id);
+  if (!diary) return;
+  const oldPolished = diary.polished || '';
+  if (oldPolished === value) return;
+  updateDiary(id, { polished: value || null });
+  if ((oldPolished && !value) || (!oldPolished && value)) {
+    renderDiaryListDetail();
+  }
+  showToast("润色内容已保存");
 }
 
 function exportAllDiaries() {
