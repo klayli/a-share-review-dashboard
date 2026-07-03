@@ -9,7 +9,7 @@
   - 实现AI配置存取：`getAIConfig()`、`saveAIConfig()`（存储baseUrl/apiKey/model）
   - 实现风格样本存取：`getStyleSamples()`、`saveStyleSamples()`
   - localStorage key使用 `diary_${currentUser}`、`ai_config_${currentUser}`、`style_samples_${currentUser}` 按用户隔离
-  - 在BREADCRUMB_SECTIONS中新增日记项：`{ key: 'sanxingDetail', label: '日记', action: 'goSanxing()' }`
+  - 在BREADCRUMB_SECTIONS中新增日记项：`{ key: 'sanxingDetail', label: '三省', action: 'goSanxing()' }`
   - 实现路由函数`goSanxing()`，新增currentPage='sanxingDetail'
   - 在render()主路由中增加sanxingDetail分支
 - **Acceptance Criteria Addressed**: AC-1, AC-9
@@ -19,15 +19,15 @@
   - `programmatic` TR-1.3: updateDiary()可更新原文/润色文内容
   - `programmatic` TR-1.4: deleteDiary()正确删除指定id条目
   - `programmatic` TR-1.5: AI配置和风格样本按用户隔离存储
-  - `human-judgement` TR-1.6: 面包屑中"日记"链接点击后跳转到日记页面
+  - `human-judgement` TR-1.6: 面包屑中"三省"链接点击后跳转到三省页面
 - **Notes**: 参考getTodos/saveTodos/addTodo的实现模式（第4630-4667行）
 
 ## [ ] Task 2: 首页日记卡片（快捷新增+近6条概要）
 - **Priority**: high
 - **Depends On**: Task 1
 - **Description**:
-  - 在首页`renderHome()`函数中，待办清单卡片之后（或纪念日之后，根据hideAnni判断）新增"三省吾身"卡片
-  - 卡片结构参照待办清单：h2标题 + 快捷输入栏(input+添加按钮) + 日记列表容器 + 统计信息 + "查看全部 (N) →"
+  - 在首页`renderHome()`函数中，待办清单卡片之后（或纪念日之后，根据hideAnni判断）新增"三省"卡片
+  - 卡片结构参照待办清单：h2标题为"三省" + 快捷输入栏(input+添加按钮) + 日记列表容器 + 统计信息 + "查看全部 (N) →"
   - 首页列表只显示最近6条，每条格式：`📅 日期 · 内容前30字...`
   - 实现`renderDiaryListHome()`函数渲染首页列表
   - 快捷添加：输入框回车或点击按钮调用addDiary()，原文为输入内容，AI润色字段为空
