@@ -1,7 +1,14 @@
 {
-  "current": "v1.31.0",
+  "current": "v1.31.1",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.31.1",
+      "date": "2026-07-03 20:20（北京时间）",
+      "summary": "首页三省卡片快捷输入栏新增\"✨ AI润色\"按钮，支持直接在首页输入内容后一键AI润色保存；首页列表已润色日记显示✨标识，一目了然。",
+      "cache": "a-share-review-v40-20260703",
+      "deploy_url": "待预览确认后部署"
+    },
     {
       "version": "v1.31.0",
       "date": "2026-07-03 20:00（北京时间）",

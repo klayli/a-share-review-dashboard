@@ -918,9 +918,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.31.0';
-const APP_VERSION_DATE = '2026-07-03 20:00';
-const APP_RELEASE_NOTES = 'AI配置新增免费服务商推荐（DeepSeek/智谱GLM/硅基流动一键填充配置）；原文和润色文区域均改为可编辑文本框，失焦自动保存；原文区域新增独立复制/下载按钮；复制下载按钮区分原文/润色/全部三种操作。';
+const APP_VERSION = 'v1.31.1';
+const APP_VERSION_DATE = '2026-07-03 20:20';
+const APP_RELEASE_NOTES = '首页三省卡片快捷输入栏新增"✨ AI润色"按钮，支持直接在首页输入内容后一键AI润色保存；首页列表已润色日记显示✨标识。';
 
 const AI_PROVIDERS = [
   { name: 'DeepSeek', desc: '新用户免费500万token，中文能力强', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', url: 'https://platform.deepseek.com/' },
@@ -1434,6 +1434,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.31.1', date:'2026-07-03 20:20', notes:'首页三省卡片快捷输入栏新增"✨ AI润色"按钮，支持直接在首页输入内容后一键AI润色保存；首页列表已润色日记显示✨标识。' },
   { version:'v1.31.0', date:'2026-07-03 20:00', notes:'AI配置新增免费服务商推荐（DeepSeek/智谱GLM/硅基流动一键填充配置）；原文和润色文区域均改为可编辑文本框，失焦自动保存；原文区域新增独立复制/下载按钮；复制下载按钮区分原文/润色/全部三种操作。' },
   { version:'v1.30.0', date:'2026-07-03 19:30', notes:'新增"三省"日记功能：首页新增快捷录入卡片展示最近6篇日记；详情页支持完整编辑和双栏对比展示原文与AI润色内容；支持OpenAI兼容API（DeepSeek等）AI文本润色；支持上传个人文风样本让AI模仿写作风格；提供一键复制Markdown/下载TXT文件便捷同步到"一本日记"App；面包屑导航新增"三省"入口；样式交互与待办清单保持一致，兼容深色/亮色主题和移动端。' },
   { version:'v1.29.0', date:'2026-07-03 18:00', notes:'金元宝祝福语词库扩充至500条，涵盖成语俗语、俏皮话、网络梗、经典祝福等多种风格；古诗词名句扩充至500首，覆盖诗经楚辞至明清诗词各朝代经典；去除v1.27.0/v1.28.0版本说明中的•圆点序号，统一使用分号分隔。' },
@@ -4860,6 +4861,25 @@ function addDiaryHome() {
   renderDiaryListHome();
 }
 
+async function addDiaryHomePolish(btn) {
+  const input = document.getElementById('diaryInput');
+  const text = input.value.trim();
+  if (!text) {
+    showToast('请先输入日记内容');
+    input.focus();
+    return;
+  }
+  const polished = await callAIPolish(text, btn);
+  if (!polished) return;
+  const diary = addDiaryFromHome(text);
+  if (diary) {
+    updateDiary(diary.id, { polished: polished });
+  }
+  input.value = '';
+  renderDiaryListHome();
+  showToast('AI润色完成，日记已保存 ✨');
+}
+
 function renderDiaryListHome() {
   const container = document.getElementById('diaryListContainer');
   if (!container) return;
@@ -4871,7 +4891,7 @@ function renderDiaryListHome() {
   } else {
     container.innerHTML = displayDiaries.map(d => `
       <div class="todo-item">
-        <span class="todo-text">📅 ${d.date} · ${escapeHtml(d.original.length > 30 ? d.original.substring(0, 30) + '...' : d.original)}</span>
+        <span class="todo-text">📅 ${d.date} ${d.polished ? '✨' : ''}· ${escapeHtml(d.original.length > 30 ? d.original.substring(0, 30) + '...' : d.original)}</span>
       </div>
     `).join('');
   }
@@ -7195,6 +7215,7 @@ function renderHome() {
       <div class="todo-add-bar">
         <input type="text" id="diaryInput" placeholder="记录今日所思，回车添加" onkeydown="if(event.key==='Enter') addDiaryHome()">
         <button onclick="addDiaryHome()">添加</button>
+        <button onclick="addDiaryHomePolish(this)" style="background:var(--yellow);color:#000;font-weight:600">✨ AI润色</button>
       </div>
       <div id="diaryListContainer" data-mode="home"></div>
       <div id="diarySummary" class="update-time"></div>
