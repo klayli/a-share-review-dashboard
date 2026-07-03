@@ -525,41 +525,93 @@
   .anni-empty { text-align:center; color:var(--text-dim); font-size:0.85rem; padding:20px 0; }
 
   /* 金融市场早报 */
-  .report-header { text-align:center; margin-bottom:24px; padding:20px; background:linear-gradient(135deg, rgba(255,214,0,0.08), rgba(68,138,255,0.08)); border-radius:16px; border:1px solid var(--border); }
-  .report-header h1 { font-size:1.5rem; color:var(--yellow); margin-bottom:6px; }
-  .report-header .report-date { color:var(--text-dim); font-size:.9rem; }
-  .report-section { margin-bottom:24px; }
-  .report-section h2 { font-size:1.1rem; color:var(--yellow); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
-  .report-overseas-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; }
-  .report-overseas-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; text-align:center; }
-  .report-overseas-card .name { font-size:.82rem; color:var(--text-dim); margin-bottom:4px; }
-  .report-overseas-card .val { font-size:1.15rem; font-weight:700; }
-  .report-overseas-card .chg { font-size:.85rem; font-weight:600; margin-top:2px; }
-  .report-news-list { list-style:none; }
-  .report-news-list li { padding:10px 0; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:flex-start; font-size:.9rem; line-height:1.6; }
-  .report-news-list li:last-child { border-bottom:none; }
-  .report-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.75rem; font-weight:600; white-space:nowrap; margin-top:2px; }
-  .report-tag-macro { background:rgba(68,138,255,0.12); color:var(--blue); }
-  .report-tag-policy { background:rgba(255,214,0,0.12); color:var(--yellow); }
-  .report-tag-industry { background:rgba(255,23,68,0.1); color:#ff5a5f; }
-  .report-tag-market { background:rgba(0,200,83,0.1); color:#00c853; }
-  .report-tag-company { background:rgba(156,39,176,0.1); color:#ce93d8; }
-  .report-tag-overseas { background:rgba(0,188,212,0.1); color:#4dd0e1; }
-  .report-focus-list { display:grid; gap:10px; }
-  .report-focus-item { background:var(--card); border:1px solid var(--border); border-left:3px solid var(--yellow); border-radius:0 10px 10px 0; padding:14px 16px; }
-  .report-focus-item .title { font-weight:700; font-size:.95rem; margin-bottom:4px; color:var(--yellow); }
-  .report-focus-item .desc { font-size:.85rem; color:var(--text-dim); line-height:1.5; }
-  .report-ipo-table { width:100%; border-collapse:collapse; font-size:.88rem; }
-  .report-ipo-table th { background:var(--card-hover); color:var(--text-dim); padding:10px 12px; text-align:left; font-weight:600; border-bottom:1px solid var(--border); }
-  .report-ipo-table td { padding:10px 12px; border-bottom:1px solid var(--border); }
-  .report-calendar { display:grid; gap:8px; }
-  .report-calendar-item { display:flex; gap:14px; align-items:center; padding:10px 14px; background:var(--card); border:1px solid var(--border); border-radius:8px; font-size:.88rem; }
-  .report-calendar-item .time { color:var(--yellow); font-weight:700; min-width:60px; font-size:.9rem; }
-  .report-views { display:grid; gap:14px; }
-  .report-view-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 18px; }
-  .report-view-card .org { font-weight:700; color:var(--blue); font-size:.95rem; margin-bottom:6px; }
-  .report-view-card .vtitle { font-weight:600; font-size:.9rem; margin-bottom:6px; }
-  .report-view-card .content { font-size:.85rem; color:var(--text-dim); line-height:1.6; }
+  .report-hero { text-align:center; margin-bottom:28px; padding:28px 20px 22px; background:linear-gradient(135deg, rgba(255,214,0,0.06), rgba(68,138,255,0.06)); border-radius:16px; border:1px solid var(--border); }
+  .report-hero .en { font-size:.75rem; letter-spacing:3px; color:var(--text-dim); text-transform:uppercase; margin-bottom:6px; font-weight:600; }
+  .report-hero h1 { font-size:1.6rem; color:var(--yellow); margin-bottom:8px; }
+  .report-hero .date-line { font-size:.9rem; color:var(--text-dim); margin-bottom:6px; }
+  .report-hero .sub { font-size:.82rem; color:var(--text-dim); }
+  .report-anchor-bar { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin:16px 0 24px; padding:10px; background:var(--card); border-radius:10px; border:1px solid var(--border); }
+  .report-anchor { font-size:.78rem; padding:4px 10px; border-radius:6px; color:var(--text-dim); cursor:pointer; transition:all .15s; text-decoration:none; white-space:nowrap; }
+  .report-anchor:hover { background:var(--card-hover); color:var(--yellow); }
+
+  /* 核心概览指数网格 */
+  .report-core-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:16px; }
+  .report-core-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 10px; text-align:center; }
+  .report-core-card .name { font-size:.78rem; color:var(--text-dim); margin-bottom:4px; }
+  .report-core-card .val { font-size:1.1rem; font-weight:700; }
+  .report-core-card .chg { font-size:.82rem; font-weight:600; margin-top:2px; }
+
+  /* 核心提示框 */
+  .report-alert { background:linear-gradient(135deg, rgba(255,214,0,0.08), rgba(255,23,68,0.06)); border:1px solid rgba(255,214,0,0.25); border-left:4px solid var(--yellow); border-radius:0 12px 12px 0; padding:14px 18px; margin-bottom:28px; }
+  .report-alert .title { font-weight:700; color:var(--yellow); font-size:.95rem; margin-bottom:6px; }
+  .report-alert .content { font-size:.88rem; line-height:1.7; color:var(--text); }
+
+  .report-section { margin-bottom:28px; }
+  .report-section h2 { font-size:1.05rem; color:var(--yellow); margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; font-weight:700; }
+  .report-section h3 { font-size:.92rem; color:var(--text-dim); margin:14px 0 8px; font-weight:600; }
+
+  /* 通用表格 */
+  .report-table-wrap { overflow-x:auto; margin-bottom:12px; border-radius:10px; border:1px solid var(--border); }
+  .report-table { width:100%; border-collapse:collapse; font-size:.85rem; }
+  .report-table th { background:var(--card-hover); color:var(--text-dim); padding:10px 12px; text-align:left; font-weight:600; border-bottom:1px solid var(--border); white-space:nowrap; font-size:.8rem; }
+  .report-table td { padding:10px 12px; border-bottom:1px solid var(--border); }
+  .report-table tr:last-child td { border-bottom:none; }
+  .report-table tr:hover td { background:var(--card-hover); }
+  .report-table .num { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+  .report-table .note { color:var(--text-dim); font-size:.8rem; }
+
+  /* 要点列表 */
+  .report-points { list-style:none; padding:0; margin:0; }
+  .report-points li { padding:8px 0 8px 18px; position:relative; font-size:.88rem; line-height:1.65; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .report-points li:last-child { border-bottom:none; }
+  .report-points li::before { content:''; position:absolute; left:4px; top:15px; width:5px; height:5px; border-radius:50%; background:var(--yellow); }
+
+  /* A股警告段 */
+  .report-warn-box { background:rgba(255,23,68,0.06); border-left:4px solid var(--green); border-radius:0 10px 10px 0; padding:12px 16px; margin:12px 0; font-size:.88rem; line-height:1.7; }
+  .report-warn-box .wt { font-weight:700; color:var(--green); margin-bottom:4px; }
+
+  /* 板块表现 */
+  .report-sector-list { display:grid; gap:8px; margin-top:12px; }
+  .report-sector-item { display:flex; gap:10px; font-size:.85rem; line-height:1.6; padding:8px 12px; background:var(--card); border-radius:8px; border:1px solid var(--border); }
+  .report-sector-item .label { font-weight:600; white-space:nowrap; min-width:80px; color:var(--text-dim); }
+  .report-sector-item.up .label { color:var(--green); }
+  .report-sector-item.down .label { color:var(--red); }
+
+  /* 新闻标签项 */
+  .report-news-item { padding:12px 0; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:flex-start; }
+  .report-news-item:last-child { border-bottom:none; }
+  .report-news-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.72rem; font-weight:700; white-space:nowrap; margin-top:3px; min-width:42px; text-align:center; }
+  .report-news-body { flex:1; }
+  .report-news-body .ntitle { font-weight:700; font-size:.9rem; margin-bottom:3px; }
+  .report-news-body .ncontent { font-size:.83rem; color:var(--text-dim); line-height:1.6; }
+
+  /* 标签色 */
+  .report-tag-hot { background:rgba(255,23,68,0.15); color:#ff5a5f; }
+  .report-tag-policy { background:rgba(255,214,0,0.15); color:var(--yellow); }
+  .report-tag-industry { background:rgba(68,138,255,0.15); color:var(--blue); }
+  .report-tag-market { background:rgba(0,200,83,0.12); color:#00c853; }
+  .report-tag-blue { background:rgba(156,39,176,0.12); color:#ce93d8; }
+  .report-tag-green { background:rgba(0,188,212,0.12); color:#4dd0e1; }
+  .report-tag-macro { background:rgba(255,152,0,0.12); color:#ffb74d; }
+  .report-tag-overseas { background:rgba(0,188,212,0.12); color:#4dd0e1; }
+
+  /* 星级 */
+  .report-stars { color:var(--yellow); letter-spacing:1px; font-size:.85rem; white-space:nowrap; }
+
+  /* 流动性提示 */
+  .report-liquidity { background:var(--blue-bg); border-left:3px solid var(--blue); border-radius:0 8px 8px 0; padding:10px 14px; margin-top:12px; font-size:.85rem; line-height:1.6; }
+  .report-liquidity .lt { font-weight:700; color:var(--blue); margin-bottom:4px; }
+
+  /* 展望区块 */
+  .report-outlook-grid { display:grid; gap:12px; }
+  .report-outlook-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .report-outlook-card .ocat { font-weight:700; font-size:.9rem; color:var(--blue); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+  .report-outlook-card .ocontent { font-size:.85rem; color:var(--text-dim); line-height:1.7; }
+
+  /* 来源 */
+  .report-sources { font-size:.78rem; color:var(--text-dim); margin-top:20px; padding-top:16px; border-top:1px solid var(--border); }
+  .report-sources li { margin-bottom:4px; list-style:disc; margin-left:18px; }
+  .report-disclaimer { text-align:center; margin-top:16px; padding:12px; color:var(--text-dim); font-size:.78rem; border-top:1px solid var(--border); }
   .report-empty { text-align:center; padding:60px 20px; color:var(--text-dim); font-size:.95rem; }
   .report-empty .icon { font-size:3rem; margin-bottom:12px; }
 </style>
@@ -748,9 +800,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.25.0';
-const APP_VERSION_DATE = '2026-07-03 12:10';
-const APP_RELEASE_NOTES = '修复了一些问题和BUG。';
+const APP_VERSION = 'v1.26.0';
+const APP_VERSION_DATE = '2026-07-03 15:30';
+const APP_RELEASE_NOTES = '全面升级金融市场早报模块，新增10+板块详细内容（美股/A股/港股/宏观/外汇/商品/加密/新闻/日历/展望）。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -881,6 +933,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.26.0', date:'2026-07-03 15:30', notes:'全面升级金融市场早报模块，按参考页面完善字段结构：新增核心概览指数卡片、美股板块带涨跌点数、A股板块带领涨领跌/成交额、港股要点、宏观数据表格（前值/预期/实际）、外汇商品双表格+分析、加密货币表格+要点、公司新闻带分类标签（重磅/行业/政策/市场/国债/能源）、经济日历带星级+流动性提示、市场展望分四大市场、数据来源列表；新增锚点导航栏；完善首页早报卡片摘要显示。' },
   { version:'v1.25.0', date:'2026-07-03 12:10', notes:'新增动态财神像icon（页面顶部中间，带浮动/发光动画，点击有弹跳效果）；新增金融市场早报卡片及详情模块（隔夜外盘、要闻精选、今日关注、新股申购、财经日历、机构观点）；新增面包屑"早报"入口；UI与现有深色/亮色主题兼容。' },
   { version:'v1.24.0', date:'2026-07-03 11:30', notes:'新增用户2233账号，该账号不显示纪念日卡片、详情及面包屑导航；版本更新说明对2233账号显示精简内容。' },
   { version:'v1.23.0', date:'2026-07-03 10:20', notes:'修复基金历史收益显示0/相同值bug；修复数据更新时间模板字符串不解析bug。' },
@@ -926,72 +979,266 @@ const VERSION_HISTORY = [
 const MORNING_REPORTS = {
   '2026-07-03': {
     date: '2026-07-03',
-    weekday: '周四',
-    overseas: [
-      { name: '道琼斯', value: '43008.36', chg: 0.18, chgVal: '+76.35' },
-      { name: '纳斯达克', value: '20318.35', chg: 0.30, chgVal: '+60.66' },
-      { name: '标普500', value: '5943.11', chg: 0.13, chgVal: '+7.68' },
-      { name: '英国富时100', value: '8733.27', chg: -0.22, chgVal: '-19.45' },
-      { name: '德国DAX', value: '20012.54', chg: 0.05, chgVal: '+10.23' },
-      { name: 'COMEX黄金', value: '4352.80', chg: 0.85, chgVal: '+36.70' },
-      { name: 'WTI原油', value: '72.85', chg: -1.20, chgVal: '-0.88' },
-      { name: '美元/人民币', value: '6.8520', chg: -0.08, chgVal: '-0.0055' }
+    weekday: '周五',
+    dateEn: '2026-07-03 FRI',
+    summary: '覆盖全球宏观 · A股 · 港股 · 美股 · 外汇 · 商品 · 加密货币',
+    coreAlert: {
+      title: '⚠ 今日重点关注',
+      content: '美国6月非农仅增5.7万人，远低于预期的11.5万人，失业率升至4.2%。数据公布后美元跳水、黄金飙升、加息预期推迟至12月。美股隔夜呈现"道强纳弱"风格切换。A股科技股遭遇"黑色星期四"，科创50暴跌7.70%。'
+    },
+    coreIndices: [
+      { name: '上证指数', value: '4,028.90', chg: -2.03 },
+      { name: '道琼斯', value: '52,900.07', chg: 1.14 },
+      { name: '标普500', value: '7,483.24', chg: 0.00 },
+      { name: '纳斯达克', value: '25,832.67', chg: -0.80 },
+      { name: '恒生指数', value: '23,055.03', chg: 0.76 },
+      { name: '现货黄金', value: '$4,123', chg: 2.30 }
     ],
-    headlines: [
-      { tag: '宏观', text: '央行公开市场净投放2000亿元，呵护半年末流动性平稳跨季' },
-      { tag: '政策', text: '国务院常务会议审议通过关于促进创业投资高质量发展的若干政策' },
-      { tag: '行业', text: '半导体设备国产化率持续提升，龙头企业订单饱满' },
-      { tag: '市场', text: '两市成交额连续5日突破2万亿，北向资金净买入超80亿元' },
-      { tag: '公司', text: '多家券商发布7月策略，普遍看好科技成长与消费复苏主线' },
-      { tag: '海外', text: '美联储6月会议纪要释放鹰派信号，9月降息预期降温' }
+    usStock: {
+      title: '🌎 美股 · 隔夜表现',
+      indices: [
+        { name: '道琼斯工业', value: '52,900.07', chg: 1.14, chgVal: '+594.83' },
+        { name: '标普500', value: '7,483.24', chg: 0.00, chgVal: '+0.01' },
+        { name: '纳斯达克综合', value: '25,832.67', chg: -0.80, chgVal: '-207.36' }
+      ],
+      points: [
+        '美股三大股指涨跌分化，道指领涨1.14%创历史新高，纳指连续回调跌0.80%',
+        '标普500十一大板块八涨三跌：医疗(+2.70%)、必需消费品(+2.41%)领涨；科技(-1.46%)、通信服务(-0.83%)领跌',
+        '美国6月非农爆冷后，市场加息预期从10月推迟至12月，美股期指短线拉升，科技股盘前企稳',
+        '风格切换加速：资金从AI/科技巨头流向传统价值板块，盘面呈现明显的"价值优于成长"格局'
+      ]
+    },
+    aShare: {
+      title: '🇨🇳 A股 · 市场回顾',
+      indices: [
+        { name: '上证指数', value: '4,028.90', chg: -2.03, note: '银行护盘跌幅最小' },
+        { name: '深证成指', value: '15,498.81', chg: -3.85, note: '科技股拖累' },
+        { name: '创业板指', value: '4,017.27', chg: -5.71, note: '创2025/4/7以来最大跌幅' },
+        { name: '科创50', value: '1,987.29', chg: -7.70, note: '年内最大单日跌幅' }
+      ],
+      warning: '⚠ 科技股"黑色星期四"',
+      warningContent: 'A股三大指数集体大幅下跌，但等权口径下万得全A微涨0.19%，全市场仍有2,219只个股上涨、156只涨停。下跌主要集中在权重科技股：半导体、CPO、算力硬件板块集体重挫，北方华创、金海通跌停，寒武纪跌超5%。',
+      sectors: {
+        leading: '贵金属、人形机器人、创新药、银行（宁波银行/沪农商行/成都银行涨超3%）、汽车',
+        lagging: '半导体、CPO、算力硬件、通信设备 — 前期涨幅巨大的热门赛道遭遇集中获利了结',
+        turnover: '沪深两市约3.45万亿元，较前一日缩量约2,095亿元'
+      }
+    },
+    hkStock: {
+      title: '🏠 港股 · 市场回顾',
+      indices: [
+        { name: '恒生指数', value: '23,055.03', chg: 0.76 },
+        { name: '恒生科技指数', value: '4,454.28', chg: -0.40 }
+      ],
+      points: [
+        '恒指收涨0.76%，主板成交3,696.3亿港元',
+        '恒生科技指数逆势微跌0.40%，科技股承压与A股联动',
+        '港股走势强于A股，受益于南向资金持续流入及估值优势'
+      ]
+    },
+    macro: {
+      title: '🌍 宏观数据与政策动态',
+      headline: '美国6月非农就业报告（重磅）',
+      dataTable: [
+        { metric: '非农新增就业', prev: '17.2万', expected: '11.5万', actual: '5.7万' },
+        { metric: '失业率', prev: '4.1%', expected: '4.2%', actual: '4.2%' },
+        { metric: '4月/5月累计下修', prev: '—', expected: '—', actual: '-7.4万' }
+      ],
+      points: [
+        '美国ISM制造业PMI（6月）：53.3，连续第六个月扩张，但低于预期的53.9，扩张步伐放缓。14个制造行业中14个报告增长，就业分项仍处收缩区间',
+        '美联储政策预期：非农远不及预期后，市场重新定价利率路径，加息时点从此前预期10月推迟至12月，降息预期升温但路径存在分歧',
+        '美元指数：非农数据公布后直线跳水，跌破101关口'
+      ]
+    },
+    fxCommodity: {
+      title: '💰 外汇与商品',
+      fx: [
+        { name: '美元指数', value: '101.35', chg: -0.06, note: '非农后跌破101' },
+        { name: '美元/人民币（中间价）', value: '6.8088', chg: -0.21, note: '央行小幅下调', chgStr: '-21bp' },
+        { name: '美元/人民币（在岸）', value: '6.7879', chg: -0.0015, note: '日内基本持平', chgStr: '-0.0015%' }
+      ],
+      commodity: [
+        { name: '现货黄金', value: '$4,123.21', chg: 2.30, note: '非农爆冷后暴力拉升' },
+        { name: '现货白银', value: '$60.94', chg: 3.04, note: '跟随黄金走强' },
+        { name: 'WTI原油', value: '$68.69', chg: 0.16, note: '能源运输恢复压制油价' },
+        { name: '布伦特原油', value: '$71.80', chg: 0.32, note: '窄幅波动' }
+      ],
+      analysis: '📈 黄金与油价走势分化',
+      analysisContent: '油价与金价二季度同时回落但驱动因素分化：油价下行主要受能源运输恢复影响，金价压力来自美联储偏鹰预期与技术面弱化。非农数据公布后，黄金暴力拉涨逾2%至$4,123，银价涨超3%。国内成品油调价窗口今日24时开启，零售限价大概率下调。'
+    },
+    crypto: {
+      title: '🟢 加密货币',
+      items: [
+        { name: 'BTC / 比特币', value: '$61,253', chg: 4.47, note: '从$5.8万低点强势反弹' },
+        { name: 'ETH / 以太坊', value: '$1,647', chg: 4.69, note: '跟随BTC反弹' }
+      ],
+      points: [
+        '比特币从7月初$5.8万低点（2024年底以来新低）强劲反弹至$6.1万上方，24H涨超4.5%',
+        '反弹逻辑：非农爆冷导致美元走弱、美联储加息预期降温，风险资产集体受益',
+        '上半年比特币从$4万冲高至$6.3万后回落，"数字黄金"叙事阶段性弱化'
+      ]
+    },
+    news: {
+      title: '📰 公司与行业重大新闻',
+      items: [
+        { tag: '重磅', tagClass: 'report-tag-hot', title: 'Meta计划出售闲置AI算力', content: '— Meta正筹划推出云基础设施业务，对外出售过剩AI计算能力和模型访问权限，直接挑战AWS/Azure/谷歌云。消息引发全球市场对"AI算力过剩"的担忧，美股费城半导体指数暴跌超6%。' },
+        { tag: '行业', tagClass: 'report-tag-industry', title: '全球科技股遭遇"黑色星期四"', content: '— 日韩股市大幅下挫（韩国KOSPI跌7.89%），A股半导体/算力/CPO集体暴跌。多重利空叠加：AI算力过剩担忧 + 交易拥挤获利了结 + 中报窗口期临近 + 估值风险提示公告频发。' },
+        { tag: '政策', tagClass: 'report-tag-policy', title: '高端制造税收补贴政策落地', content: '— 2026.7.1至2028年底，高端制造领域税收优惠政策正式实施，利好高端装备、新材料、新能源汽车等板块。' },
+        { tag: '市场', tagClass: 'report-tag-market', title: '广期所引入境外交易者', content: '— 7月3日9时起，广期所正式引入境外交易者参与碳酸锂期货及期权交易，中国大宗商品市场对外开放迈出重要一步。' },
+        { tag: '国债', tagClass: 'report-tag-blue', title: '800亿元30年期超长期特别国债今日招标', content: '— 全年总额1.3万亿，本次发行后整体进度突破50%。三季度将集中发行11期20/30/50年期超长债。' },
+        { tag: '能源', tagClass: 'report-tag-green', title: '国内成品油调价窗口今日开启', content: '— 7月3日24时，本轮成品油零售限价大概率迎下调，利好物流运输及消费者成本。' }
+      ]
+    },
+    calendar: {
+      title: '📅 今日经济日历与风险事件',
+      items: [
+        { time: '全天', event: '纽约交易所因美国独立日假期休市', stars: 3 },
+        { time: '09:00', event: '广期所碳酸锂期货引入境外交易者', stars: 2 },
+        { time: '待定', event: '2026全球数字经济大会 · AI融合应用论坛', stars: 2 },
+        { time: '待定', event: '欧元区6月服务业PMI终值', stars: 2 },
+        { time: '24:00', event: '国内成品油零售限价调价窗口', stars: 1 },
+        { time: '全天', event: '800亿元30年期超长期特别国债招标', stars: 1 }
+      ],
+      liquidity: '📝 流动性提示',
+      liquidityContent: '今日有2,315亿元7天期逆回购到期，关注央行是否进行等额或超额续做，以判断短期流动性态度。'
+    },
+    outlook: {
+      title: '📊 市场展望',
+      global: '美国6月非农仅增5.7万人，远低于预期，叠加4/5月数据累计下修7.4万，劳动力市场降温信号明确。市场已将美联储加息预期从10月推迟至12月，短期对风险资产偏利多。今日纽约交易所因独立日休市，美盘交投清淡，市场焦点将转向欧洲数据及下周的美联储会议纪要。',
+      ashare: '昨日科技股遭遇剧烈调整，但市场呈现"指数弱、个股活跃"格局，风格切换加速深化。短期内关注：(1) 科创板/半导体板块调整是否已到位；(2) 北方华创、寒武纪等龙头能否止跌企稳；(3) 黄金、银行、创新药等防御板块能否延续相对优势。今日无新股申购，流动性压力可控。',
+      hk: '恒指独立走强，收涨0.76%，显示南向资金逢低布局意愿较强。恒生科技指数微跌，预计短期跟随A股科技板块波动。在A股风格切换背景下，港股低估值优势有望吸引更多配置资金。',
+      commodity: '黄金在非农爆冷后暴力拉升逾2%，短期关注$4,150阻力位。油价受能源运输恢复压制，上方空间有限。比特币从$5.8万低点反弹至$6.1万，但上方$6.3万前高仍构成重要阻力，中期走势取决于全球流动性预期及监管政策。'
+    },
+    sources: [
+      { name: '新华网', title: '纽约股市三大股指2日涨跌不一', url: '#' },
+      { name: '中财网', title: '道琼斯收涨1.14% 标普指数收平', url: '#' },
+      { name: '证券时报', title: 'A股半导体崩跌，全球资本市场遭遇"黑色星期四"', url: '#' },
+      { name: '中国新闻网', title: '美国6月非农就业新增5.7万人 失业率4.2%', url: '#' },
+      { name: '财联社', title: '比特币涨至$61,253，24H涨4.47%', url: '#' },
+      { name: '东方财富网', title: '7月3日投资日历', url: '#' }
     ],
-    focus: [
-      { title: '关注半年报业绩预告窗口期', desc: '7月起进入半年报业绩预告密集披露期，重点关注预增超预期个股' },
-      { title: 'AI算力产业链持续景气', desc: '光模块、服务器、液冷等细分领域需求旺盛，关注订单落地情况' },
-      { title: '新能源板块估值修复', desc: '锂电池、光伏板块经历深度调整后，部分龙头估值已具吸引力' },
-      { title: '黄金等避险资产配置价值', desc: '地缘政治不确定性叠加央行购金需求，黄金中长期看涨' }
-    ],
-    ipo: [
-      { name: '华信永道', code: '839792', type: '北交所新股', price: '10.38', pe: '23.5' },
-      { name: '博苑股份', code: '301622', type: '创业板新股', price: '28.50', pe: '32.1' }
-    ],
-    calendar: [
-      { time: '09:30', event: '中国6月财新服务业PMI' },
-      { time: '20:30', event: '美国6月非农就业数据' },
-      { time: '次日02:00', event: '美联储FOMC公布货币政策会议纪要' }
-    ],
-    views: [
-      { org: '中信证券', title: '震荡上行格局不变，科技消费双轮驱动', content: '预计7月市场将延续震荡上行态势，配置上建议以科技成长为主线，关注AI算力、半导体设备、机器人等高景气赛道，同时布局消费复苏中的食品饮料、医药等板块。' },
-      { org: '国泰君安', title: '把握中报行情，聚焦业绩确定性', content: '当前市场流动性充裕，风险偏好回升，中报业绩超预期将成为7月最重要的alpha来源。建议重点关注业绩预增且估值合理的新能源汽车产业链、军工、通信设备等方向。' }
-    ]
+    disclaimer: '免责声明：本早报基于公开市场数据整理，仅供参考，不构成任何投资建议。投资有风险，入市须谨慎。'
   },
   '2026-07-02': {
     date: '2026-07-02',
-    weekday: '周三',
-    overseas: [
-      { name: '道琼斯', value: '42932.01', chg: -0.05, chgVal: '-21.35' },
-      { name: '纳斯达克', value: '20257.69', chg: 0.25, chgVal: '+50.43' },
-      { name: '标普500', value: '5935.43', chg: 0.08, chgVal: '+4.80' },
-      { name: 'COMEX黄金', value: '4316.10', chg: 0.32, chgVal: '+13.80' },
-      { name: 'WTI原油', value: '73.73', chg: 0.65, chgVal: '+0.48' },
-      { name: '美元/人民币', value: '6.8575', chg: 0.02, chgVal: '+0.0014' }
+    weekday: '周四',
+    dateEn: '2026-07-02 THU',
+    summary: '覆盖全球宏观 · A股 · 港股 · 美股 · 外汇 · 商品',
+    coreAlert: {
+      title: '⚠ 今日重点关注',
+      content: 'A股上半年收官，科创50累计涨超18%领跑全球。6月制造业PMI 49.5%环比微升，经济弱复苏态势延续。美股小幅收涨，市场静待今晚非农数据。'
+    },
+    coreIndices: [
+      { name: '上证指数', value: '4,112.30', chg: 0.35 },
+      { name: '道琼斯', value: '52,305.24', chg: 0.25 },
+      { name: '标普500', value: '7,483.23', chg: 0.08 },
+      { name: '纳斯达克', value: '26,040.03', chg: 0.32 },
+      { name: '恒生指数', value: '22,880.50', chg: 0.45 },
+      { name: '现货黄金', value: '$4,030', chg: 0.52 }
     ],
-    headlines: [
-      { tag: '宏观', text: '6月制造业PMI为49.5%，环比微升0.2个百分点' },
-      { tag: '政策', text: '证监会发布新"国九条"配套政策，进一步强化分红导向' },
-      { tag: '行业', text: '人形机器人产业化加速，核心零部件企业受益' },
-      { tag: '市场', text: 'A股上半年收官，科创50指数累计上涨超18%' }
+    usStock: {
+      title: '🌎 美股 · 隔夜表现',
+      indices: [
+        { name: '道琼斯工业', value: '52,305.24', chg: 0.25, chgVal: '+130.45' },
+        { name: '标普500', value: '7,483.23', chg: 0.08, chgVal: '+5.98' },
+        { name: '纳斯达克综合', value: '26,040.03', chg: 0.32, chgVal: '+83.12' }
+      ],
+      points: [
+        '美股三大指数小幅收涨，市场等待今晚非农数据指引',
+        '科技股多数上涨，英伟达、微软小幅攀升',
+        '初请失业金人数23.5万，高于预期，劳动力市场显现降温迹象'
+      ]
+    },
+    aShare: {
+      title: '🇨🇳 A股 · 市场回顾',
+      indices: [
+        { name: '上证指数', value: '4,112.30', chg: 0.35, note: '半年线收官' },
+        { name: '深证成指', value: '16,119.45', chg: 0.52, note: '消费领涨' },
+        { name: '创业板指', value: '4,260.81', chg: 0.68, note: '新能源反弹' },
+        { name: '科创50', value: '2,153.08', chg: 1.15, note: '上半年累计涨18%+' }
+      ],
+      warning: '📊 A股上半年收官',
+      warningContent: '上半年A股主要指数全线收涨，科创50以18%+涨幅领跑全球主要指数。6月收官日市场情绪偏暖，超3000只个股上涨，成交额维持在2万亿上方。',
+      sectors: {
+        leading: '消费电子、食品饮料、新能源汽车、医药',
+        lagging: '煤炭、银行、石油石化等防御板块小幅回调',
+        turnover: '沪深两市约2.68万亿元'
+      }
+    },
+    hkStock: {
+      title: '🏠 港股 · 市场回顾',
+      indices: [
+        { name: '恒生指数', value: '22,880.50', chg: 0.45 },
+        { name: '恒生科技指数', value: '4,472.15', chg: 0.82 }
+      ],
+      points: [
+        '恒指收涨0.45%，恒生科技指数涨0.82%',
+        '科技股和消费股领涨，南向资金净买入超50亿港元'
+      ]
+    },
+    macro: {
+      title: '🌍 宏观数据与政策动态',
+      headline: '中国6月制造业PMI',
+      dataTable: [
+        { metric: '制造业PMI', prev: '49.3%', expected: '49.6%', actual: '49.5%' },
+        { metric: '非制造业PMI', prev: '50.5%', expected: '50.4%', actual: '50.3%' }
+      ],
+      points: [
+        '6月制造业PMI 49.5%，环比微升0.2个百分点，但仍处荣枯线以下',
+        '新订单指数回升至49.8%，需求端边际改善',
+        '国务院常务会议审议通过促进创业投资高质量发展政策'
+      ]
+    },
+    fxCommodity: {
+      title: '💰 外汇与商品',
+      fx: [
+        { name: '美元指数', value: '101.42', chg: -0.12, note: '非农前窄幅震荡', chgStr: '-0.12%' },
+        { name: '美元/人民币（在岸）', value: '6.7894', chg: -0.03, note: '人民币持稳', chgStr: '-0.03%' }
+      ],
+      commodity: [
+        { name: '现货黄金', value: '$4,030.50', chg: 0.52, note: '静待非农数据' },
+        { name: 'WTI原油', value: '$68.58', chg: -0.35, note: '库存增加压制' }
+      ],
+      analysis: '',
+      analysisContent: ''
+    },
+    crypto: {
+      title: '🟢 加密货币',
+      items: [
+        { name: 'BTC / 比特币', value: '$58,620', chg: -1.25, note: '继续探底' }
+      ],
+      points: [
+        '比特币继续在$5.8万附近震荡，市场等待非农数据方向指引',
+        'ETF资金流向显示机构观望情绪浓厚'
+      ]
+    },
+    news: {
+      title: '📰 公司与行业重大新闻',
+      items: [
+        { tag: '政策', tagClass: 'report-tag-policy', title: '证监会发布新"国九条"配套政策', content: '— 进一步强化分红导向，推动上市公司提升投资者回报水平。' },
+        { tag: '行业', tagClass: 'report-tag-industry', title: '人形机器人产业化加速', content: '— 多家核心零部件企业发布半年报预告，订单同比大幅增长。' }
+      ]
+    },
+    calendar: {
+      title: '📅 今日经济日历与风险事件',
+      items: [
+        { time: '09:45', event: '中国6月财新制造业PMI', stars: 2 },
+        { time: '20:30', event: '美国6月非农就业数据', stars: 3 }
+      ],
+      liquidity: '',
+      liquidityContent: ''
+    },
+    outlook: {
+      title: '📊 市场展望',
+      global: '今晚美国非农数据是全球市场焦点，若数据大幅不及预期可能强化降息预期，利好风险资产；若超预期强劲则可能压制市场。',
+      ashare: '下半年开局，关注中报业绩预告窗口期。市场结构性行情特征明显，建议均衡配置科技成长与消费复苏主线。',
+      hk: '港股估值优势明显，南向资金持续流入提供支撑。',
+      commodity: '黄金在非农前维持谨慎，数据公布后或选择方向。'
+    },
+    sources: [
+      { name: '东方财富网', title: '7月2日投资日历', url: '#' }
     ],
-    focus: [
-      { title: '下半年开局市场展望', desc: '关注政策面持续发力和资金面变化，结构性行情仍为主基调' }
-    ],
-    ipo: [],
-    calendar: [
-      { time: '09:45', event: '中国6月财新制造业PMI' }
-    ],
-    views: [
-      { org: '海通证券', title: '下半年A股有望突破前高', content: '综合估值、盈利、政策和资金面因素，判断下半年A股将迎来更明确的上行行情。' }
-    ]
+    disclaimer: '免责声明：本早报基于公开市场数据整理，仅供参考，不构成任何投资建议。'
   }
 };
 
@@ -4300,18 +4547,24 @@ function renderHome() {
   // Card 3: 金融市场早报
   const report = getMorningReport(d.date);
   if (report) {
-    const us3 = report.overseas.filter(o => ['道琼斯','纳斯达克','标普500'].includes(o.name));
-    const hls = report.headlines.slice(0, 2);
-    const focus0 = report.focus[0];
+    const coreAll = report.coreIndices || [];
+    const coreShow = coreAll.slice(0, 6);
+    const alertShort = report.coreAlert ? report.coreAlert.content.substring(0, 85) + (report.coreAlert.content.length > 85 ? '...' : '') : '';
+    const hotNews = report.news && report.news.items ? report.news.items.slice(0, 2) : [];
+    const usIdx = report.usStock && report.usStock.indices ? report.usStock.indices[0] : null;
     html += `<div class="home-card" onclick="goMorningReport()"><div class="home-card-body">
       <h2>📰 金融市场早报 <span style="font-size:.75rem;color:var(--text-dim);font-weight:400">${report.date} ${report.weekday}</span></h2>
-      <div class="idx-grid" style="margin-bottom:10px;grid-template-columns:repeat(3,1fr)">
-        ${us3.map(o => `<div class="idx-card" style="padding:8px"><div class="name">${o.name}</div><div class="pt" style="font-size:1.1rem">${o.value}</div><div class="chg ${cls(o.chg)}" style="font-size:.85rem">${o.chgVal} (${sign(o.chg)}${fmt(o.chg)}%)</div></div>`).join('')}
-      </div>
-      <div style="font-size:.82rem;color:var(--text-dim);margin:8px 0">
-        ${hls.map(h => `<div style="margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span class="tag tag-blue" style="font-size:.7rem;margin-right:4px">${h.tag}</span>${h.text}</div>`).join('')}
-      </div>
-      ${focus0 ? `<div style="font-size:.8rem;padding:8px;background:var(--yellow-bg);border-radius:8px;border-left:3px solid var(--yellow);margin-top:8px"><b style="color:var(--yellow)">⚡ ${focus0.title}</b></div>` : ''}
+      ${coreShow.length ? `<div class="idx-grid" style="margin-bottom:10px;grid-template-columns:repeat(${Math.min(coreShow.length, 3)},1fr)">
+        ${coreShow.map(o => `<div class="idx-card" style="padding:8px"><div class="name">${o.name}</div><div class="pt" style="font-size:1.05rem">${o.value}</div><div class="chg ${cls(o.chg)}" style="font-size:.82rem">${sign(o.chg)}${fmt(o.chg)}%</div></div>`).join('')}
+      </div>` : ''}
+      ${report.coreAlert ? `<div style="font-size:.78rem;padding:8px 10px;background:var(--yellow-bg);border-radius:8px;border-left:3px solid var(--yellow);margin:8px 0;line-height:1.5;color:var(--text-dim)">
+        <b style="color:var(--yellow)">⚠</b> ${alertShort}
+      </div>` : ''}
+      ${hotNews.length ? `<div style="margin-top:8px">
+        ${hotNews.map(n => `<div style="font-size:.78rem;color:var(--text-dim);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          <span class="report-news-tag ${n.tagClass || 'report-tag-market'}" style="font-size:.65rem;margin-right:4px;padding:1px 6px">${n.tag}</span>${n.title}
+        </div>`).join('')}
+      </div>` : ''}
     </div><div class="card-arrow">查看完整早报 →</div></div>`;
   } else {
     html += `<div class="home-card" onclick="goMorningReport()"><div class="home-card-body">
@@ -4462,98 +4715,257 @@ function renderMorningReport() {
     return;
   }
 
-  const tagClass = { '宏观':'report-tag-macro', '政策':'report-tag-policy', '行业':'report-tag-industry', '市场':'report-tag-market', '公司':'report-tag-company', '海外':'report-tag-overseas' };
+  function chgCell(v) {
+    if (v > 0) return `<span class="pos">+${fmt(v)}%</span>`;
+    if (v < 0) return `<span class="neg">${fmt(v)}%</span>`;
+    return `<span style="color:var(--text-dim)">0.00%</span>`;
+  }
+  function stars(n) { return '★'.repeat(n) + '☆'.repeat(3-n); }
 
   let html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>`;
 
-  html += `<div class="report-header">
+  // Hero 标题区
+  html += `<div class="report-hero">
+    <div class="en">MORNING BRIEF</div>
     <h1>📰 金融市场早报</h1>
-    <div class="report-date">${report.date} ${report.weekday} · 盘前必读</div>
+    <div class="date-line">${report.dateEn || report.date + ' ' + report.weekday}</div>
+    <div class="sub">${report.summary || ''}</div>
   </div>`;
 
-  // 隔夜外盘
-  html += `<div class="report-section">
-    <h2>🌍 隔夜外盘</h2>
-    <div class="report-overseas-grid">
-      ${report.overseas.map(o => `<div class="report-overseas-card">
-        <div class="name">${o.name}</div>
-        <div class="val">${o.value}</div>
-        <div class="chg ${cls(o.chg)}">${o.chgVal} (${sign(o.chg)}${fmt(o.chg)}%)</div>
+  // 锚点导航
+  const anchors = [
+    { id: 'core', label: '核心概览' },
+    { id: 'us', label: '美股' },
+    { id: 'a', label: 'A股' },
+    { id: 'hk', label: '港股' },
+    { id: 'macro', label: '宏观政策' },
+    { id: 'fx', label: '外汇商品' },
+    { id: 'crypto', label: '加密货币' },
+    { id: 'news', label: '公司行业' },
+    { id: 'cal', label: '经济日历' },
+    { id: 'outlook', label: '市场展望' }
+  ];
+  html += `<div class="report-anchor-bar">${anchors.map(a => `<a class="report-anchor" onclick="document.getElementById('sec-${a.id}')?.scrollIntoView({behavior:'smooth',block:'start'})">${a.label}</a>`).join('')}</div>`;
+
+  // ◆ 核心概览
+  html += `<div class="report-section" id="sec-core">
+    <h2>◆ 核心概览</h2>
+    <div class="report-core-grid">
+      ${report.coreIndices.map(i => `<div class="report-core-card">
+        <div class="name">${i.name}</div>
+        <div class="val">${i.value}</div>
+        <div class="chg">${chgCell(i.chg)}</div>
       </div>`).join('')}
     </div>
+    ${report.coreAlert ? `<div class="report-alert">
+      <div class="title">${report.coreAlert.title}</div>
+      <div class="content">${report.coreAlert.content}</div>
+    </div>` : ''}
   </div>`;
 
-  // 要闻精选
-  html += `<div class="report-section">
-    <h2>📝 要闻精选</h2>
-    <ul class="report-news-list">
-      ${report.headlines.map(h => `<li>
-        <span class="report-tag ${tagClass[h.tag] || 'report-tag-macro'}">${h.tag}</span>
-        <span>${h.text}</span>
-      </li>`).join('')}
-    </ul>
-  </div>`;
-
-  // 今日关注
-  if (report.focus && report.focus.length) {
-    html += `<div class="report-section">
-      <h2>⚡ 今日关注</h2>
-      <div class="report-focus-list">
-        ${report.focus.map((f,i) => `<div class="report-focus-item">
-          <div class="title">${i+1}. ${f.title}</div>
-          <div class="desc">${f.desc}</div>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  }
-
-  // 新股/新债申购
-  if (report.ipo && report.ipo.length) {
-    html += `<div class="report-section">
-      <h2>🎯 新股/新债申购</h2>
-      <table class="report-ipo-table">
-        <thead><tr><th>名称</th><th>代码</th><th>类型</th><th>发行价</th><th>发行市盈率</th></tr></thead>
-        <tbody>${report.ipo.map(i => `<tr>
-          <td style="font-weight:600">${i.name}</td>
-          <td style="color:var(--text-dim)">${i.code}</td>
-          <td><span class="tag tag-blue" style="font-size:.72rem">${i.type}</span></td>
-          <td>${i.price}</td>
-          <td>${i.pe}</td>
+  // 🌎 美股
+  if (report.usStock) {
+    const us = report.usStock;
+    html += `<div class="report-section" id="sec-us">
+      <h2>${us.title}</h2>
+      <div class="report-table-wrap"><table class="report-table">
+        <thead><tr><th>指数</th><th class="num">收盘点位</th><th class="num">涨跌幅</th><th class="num">变动</th></tr></thead>
+        <tbody>${us.indices.map(i => `<tr>
+          <td>${i.name}</td>
+          <td class="num">${i.value}</td>
+          <td class="num">${chgCell(i.chg)}</td>
+          <td class="num">${i.chgVal || ''}</td>
         </tr>`).join('')}</tbody>
-      </table>
+      </table></div>
+      ${us.points && us.points.length ? `<ul class="report-points">${us.points.map(p => `<li>${p}</li>`).join('')}</ul>` : ''}
     </div>`;
   }
 
-  // 财经日历
-  if (report.calendar && report.calendar.length) {
-    html += `<div class="report-section">
-      <h2>📅 财经日历</h2>
-      <div class="report-calendar">
-        ${report.calendar.map(c => `<div class="report-calendar-item">
-          <span class="time">${c.time}</span>
-          <span>${c.event}</span>
-        </div>`).join('')}
+  // 🇨🇳 A股
+  if (report.aShare) {
+    const a = report.aShare;
+    html += `<div class="report-section" id="sec-a">
+      <h2>${a.title}</h2>
+      <div class="report-table-wrap"><table class="report-table">
+        <thead><tr><th>指数</th><th class="num">收盘点位</th><th class="num">涨跌幅</th><th>备注</th></tr></thead>
+        <tbody>${a.indices.map(i => `<tr>
+          <td>${i.name}</td>
+          <td class="num">${i.value}</td>
+          <td class="num">${chgCell(i.chg)}</td>
+          <td class="note">${i.note || ''}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+      ${a.warning ? `<div class="report-warn-box">
+        <div class="wt">${a.warning}</div>
+        <div>${a.warningContent || ''}</div>
+      </div>` : ''}
+      ${a.sectors ? `<h3>板块表现</h3>
+      <div class="report-sector-list">
+        <div class="report-sector-item up"><span class="label">领涨板块</span><span>${a.sectors.leading}</span></div>
+        <div class="report-sector-item down"><span class="label">领跌板块</span><span>${a.sectors.lagging}</span></div>
+        <div class="report-sector-item"><span class="label">成交额</span><span>${a.sectors.turnover}</span></div>
+      </div>` : ''}
+    </div>`;
+  }
+
+  // 🏠 港股
+  if (report.hkStock) {
+    const hk = report.hkStock;
+    html += `<div class="report-section" id="sec-hk">
+      <h2>${hk.title}</h2>
+      <div class="report-table-wrap"><table class="report-table">
+        <thead><tr><th>指数</th><th class="num">收盘点位</th><th class="num">涨跌幅</th></tr></thead>
+        <tbody>${hk.indices.map(i => `<tr>
+          <td>${i.name}</td>
+          <td class="num">${i.value}</td>
+          <td class="num">${chgCell(i.chg)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+      ${hk.points && hk.points.length ? `<ul class="report-points">${hk.points.map(p => `<li>${p}</li>`).join('')}</ul>` : ''}
+    </div>`;
+  }
+
+  // 🌍 宏观数据与政策
+  if (report.macro) {
+    const m = report.macro;
+    html += `<div class="report-section" id="sec-macro">
+      <h2>${m.title}</h2>
+      ${m.headline ? `<h3>${m.headline}</h3>` : ''}
+      ${m.dataTable && m.dataTable.length ? `<div class="report-table-wrap"><table class="report-table">
+        <thead><tr><th>指标</th><th class="num">前值</th><th class="num">预期</th><th class="num">实际</th></tr></thead>
+        <tbody>${m.dataTable.map(r => `<tr>
+          <td>${r.metric}</td>
+          <td class="num">${r.prev}</td>
+          <td class="num">${r.expected}</td>
+          <td class="num" style="font-weight:700;color:var(--yellow)">${r.actual}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : ''}
+      ${m.points && m.points.length ? `<ul class="report-points">${m.points.map(p => `<li>${p}</li>`).join('')}</ul>` : ''}
+    </div>`;
+  }
+
+  // 💰 外汇与商品
+  if (report.fxCommodity) {
+    const fc = report.fxCommodity;
+    html += `<div class="report-section" id="sec-fx">
+      <h2>${fc.title}</h2>
+      ${fc.fx && fc.fx.length ? `<h3>主要货币</h3>
+      <div class="report-table-wrap"><table class="report-table">
+        <thead><tr><th>品种</th><th class="num">最新报价</th><th class="num">涨跌幅</th><th>备注</th></tr></thead>
+        <tbody>${fc.fx.map(i => `<tr>
+          <td>${i.name}</td>
+          <td class="num">${i.value}</td>
+          <td class="num">${i.chgStr ? (i.chg > 0 ? `<span class="pos">+${i.chgStr}</span>` : `<span class="neg">${i.chgStr}</span>`) : chgCell(i.chg)}</td>
+          <td class="note">${i.note || ''}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : ''}
+      ${fc.commodity && fc.commodity.length ? `<h3>大宗商品</h3>
+      <div class="report-table-wrap"><table class="report-table">
+        <thead><tr><th>品种</th><th class="num">最新价格</th><th class="num">涨跌幅</th><th>备注</th></tr></thead>
+        <tbody>${fc.commodity.map(i => `<tr>
+          <td>${i.name}</td>
+          <td class="num">${i.value}</td>
+          <td class="num">${chgCell(i.chg)}</td>
+          <td class="note">${i.note || ''}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : ''}
+      ${fc.analysis ? `<div class="report-warn-box" style="background:rgba(255,214,0,0.06);border-left-color:var(--yellow)">
+        <div class="wt" style="color:var(--yellow)">${fc.analysis}</div>
+        <div>${fc.analysisContent || ''}</div>
+      </div>` : ''}
+    </div>`;
+  }
+
+  // 🟢 加密货币
+  if (report.crypto) {
+    const c = report.crypto;
+    html += `<div class="report-section" id="sec-crypto">
+      <h2>${c.title}</h2>
+      ${c.items && c.items.length ? `<div class="report-table-wrap"><table class="report-table">
+        <thead><tr><th>品种</th><th class="num">最新价格</th><th class="num">24H涨跌幅</th><th>备注</th></tr></thead>
+        <tbody>${c.items.map(i => `<tr>
+          <td>${i.name}</td>
+          <td class="num">${i.value}</td>
+          <td class="num">${chgCell(i.chg)}</td>
+          <td class="note">${i.note || ''}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : ''}
+      ${c.points && c.points.length ? `<ul class="report-points">${c.points.map(p => `<li>${p}</li>`).join('')}</ul>` : ''}
+    </div>`;
+  }
+
+  // 📰 公司与行业新闻
+  if (report.news) {
+    const n = report.news;
+    html += `<div class="report-section" id="sec-news">
+      <h2>${n.title}</h2>
+      <div>${n.items.map(item => `<div class="report-news-item">
+        <span class="report-news-tag ${item.tagClass || 'report-tag-market'}">${item.tag}</span>
+        <div class="report-news-body">
+          <div class="ntitle">${item.title}</div>
+          <div class="ncontent">${item.content}</div>
+        </div>
+      </div>`).join('')}</div>
+    </div>`;
+  }
+
+  // 📅 经济日历
+  if (report.calendar) {
+    const cal = report.calendar;
+    html += `<div class="report-section" id="sec-cal">
+      <h2>${cal.title}</h2>
+      ${cal.items && cal.items.length ? `<div class="report-table-wrap"><table class="report-table">
+        <thead><tr><th>时间</th><th>事件/数据</th><th class="num">重要性</th></tr></thead>
+        <tbody>${cal.items.map(i => `<tr>
+          <td style="font-weight:600;color:var(--yellow);white-space:nowrap">${i.time}</td>
+          <td>${i.event}</td>
+          <td class="num"><span class="report-stars">${stars(i.stars || 1)}</span></td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : ''}
+      ${cal.liquidity ? `<div class="report-liquidity">
+        <div class="lt">${cal.liquidity}</div>
+        <div>${cal.liquidityContent || ''}</div>
+      </div>` : ''}
+    </div>`;
+  }
+
+  // 📊 市场展望
+  if (report.outlook) {
+    const o = report.outlook;
+    html += `<div class="report-section" id="sec-outlook">
+      <h2>${o.title}</h2>
+      <div class="report-outlook-grid">
+        ${o.global ? `<div class="report-outlook-card">
+          <div class="ocat">🌍 全球市场</div>
+          <div class="ocontent">${o.global}</div>
+        </div>` : ''}
+        ${o.ashare ? `<div class="report-outlook-card">
+          <div class="ocat">🇨🇳 A股市场</div>
+          <div class="ocontent">${o.ashare}</div>
+        </div>` : ''}
+        ${o.hk ? `<div class="report-outlook-card">
+          <div class="ocat">🏠 港股市场</div>
+          <div class="ocontent">${o.hk}</div>
+        </div>` : ''}
+        ${o.commodity ? `<div class="report-outlook-card">
+          <div class="ocat">💰 商品与加密</div>
+          <div class="ocontent">${o.commodity}</div>
+        </div>` : ''}
       </div>
     </div>`;
   }
 
-  // 机构观点
-  if (report.views && report.views.length) {
+  // 数据来源
+  if (report.sources && report.sources.length) {
     html += `<div class="report-section">
-      <h2>🏛️ 机构观点</h2>
-      <div class="report-views">
-        ${report.views.map(v => `<div class="report-view-card">
-          <div class="org">${v.org}</div>
-          <div class="vtitle">${v.title}</div>
-          <div class="content">${v.content}</div>
-        </div>`).join('')}
-      </div>
+      <h2>Sources</h2>
+      <ul class="report-sources">
+        ${report.sources.map(s => `<li>${s.name}，${s.title}</li>`).join('')}
+      </ul>
     </div>`;
   }
 
-  html += `<div style="text-align:center;margin-top:20px;padding:12px;color:var(--text-dim);font-size:.8rem;border-top:1px solid var(--border)">
-    免责声明：本早报基于公开信息整理，仅供参考，不构成投资建议。
-  </div>`;
+  html += `<div class="report-disclaimer">${report.disclaimer || '免责声明：本早报基于公开市场数据整理，仅供参考，不构成任何投资建议。投资有风险，入市须谨慎。'}</div>`;
 
   document.getElementById('content').innerHTML = html;
 }
