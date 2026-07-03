@@ -812,8 +812,10 @@
       <textarea id="aiStyleSamples" rows="8" placeholder="在此粘贴3-10篇您过往的文章/日记作为风格样本（建议1000-5000字），AI润色时会模仿您的写作风格..."></textarea>
     </div>
     <div class="modal-foot">
-      <button class="btn-save" onclick="saveAIConfigFromModal()">保存</button>
+      <button class="btn-small" onclick="testAIConnection()" id="aiTestBtn" style="margin-right:8px">🔌 测试连接</button>
+      <button class="btn-save" onclick="saveAIConfigFromModal()">💾 保存设置</button>
     </div>
+    <div style="margin-top:8px;font-size:.75rem;color:var(--text-dim);text-align:center">⚠️ 填写API Key后务必点击"保存设置"，否则配置不会生效</div>
   </div>
 </div>
 
@@ -918,9 +920,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.31.1';
-const APP_VERSION_DATE = '2026-07-03 20:20';
-const APP_RELEASE_NOTES = '首页三省卡片快捷输入栏新增"✨ AI润色"按钮，支持直接在首页输入内容后一键AI润色保存；首页列表已润色日记显示✨标识。';
+const APP_VERSION = 'v1.31.2';
+const APP_VERSION_DATE = '2026-07-03 20:50';
+const APP_RELEASE_NOTES = 'AI设置弹窗新增"🔌 测试连接"按钮，可验证API Key和网络是否正常；保存按钮改为"💾 保存设置"并添加醒目提示；修复智谱GLM配置后可能未点保存导致不生效的问题。';
 
 const AI_PROVIDERS = [
   { name: 'DeepSeek', desc: '新用户免费500万token，中文能力强', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', url: 'https://platform.deepseek.com/' },
@@ -1434,6 +1436,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.31.2', date:'2026-07-03 20:50', notes:'AI设置弹窗新增"🔌 测试连接"按钮，可验证API Key和网络是否正常；保存按钮改为"💾 保存设置"并添加醒目提示；修复智谱GLM配置后可能未点保存导致不生效的问题。' },
   { version:'v1.31.1', date:'2026-07-03 20:20', notes:'首页三省卡片快捷输入栏新增"✨ AI润色"按钮，支持直接在首页输入内容后一键AI润色保存；首页列表已润色日记显示✨标识。' },
   { version:'v1.31.0', date:'2026-07-03 20:00', notes:'AI配置新增免费服务商推荐（DeepSeek/智谱GLM/硅基流动一键填充配置）；原文和润色文区域均改为可编辑文本框，失焦自动保存；原文区域新增独立复制/下载按钮；复制下载按钮区分原文/润色/全部三种操作。' },
   { version:'v1.30.0', date:'2026-07-03 19:30', notes:'新增"三省"日记功能：首页新增快捷录入卡片展示最近6篇日记；详情页支持完整编辑和双栏对比展示原文与AI润色内容；支持OpenAI兼容API（DeepSeek等）AI文本润色；支持上传个人文风样本让AI模仿写作风格；提供一键复制Markdown/下载TXT文件便捷同步到"一本日记"App；面包屑导航新增"三省"入口；样式交互与待办清单保持一致，兼容深色/亮色主题和移动端。' },
@@ -6819,7 +6822,52 @@ function fillAIProvider(index) {
   if (!p) return;
   document.getElementById('aiBaseUrl').value = p.baseUrl;
   document.getElementById('aiModel').value = p.model;
-  showToast("已填充"+p.name+"配置，请填入API Key");
+  showToast("已填充"+p.name+"配置，请填入API Key后保存");
+}
+
+async function testAIConnection() {
+  const btn = document.getElementById('aiTestBtn');
+  const baseUrl = document.getElementById('aiBaseUrl').value.trim();
+  const apiKey = document.getElementById('aiApiKey').value.trim();
+  const model = document.getElementById('aiModel').value.trim();
+  if (!apiKey) {
+    showToast('请先填入API Key');
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '测试中...';
+  try {
+    const response = await fetch(baseUrl.replace(/\/+$/, '') + '/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: '回复ok' }],
+        temperature: 0.3,
+        max_tokens: 10
+      })
+    });
+    if (!response.ok) {
+      let err = '连接失败 (HTTP ' + response.status + ')';
+      try {
+        const d = await response.json();
+        if (d.error && d.error.message) err += ': ' + d.error.message;
+      } catch(e) {}
+      showToast(err);
+    } else {
+      const data = await response.json();
+      if (data.choices && data.choices[0]) {
+        showToast('✅ 连接成功！模型返回正常，记得点击"保存设置"');
+      } else {
+        showToast('连接成功但返回格式异常');
+      }
+    }
+  } catch(e) {
+    showToast('❌ 连接失败：' + (e.message || '网络错误') + '（可能是CORS限制）');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔌 测试连接';
+  }
 }
 
 function closeAIConfig() {

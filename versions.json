@@ -1,7 +1,14 @@
 {
-  "current": "v1.31.1",
+  "current": "v1.31.2",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.31.2",
+      "date": "2026-07-03 20:50（北京时间）",
+      "summary": "AI设置弹窗新增\"🔌 测试连接\"按钮，填入配置后可立即验证API Key和网络是否正常；保存按钮改为\"💾 保存设置\"并添加醒目提示文字；经过实测确认智谱AI(GLM-4-Flash)API支持浏览器CORS直接调用，API Key有效。",
+      "cache": "a-share-review-v41-20260703",
+      "deploy_url": "待预览确认后部署"
+    },
     {
       "version": "v1.31.1",
       "date": "2026-07-03 20:20（北京时间）",
