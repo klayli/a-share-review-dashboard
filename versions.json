@@ -1,7 +1,14 @@
 {
-  "current": "v1.32.0",
+  "current": "v1.32.1",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.32.1",
+      "date": "2026-07-04 12:00（北京时间）",
+      "summary": "紧急修复：大盘情绪详情页无法打开致命bug（renderThemeCard访问undefined.pct导致TypeError崩溃，阻断页面渲染）；补充2026年7月3日（周五）完整交易日数据。",
+      "cache": "a-share-review-v43-20260704",
+      "deploy_url": "待部署"
+    },
     {
       "version": "v1.32.0",
       "date": "2026-07-03 21:00（北京时间）",
