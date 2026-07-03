@@ -701,6 +701,21 @@
   .btn-link { text-decoration:none; display:inline-flex; align-items:center; color:var(--blue); border-color:var(--blue); }
   .btn-link:hover { background:rgba(59,130,246,0.1); }
   .ai-providers-tip { font-size:.75rem; color:var(--text-dim); margin-top:8px; text-align:center; }
+
+  .ai-config-tabs { display:flex; gap:6px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--border); flex-wrap:wrap; align-items:center; }
+  .ai-config-tab { padding:6px 14px; border-radius:8px; border:1px solid var(--border); background:var(--card); cursor:pointer; font-size:.82rem; color:var(--text-dim); transition:all .15s; }
+  .ai-config-tab:hover { border-color:var(--text-dim); color:var(--text); }
+  .ai-config-tab.active { border-color:var(--yellow); background:rgba(245,158,11,0.12); color:var(--yellow); font-weight:600; }
+  .ai-config-tab-actions { margin-left:auto; display:flex; gap:4px; }
+  .diary-add-actions { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .diary-current-ai { font-size:.82rem; color:var(--text-dim); display:flex; align-items:center; gap:4px; }
+  .diary-batch-bar { display:flex; align-items:center; gap:10px; margin:12px 0; padding:8px 12px; background:var(--card-hover); border-radius:8px; font-size:.85rem; flex-wrap:wrap; }
+  .diary-batch-bar .btn-danger:disabled { opacity:.4; cursor:not-allowed; }
+  .diary-search-input { flex:1; min-width:160px; padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:.85rem; outline:none; }
+  .diary-search-input:focus { border-color:var(--yellow); }
+  .diary-header { display:flex; align-items:center; gap:8px; }
+  .diary-checkbox { width:16px; height:16px; cursor:pointer; accent-color:var(--yellow); flex-shrink:0; }
+  .search-match-tag { font-size:.7rem; padding:1px 6px; border-radius:4px; background:rgba(245,158,11,0.2); color:var(--yellow); font-weight:600; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -795,27 +810,37 @@
       <button class="modal-close" onclick="closeAIConfig()">关闭</button>
     </div>
     <div class="ai-providers" id="aiProvidersContainer"></div>
+    <div class="ai-config-tabs" id="aiConfigTabs">
+      <div class="ai-config-tab-actions">
+        <button class="btn-small" onclick="addNewAIConfig()">+ 新增</button>
+        <button class="btn-small btn-danger" onclick="deleteCurrentAIConfig()">🗑️ 删除</button>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>AI名称</label>
+      <input type="text" id="aiConfigName" placeholder="给这个AI起个名字，如我的DeepSeek" oninput="autoSaveAIConfig()">
+    </div>
     <div class="form-field">
       <label>Base URL</label>
-      <input type="text" id="aiBaseUrl" placeholder="https://api.deepseek.com/v1">
+      <input type="text" id="aiBaseUrl" placeholder="https://api.deepseek.com/v1" oninput="autoSaveAIConfig()">
     </div>
     <div class="form-field">
       <label>API Key</label>
-      <input type="password" id="aiApiKey" placeholder="sk-...">
+      <input type="password" id="aiApiKey" placeholder="sk-..." oninput="autoSaveAIConfig()">
     </div>
     <div class="form-field">
       <label>Model</label>
-      <input type="text" id="aiModel" placeholder="deepseek-chat">
+      <input type="text" id="aiModel" placeholder="deepseek-chat" oninput="autoSaveAIConfig()">
     </div>
     <div class="form-field">
       <label>我的文风样本</label>
-      <textarea id="aiStyleSamples" rows="8" placeholder="在此粘贴3-10篇您过往的文章/日记作为风格样本（建议1000-5000字），AI润色时会模仿您的写作风格..."></textarea>
+      <textarea id="aiStyleSamples" rows="8" placeholder="在此粘贴3-10篇您过往的文章/日记作为风格样本（建议1000-5000字），AI润色时会模仿您的写作风格..." oninput="autoSaveAIConfig()"></textarea>
     </div>
     <div class="modal-foot">
       <button class="btn-small" onclick="testAIConnection()" id="aiTestBtn" style="margin-right:8px">🔌 测试连接</button>
-      <button class="btn-save" onclick="saveAIConfigFromModal()">💾 保存设置</button>
+      <button class="btn-save" onclick="closeAIConfig()">✓ 完成</button>
     </div>
-    <div style="margin-top:8px;font-size:.75rem;color:var(--text-dim);text-align:center">⚠️ 填写API Key后务必点击"保存设置"，否则配置不会生效</div>
+    <div style="margin-top:8px;font-size:.75rem;color:var(--text-dim);text-align:center">💡 切换标签可管理多个AI配置，所有修改自动保存</div>
   </div>
 </div>
 
@@ -920,9 +945,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.31.2';
-const APP_VERSION_DATE = '2026-07-03 20:50';
-const APP_RELEASE_NOTES = 'AI设置弹窗新增"🔌 测试连接"按钮，可验证API Key和网络是否正常；保存按钮改为"💾 保存设置"并添加醒目提示；修复智谱GLM配置后可能未点保存导致不生效的问题。';
+const APP_VERSION = 'v1.32.0';
+const APP_VERSION_DATE = '2026-07-03 21:00';
+const APP_RELEASE_NOTES = 'AI配置支持多套保存切换，可为每个AI设置自定义名称，标签栏一键切换；详情页回显当前使用的AI名称；日记列表支持复选框批量删除；日记时间精确到年月日时分；新增日记内容关键词检索功能，支持原文/润色文实时搜索；旧数据自动平滑迁移。';
 
 const AI_PROVIDERS = [
   { name: 'DeepSeek', desc: '新用户免费500万token，中文能力强', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', url: 'https://platform.deepseek.com/' },
@@ -1436,6 +1461,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.32.0', date:'2026-07-03 21:00', notes:'AI配置支持多套保存与一键切换，可自定义AI名称；详情页回显当前AI名称；支持批量删除日记；日记时间精确到时分；新增日记内容关键词实时检索功能；旧数据自动迁移。' },
   { version:'v1.31.2', date:'2026-07-03 20:50', notes:'AI设置弹窗新增"🔌 测试连接"按钮，可验证API Key和网络是否正常；保存按钮改为"💾 保存设置"并添加醒目提示；修复智谱GLM配置后可能未点保存导致不生效的问题。' },
   { version:'v1.31.1', date:'2026-07-03 20:20', notes:'首页三省卡片快捷输入栏新增"✨ AI润色"按钮，支持直接在首页输入内容后一键AI润色保存；首页列表已润色日记显示✨标识。' },
   { version:'v1.31.0', date:'2026-07-03 20:00', notes:'AI配置新增免费服务商推荐（DeepSeek/智谱GLM/硅基流动一键填充配置）；原文和润色文区域均改为可编辑文本框，失焦自动保存；原文区域新增独立复制/下载按钮；复制下载按钮区分原文/润色/全部三种操作。' },
@@ -4809,8 +4835,45 @@ function renderTodoList() {
 }
 
 // ==================== Sanxing Diary ====================
+let diarySearchKeyword = '';
+
+function nowDateTimeStr() {
+  const d = getBeijingTime();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function migrateDiaryDates() {
+  if (!currentUser) return;
+  try {
+    const key = 'diary_' + currentUser;
+    const diaries = JSON.parse(localStorage.getItem(key) || '[]');
+    let migrated = false;
+    diaries.forEach(d => {
+      if (d.date && d.date.length <= 10) {
+        let timePart = ' 00:00';
+        if (d.createdAt) {
+          try {
+            const cd = new Date(d.createdAt);
+            if (!isNaN(cd.getTime())) {
+              const pad = n => String(n).padStart(2,'0');
+              timePart = ` ${pad(cd.getHours())}:${pad(cd.getMinutes())}`;
+            }
+          } catch(e) {}
+        }
+        d.date = d.date + timePart;
+        migrated = true;
+      }
+    });
+    if (migrated) {
+      localStorage.setItem(key, JSON.stringify(diaries));
+    }
+  } catch(e) {}
+}
+
 function getDiaries() {
   if (!currentUser) return [];
+  migrateDiaryDates();
   try {
     const key = 'diary_' + currentUser;
     return JSON.parse(localStorage.getItem(key) || '[]');
@@ -4827,9 +4890,17 @@ function addDiaryFromHome(text, date) {
   if (!trimmed) return null;
   const diaries = getDiaries();
   const now = Date.now();
+  let dateStr;
+  if (date) {
+    const pad = n => String(n).padStart(2,'0');
+    const nowD = getBeijingTime();
+    dateStr = date + ` ${pad(nowD.getHours())}:${pad(nowD.getMinutes())}`;
+  } else {
+    dateStr = nowDateTimeStr();
+  }
   const diary = {
     id: now,
-    date: date || todayText(),
+    date: dateStr,
     original: trimmed,
     polished: '',
     createdAt: now,
@@ -4894,7 +4965,7 @@ function renderDiaryListHome() {
   } else {
     container.innerHTML = displayDiaries.map(d => `
       <div class="todo-item">
-        <span class="todo-text">📅 ${d.date} ${d.polished ? '✨' : ''}· ${escapeHtml(d.original.length > 30 ? d.original.substring(0, 30) + '...' : d.original)}</span>
+        <span class="todo-text">📅 ${escapeHtml(d.date.substring(5))} ${d.polished ? '✨' : ''}· ${escapeHtml(d.original.length > 30 ? d.original.substring(0, 30) + '...' : d.original)}</span>
       </div>
     `).join('');
   }
@@ -4908,41 +4979,168 @@ function renderDiaryListHome() {
   }
 }
 
+function inferAIName(baseUrl) {
+  if (!baseUrl) return '默认配置';
+  if (baseUrl.includes('deepseek')) return 'DeepSeek';
+  if (baseUrl.includes('bigmodel')) return '智谱AI (GLM)';
+  if (baseUrl.includes('siliconflow')) return '硅基流动';
+  if (baseUrl.includes('openai')) return 'OpenAI';
+  return '默认配置';
+}
+
+function migrateAIConfig() {
+  if (!currentUser) return;
+  try {
+    const configsKey = 'ai_configs_' + currentUser;
+    const activeKey = 'ai_active_config_' + currentUser;
+    const oldKey = 'ai_config_' + currentUser;
+    const oldStyleKey = 'style_samples_' + currentUser;
+    
+    let configs = null;
+    let activeId = null;
+    try { configs = JSON.parse(localStorage.getItem(configsKey) || 'null'); } catch(e) {}
+    try { activeId = JSON.parse(localStorage.getItem(activeKey) || 'null'); } catch(e) {}
+    
+    if (Array.isArray(configs) && configs.length > 0 && activeId) {
+      return;
+    }
+    
+    let oldConfig = null;
+    try { oldConfig = JSON.parse(localStorage.getItem(oldKey) || 'null'); } catch(e) {}
+    let oldStyle = localStorage.getItem(oldStyleKey) || '';
+    
+    const defaultConfig = {
+      id: Date.now(),
+      name: oldConfig && oldConfig.baseUrl ? inferAIName(oldConfig.baseUrl) : '默认配置',
+      baseUrl: (oldConfig && oldConfig.baseUrl) || 'https://api.deepseek.com/v1',
+      apiKey: (oldConfig && oldConfig.apiKey) || '',
+      model: (oldConfig && oldConfig.model) || 'deepseek-chat',
+      styleSample: oldStyle || ''
+    };
+    
+    configs = [defaultConfig];
+    activeId = defaultConfig.id;
+    
+    localStorage.setItem(configsKey, JSON.stringify(configs));
+    localStorage.setItem(activeKey, JSON.stringify(activeId));
+  } catch(e) {}
+}
+
+function getAIConfigs() {
+  if (!currentUser) return [];
+  migrateAIConfig();
+  try {
+    const key = 'ai_configs_' + currentUser;
+    const configs = JSON.parse(localStorage.getItem(key) || '[]');
+    if (!Array.isArray(configs) || configs.length === 0) {
+      const defaultConfig = {
+        id: Date.now(),
+        name: '默认配置',
+        baseUrl: 'https://api.deepseek.com/v1',
+        apiKey: '',
+        model: 'deepseek-chat',
+        styleSample: ''
+      };
+      localStorage.setItem(key, JSON.stringify([defaultConfig]));
+      localStorage.setItem('ai_active_config_' + currentUser, JSON.stringify(defaultConfig.id));
+      return [defaultConfig];
+    }
+    return configs;
+  } catch(e) {
+    return [{ id: 1, name: '默认配置', baseUrl: 'https://api.deepseek.com/v1', apiKey: '', model: 'deepseek-chat', styleSample: '' }];
+  }
+}
+
+function saveAIConfigs(configs, activeId) {
+  if (!currentUser) return;
+  localStorage.setItem('ai_configs_' + currentUser, JSON.stringify(configs));
+  if (activeId !== undefined) {
+    localStorage.setItem('ai_active_config_' + currentUser, JSON.stringify(activeId));
+  }
+}
+
+function getActiveAIConfigId() {
+  if (!currentUser) return null;
+  migrateAIConfig();
+  try {
+    return JSON.parse(localStorage.getItem('ai_active_config_' + currentUser) || 'null');
+  } catch(e) { return null; }
+}
+
 function getAIConfig() {
   if (!currentUser) {
-    return { baseUrl: 'https://api.deepseek.com/v1', apiKey: '', model: 'deepseek-chat' };
+    return { id: 0, name: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', apiKey: '', model: 'deepseek-chat', styleSample: '' };
   }
-  try {
-    const key = 'ai_config_' + currentUser;
-    const saved = JSON.parse(localStorage.getItem(key) || '{}');
-    return {
-      baseUrl: saved.baseUrl || 'https://api.deepseek.com/v1',
-      apiKey: saved.apiKey || '',
-      model: saved.model || 'deepseek-chat'
-    };
-  } catch(e) {
-    return { baseUrl: 'https://api.deepseek.com/v1', apiKey: '', model: 'deepseek-chat' };
+  const configs = getAIConfigs();
+  let activeId = getActiveAIConfigId();
+  let config = configs.find(c => c.id === activeId);
+  if (!config) {
+    config = configs[0] || { id: Date.now(), name: '默认配置', baseUrl: 'https://api.deepseek.com/v1', apiKey: '', model: 'deepseek-chat', styleSample: '' };
   }
+  return {
+    id: config.id,
+    name: config.name || '默认配置',
+    baseUrl: config.baseUrl || 'https://api.deepseek.com/v1',
+    apiKey: config.apiKey || '',
+    model: config.model || 'deepseek-chat',
+    styleSample: config.styleSample || ''
+  };
 }
 
 function saveAIConfig(config) {
   if (!currentUser) return;
-  const key = 'ai_config_' + currentUser;
-  localStorage.setItem(key, JSON.stringify(config));
+  const configs = getAIConfigs();
+  const activeId = getActiveAIConfigId() || (configs[0] && configs[0].id);
+  const idx = configs.findIndex(c => c.id === (config.id || activeId));
+  if (idx !== -1) {
+    configs[idx] = { ...configs[idx], ...config };
+    saveAIConfigs(configs, activeId);
+  }
 }
 
 function getStyleSamples() {
-  if (!currentUser) return '';
-  try {
-    const key = 'style_samples_' + currentUser;
-    return localStorage.getItem(key) || '';
-  } catch(e) { return ''; }
+  const config = getAIConfig();
+  return config.styleSample || '';
 }
 
 function saveStyleSamples(text) {
   if (!currentUser) return;
-  const key = 'style_samples_' + currentUser;
-  localStorage.setItem(key, text);
+  saveAIConfig({ styleSample: text });
+}
+
+function setActiveAIConfig(id) {
+  if (!currentUser) return;
+  localStorage.setItem('ai_active_config_' + currentUser, JSON.stringify(id));
+}
+
+function addAIConfig(name, baseUrl, model, apiKey) {
+  if (!currentUser) return null;
+  const configs = getAIConfigs();
+  const newId = Date.now();
+  const newConfig = {
+    id: newId,
+    name: name || '新配置',
+    baseUrl: baseUrl || 'https://api.deepseek.com/v1',
+    model: model || 'deepseek-chat',
+    apiKey: apiKey || '',
+    styleSample: ''
+  };
+  configs.push(newConfig);
+  saveAIConfigs(configs, newId);
+  return newId;
+}
+
+function deleteAIConfig(id) {
+  if (!currentUser) return false;
+  let configs = getAIConfigs();
+  if (configs.length <= 1) return false;
+  configs = configs.filter(c => c.id !== id);
+  let activeId = getActiveAIConfigId();
+  if (activeId === id) {
+    activeId = configs[0].id;
+  }
+  saveAIConfigs(configs, activeId);
+  return true;
 }
 
 // ==================== Anniversary ====================
@@ -6652,10 +6850,23 @@ function render() {
   else if (currentPage === 'anniDetail') renderAnniDetail();
 }
 
+function updateCurrentAINameDisplay() {
+  const el = document.getElementById('currentAIName');
+  if (!el) return;
+  const config = getAIConfig();
+  if (!config.apiKey) {
+    el.textContent = '🤖 未配置AI';
+    el.style.color = 'var(--text-dim)';
+  } else {
+    el.textContent = '🤖 当前：' + (config.name || '默认配置');
+    el.style.color = 'var(--text-dim)';
+  }
+}
+
 function renderSanxingDetail() {
   if (!currentUser) { goHome(); return; }
-  const diaries = getDiaries();
-  const polishedCount = diaries.filter(d => d.polished).length;
+  const diariesAll = getDiaries();
+  const polishedCount = diariesAll.filter(d => d.polished).length;
   const html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>
     <div class="section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
@@ -6669,29 +6880,69 @@ function renderSanxingDetail() {
         <input type="date" id="diaryDetailDate" value="${todayText()}">
         <textarea id="diaryDetailInput" placeholder="记录今日所思所感..." rows="4"></textarea>
         <div class="diary-add-actions">
-          <button class="btn-secondary" onclick="polishDiaryNew()" disabled>✨ AI润色</button>
-          <button class="btn-primary" onclick="addDiaryDetail()">💾 保存日记</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn-secondary" onclick="polishDiaryNew()" id="polishNewBtn" disabled>✨ AI润色</button>
+            <button class="btn-primary" onclick="addDiaryDetail()">💾 保存日记</button>
+          </div>
+          <span class="diary-current-ai" id="currentAIName">🤖 当前：...</span>
         </div>
       </div>
+      <div class="diary-batch-bar">
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="diarySelectAll" onchange="toggleAllDiaries(this.checked)"> 全选
+        </label>
+        <button class="btn-small btn-danger" onclick="batchDeleteDiaries()" id="batchDeleteBtn" disabled>🗑️ 批量删除</button>
+        <span id="selectedCount" style="color:var(--text-dim);font-size:.8rem"></span>
+        <span style="flex:1"></span>
+        <input type="text" id="diarySearchInput" placeholder="🔍 搜索日记..." oninput="onDiarySearch(this.value)" onkeydown="if(event.key==='Escape')this.value='';onDiarySearch('')" class="diary-search-input">
+        <span id="searchResultInfo" style="color:var(--text-dim);font-size:.8rem;white-space:nowrap"></span>
+      </div>
       <div id="diaryListDetail"></div>
-      <div class="diary-stats">共 ${diaries.length} 篇日记 · ${polishedCount} 篇已润色</div>
     </div>`;
   document.getElementById('content').innerHTML = html;
+  const searchInput = document.getElementById('diarySearchInput');
+  if (searchInput) searchInput.value = diarySearchKeyword;
   renderDiaryListDetail();
+  updateCurrentAINameDisplay();
 }
 
 function renderDiaryListDetail() {
   const container = document.getElementById('diaryListDetail');
   if (!container) return;
-  let diaries = getDiaries();
-  diaries = diaries.slice().sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
-  if (diaries.length === 0) {
-    container.innerHTML = '<div class="diary-empty">暂无日记记录，在上方输入框开始记录吧 📝</div>';
+  let diariesAll = getDiaries();
+  const totalCount = diariesAll.length;
+  const totalPolished = diariesAll.filter(d => d.polished).length;
+  
+  let diaries = diariesAll.slice().sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+  
+  const kw = diarySearchKeyword.toLowerCase();
+  let filteredDiaries = diaries;
+  if (kw) {
+    filteredDiaries = diaries.filter(d => 
+      d.original.toLowerCase().includes(kw) || 
+      (d.polished && d.polished.toLowerCase().includes(kw))
+    );
+  }
+  
+  if (filteredDiaries.length === 0) {
+    if (kw) {
+      container.innerHTML = '<div class="diary-empty">没有找到匹配"' + escapeHtml(diarySearchKeyword) + '"的日记</div>';
+    } else {
+      container.innerHTML = '<div class="diary-empty">暂无日记记录，在上方输入框开始记录吧 📝</div>';
+    }
   } else {
-    container.innerHTML = diaries.map(d => `
+    container.innerHTML = filteredDiaries.map(d => {
+      const matchInOriginal = kw && d.original.toLowerCase().includes(kw);
+      const matchInPolished = kw && d.polished && d.polished.toLowerCase().includes(kw);
+      let tags = '';
+      if (matchInOriginal) tags += '<span class="search-match-tag">原文匹配</span>';
+      if (matchInPolished) tags += '<span class="search-match-tag">润色文匹配</span>';
+      
+      return `
       <div class="diary-item">
         <div class="diary-header">
-          <span class="diary-date">📅 ${d.date}</span>
+          <input type="checkbox" class="diary-checkbox" data-id="${d.id}" onchange="updateSelectedCount()">
+          <span class="diary-date">📅 ${escapeHtml(d.date)} ${tags}</span>
           <div class="diary-actions">
             <button class="btn-small" onclick="editDiary(${d.id})">✎ 编辑</button>
             <button class="btn-small btn-danger" onclick="deleteDiaryConfirm(${d.id})">× 删除</button>
@@ -6719,22 +6970,67 @@ function renderDiaryListDetail() {
           </div>
         </div>
       </div>
-    `).join('');
+    `}).join('');
   }
-  const diariesAll = getDiaries();
-  const statsEl = document.querySelector('.diary-stats');
-  if (statsEl) {
-    const polishedCount = diariesAll.filter(d => d.polished).length;
-    statsEl.textContent = `共 ${diariesAll.length} 篇日记 · ${polishedCount} 篇已润色`;
+  
+  const searchInfo = document.getElementById('searchResultInfo');
+  if (searchInfo) {
+    if (kw) {
+      searchInfo.textContent = '找到 ' + filteredDiaries.length + ' 篇匹配';
+    } else {
+      searchInfo.textContent = '共 ' + totalCount + ' 篇 · ' + totalPolished + '篇已润色';
+    }
   }
+  
+  const selectAll = document.getElementById('diarySelectAll');
+  if (selectAll) selectAll.checked = false;
+  updateSelectedCount();
+  
   const textInput = document.getElementById('diaryDetailInput');
-  const polishBtn = document.querySelector('.diary-add-actions .btn-secondary');
+  const polishBtn = document.getElementById('polishNewBtn');
   if (textInput && polishBtn) {
     const toggleBtn = () => { polishBtn.disabled = !textInput.value.trim(); };
     textInput.removeEventListener('input', toggleBtn);
     textInput.addEventListener('input', toggleBtn);
     toggleBtn();
   }
+}
+
+function toggleAllDiaries(checked) {
+  const checkboxes = document.querySelectorAll('.diary-checkbox');
+  checkboxes.forEach(cb => { cb.checked = checked; });
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const checkboxes = document.querySelectorAll('.diary-checkbox');
+  const checked = document.querySelectorAll('.diary-checkbox:checked');
+  const countEl = document.getElementById('selectedCount');
+  const delBtn = document.getElementById('batchDeleteBtn');
+  const count = checked.length;
+  if (countEl) countEl.textContent = count > 0 ? '已选' + count + '篇' : '';
+  if (delBtn) delBtn.disabled = count === 0;
+  
+  const selectAll = document.getElementById('diarySelectAll');
+  if (selectAll && checkboxes.length > 0) {
+    selectAll.checked = count === checkboxes.length;
+  }
+}
+
+function batchDeleteDiaries() {
+  const checked = document.querySelectorAll('.diary-checkbox:checked');
+  if (checked.length === 0) return;
+  const ids = Array.from(checked).map(cb => parseInt(cb.dataset.id));
+  if (!confirm('确定删除选中的' + ids.length + '篇日记吗？此操作不可恢复')) return;
+  ids.forEach(id => deleteDiary(id));
+  renderDiaryListDetail();
+  renderDiaryListHome();
+  showToast('已删除' + ids.length + '篇日记');
+}
+
+function onDiarySearch(keyword) {
+  diarySearchKeyword = keyword.trim();
+  renderDiaryListDetail();
 }
 
 function addDiaryDetail() {
@@ -6751,6 +7047,7 @@ function addDiaryDetail() {
   textInput.value = '';
   dateInput.value = todayText();
   renderDiaryListDetail();
+  renderDiaryListHome();
 }
 
 function editDiary(id) {
@@ -6761,7 +7058,7 @@ function editDiary(id) {
   const textInput = document.getElementById('diaryDetailInput');
   if (dateInput && textInput) {
     window._pendingPolished = null;
-    dateInput.value = d.date;
+    dateInput.value = d.date.substring(0, 10);
     textInput.value = d.original;
     textInput.dispatchEvent(new Event('input'));
     textInput.focus();
@@ -6773,6 +7070,7 @@ function deleteDiaryConfirm(id) {
   if (confirm('确定删除这篇日记吗？')) {
     deleteDiary(id);
     renderDiaryListDetail();
+    renderDiaryListHome();
   }
 }
 
@@ -6789,10 +7087,51 @@ function showToast(message) {
   }, 2500);
 }
 
+function autoSaveAIConfig() {
+  if (!currentUser) return;
+  const nameEl = document.getElementById('aiConfigName');
+  const baseUrlEl = document.getElementById('aiBaseUrl');
+  const apiKeyEl = document.getElementById('aiApiKey');
+  const modelEl = document.getElementById('aiModel');
+  const styleEl = document.getElementById('aiStyleSamples');
+  if (!nameEl || !baseUrlEl || !apiKeyEl || !modelEl || !styleEl) return;
+  
+  const config = getAIConfig();
+  saveAIConfig({
+    id: config.id,
+    name: nameEl.value.trim() || '默认配置',
+    baseUrl: baseUrlEl.value.trim() || 'https://api.deepseek.com/v1',
+    apiKey: apiKeyEl.value.trim(),
+    model: modelEl.value.trim() || 'deepseek-chat',
+    styleSample: styleEl.value
+  });
+}
+
+function renderAIConfigTabs() {
+  const tabsContainer = document.getElementById('aiConfigTabs');
+  if (!tabsContainer) return;
+  const configs = getAIConfigs();
+  const activeId = getActiveAIConfigId();
+  
+  const actionsHtml = tabsContainer.querySelector('.ai-config-tab-actions')?.outerHTML || 
+    `<div class="ai-config-tab-actions">
+      <button class="btn-small" onclick="addNewAIConfig()">+ 新增</button>
+      <button class="btn-small btn-danger" onclick="deleteCurrentAIConfig()">🗑️ 删除</button>
+    </div>`;
+  
+  let tabsHtml = '';
+  configs.forEach(c => {
+    const isActive = c.id === activeId;
+    tabsHtml += `<button class="ai-config-tab ${isActive ? 'active' : ''}" data-id="${c.id}" onclick="switchAIConfig(${c.id})">${escapeHtml(c.name || '默认配置')}</button>`;
+  });
+  
+  tabsContainer.innerHTML = tabsHtml + actionsHtml;
+}
+
 function openAIConfig() {
+  autoSaveAIConfig();
   const modal = document.getElementById('aiConfigModal');
   const config = getAIConfig();
-  const samples = getStyleSamples();
   const container = document.getElementById('aiProvidersContainer');
   container.innerHTML = `
     <div class="ai-providers-title">🚀 推荐免费服务商（注册即可获取免费API Key）</div>
@@ -6810,19 +7149,70 @@ function openAIConfig() {
     `).join('')}
     <div class="ai-providers-tip">💡 注册后在控制台创建API Key，填入下方即可使用AI润色功能</div>
   `;
+  
+  renderAIConfigTabs();
+  
+  document.getElementById('aiConfigName').value = config.name || '';
   document.getElementById('aiBaseUrl').value = config.baseUrl;
   document.getElementById('aiApiKey').value = config.apiKey;
   document.getElementById('aiModel').value = config.model;
-  document.getElementById('aiStyleSamples').value = samples;
+  document.getElementById('aiStyleSamples').value = config.styleSample || '';
   modal.classList.add('active');
+}
+
+function switchAIConfig(id) {
+  autoSaveAIConfig();
+  setActiveAIConfig(id);
+  const config = getAIConfig();
+  
+  document.querySelectorAll('.ai-config-tab').forEach(tab => {
+    tab.classList.toggle('active', parseInt(tab.dataset.id) === id);
+  });
+  
+  document.getElementById('aiConfigName').value = config.name || '';
+  document.getElementById('aiBaseUrl').value = config.baseUrl;
+  document.getElementById('aiApiKey').value = config.apiKey;
+  document.getElementById('aiModel').value = config.model;
+  document.getElementById('aiStyleSamples').value = config.styleSample || '';
+}
+
+function addNewAIConfig() {
+  autoSaveAIConfig();
+  const newId = addAIConfig('新配置', 'https://api.deepseek.com/v1', 'deepseek-chat', '');
+  if (newId) {
+    renderAIConfigTabs();
+    switchAIConfig(newId);
+  }
+}
+
+function deleteCurrentAIConfig() {
+  const config = getAIConfig();
+  const configs = getAIConfigs();
+  if (configs.length <= 1) {
+    showToast('至少保留一个配置');
+    return;
+  }
+  if (!confirm('确定删除当前配置"' + (config.name || '默认配置') + '"吗？')) return;
+  if (deleteAIConfig(config.id)) {
+    renderAIConfigTabs();
+    const newConfig = getAIConfig();
+    document.getElementById('aiConfigName').value = newConfig.name || '';
+    document.getElementById('aiBaseUrl').value = newConfig.baseUrl;
+    document.getElementById('aiApiKey').value = newConfig.apiKey;
+    document.getElementById('aiModel').value = newConfig.model;
+    document.getElementById('aiStyleSamples').value = newConfig.styleSample || '';
+    showToast('配置已删除');
+  }
 }
 
 function fillAIProvider(index) {
   const p = AI_PROVIDERS[index];
   if (!p) return;
+  document.getElementById('aiConfigName').value = p.name;
   document.getElementById('aiBaseUrl').value = p.baseUrl;
   document.getElementById('aiModel').value = p.model;
-  showToast("已填充"+p.name+"配置，请填入API Key后保存");
+  autoSaveAIConfig();
+  showToast('已填充' + p.name + '配置，请填入API Key');
 }
 
 async function testAIConnection() {
@@ -6857,7 +7247,7 @@ async function testAIConnection() {
     } else {
       const data = await response.json();
       if (data.choices && data.choices[0]) {
-        showToast('✅ 连接成功！模型返回正常，记得点击"保存设置"');
+        showToast('✅ 连接成功！');
       } else {
         showToast('连接成功但返回格式异常');
       }
@@ -6871,19 +7261,10 @@ async function testAIConnection() {
 }
 
 function closeAIConfig() {
+  autoSaveAIConfig();
   const modal = document.getElementById('aiConfigModal');
   modal.classList.remove('active');
-}
-
-function saveAIConfigFromModal() {
-  const baseUrl = document.getElementById('aiBaseUrl').value.trim() || 'https://api.deepseek.com/v1';
-  const apiKey = document.getElementById('aiApiKey').value.trim();
-  const model = document.getElementById('aiModel').value.trim() || 'deepseek-chat';
-  const styleSamples = document.getElementById('aiStyleSamples').value;
-  saveAIConfig({ baseUrl, apiKey, model });
-  saveStyleSamples(styleSamples);
-  closeAIConfig();
-  showToast('设置已保存');
+  updateCurrentAINameDisplay();
 }
 
 function showAIConfig() {
@@ -7047,7 +7428,8 @@ function downloadOriginal(id) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = '三省_' + diary.date + '_原文.txt';
+  const safeDate = diary.date.replace(/:/g,'-').replace(/ /g,'_');
+  a.download = '三省_' + safeDate + '_原文.txt';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -7080,7 +7462,8 @@ function downloadPolished(id) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = '三省_' + diary.date + '_润色.txt';
+  const safeDate = diary.date.replace(/:/g,'-').replace(/ /g,'_');
+  a.download = '三省_' + safeDate + '_润色.txt';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -7111,6 +7494,7 @@ function saveDiaryOriginal(textarea, id) {
   if (diary.original === value) return;
   updateDiary(id, { original: value });
   renderDiaryListHome();
+  if (currentPage === 'sanxingDetail') renderDiaryListDetail();
   showToast("原文已保存");
 }
 
@@ -7124,9 +7508,8 @@ function saveDiaryPolished(textarea, id) {
   const oldPolished = diary.polished || '';
   if (oldPolished === value) return;
   updateDiary(id, { polished: value || null });
-  if ((oldPolished && !value) || (!oldPolished && value)) {
-    renderDiaryListDetail();
-  }
+  renderDiaryListHome();
+  if (currentPage === 'sanxingDetail') renderDiaryListDetail();
   showToast("润色内容已保存");
 }
 
