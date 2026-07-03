@@ -701,8 +701,8 @@ function updateHeaderClock() {
 
 // ==================== DATA ====================
 const APP_VERSION = 'v1.23.0';
-const APP_VERSION_DATE = '2026-07-03 09:05';
-const APP_RELEASE_NOTES = '补全2026-07-02（周四）交易日缺失数据：基于东方财富/新浪API获取真实收盘行情（上证-2.03%/深证-3.85%/创业板-5.71%、93涨停40跌停），补全持仓证券收盘价和基金估算净值，板块热力图涨幅前5+跌幅前5共10个大类板块；板块热力图升级：同时拉取东财涨幅榜和跌幅榜，红绿分明展示；基金净值自动刷新：东方财富fundgz JSONP接口，交易时段每10分钟估算净值、22:30更新确认净值、手动刷新强制拉取。';
+const APP_VERSION_DATE = '2026-07-03 10:20';
+const APP_RELEASE_NOTES = '修复基金模块历史收益显示bug：新增FUND_NAV_HISTORY历史净值字典和rebuildFundHistory()函数，基于东方财富真实历史净值（006502/006195的6/23-7/2确认净值）和交易记录自动计算每个交易日的基金持仓快照（份额、成本、当日盈亏、持有收益），基金Tab日历每日盈亏不再显示同一数值；修复数据更新时间显示bug：1810行renderSummarySection单引号包裹模板字符串导致${}不解析显示为字面量（持仓详情页基金Tab数据更新时间显示模板源码），修复后历史日期显示"日期+收盘后"、今天显示实时刷新时间，首页/持仓详情/大盘情绪页统一处理。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -833,7 +833,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
-  { version:'v1.23.0', date:'2026-07-03 09:05', notes:'补全2026-07-02（周四）交易日缺失数据：通过新浪/东财API获取真实收盘行情（上证4028.90/-2.03%、深证15498.81/-3.85%、创业板4017.27/-5.71%，93涨停40跌停），补全持仓证券收盘价（纳指ETF 1.614、黄金ETF 8.475、农行5.980）、基金7/2估算净值（006502:9.2995/-5.61%、006195:3.6106/-2.82%），板块热力图涨幅前5+跌幅前5共10个大类板块；板块热力图升级：同时拉取涨幅榜/跌幅榜按大类合并红绿分明；基金净值自动刷新：fundgz JSONP接口，交易时段每10分钟估算净值、22:30更新确认净值、手动刷新强制拉取。' },
+  { version:'v1.23.0', date:'2026-07-03 10:20', notes:'修复基金模块历史收益显示bug：新增FUND_NAV_HISTORY历史净值字典（东方财富API获取006502/006195的6/23-7/2共8个交易日确认净值）和rebuildFundHistory()函数，基于交易记录自动累加份额/成本，为每个交易日生成基金持仓快照（净值/市值/持有收益/当日盈亏），基金Tab每日盈亏日历不再全部显示同一数值；修复数据更新时间显示bug：renderSummarySection中单引号包裹模板字符串导致${...}不解析，持仓详情页基金Tab数据更新时间显示为源码字面量，修复后历史日期显示"日期 收盘后"、今天显示实时刷新时间，首页/持仓详情/大盘情绪页三处统一处理；refreshFundNavs刷新后自动保存当日基金快照到DAYS数组供历史查看。' },
   { version:'v1.22.0', date:'2026-07-03 01:10', notes:'全文字段股票可点击：隔夜单计划/热点题材原因描述/明日操作方向/驱动消息/板块强度说明等所有正文中提及的股票名称，自动识别转换为蓝色可点击链接（显示名称+代码），点击弹出K线详情弹窗；隔夜单计划连板梯队补充股票代码；linkStocks()新增opts参数，正文链接默认不显示价格避免破坏排版。' },
   { version:'v1.21.0', date:'2026-07-03 00:52', notes:'UI体验优化：备选标的限制显示3个；热点题材默认显示前6条+展开收起；个股涨跌比涨红跌绿着色；明日策略包含具体推荐股票（名称(代码) N板→板块）。' },
   { version:'v1.20.0', date:'2026-07-03 00:25', notes:'热点题材原因智能生成：附录·当日热点题材汇总新增驱动因素+龙头表现自动描述（如"避险情绪升温+大宗商品涨价催化，赤峰黄金涨停领涨"）；23个细分板块驱动模板库，连板数/涨停时间/封单额自动分析；样式升级为圆角卡片+涨跌幅+区分主线/活跃标签。' },
@@ -1768,9 +1768,77 @@ let TRANSACTIONS = {
 };
 
 let FUND_PORTFOLIO = [
-  { code:'006502', name:'财通集成电路产业股票A', type:'股票型基金', account:'中国银行(尾号1937)', unitCost:8.9880, latestNav:9.2995, navDate:'07-02(估)', shares:55.63, available:55.63, holdingIncome:17.33, holdingYield:3.47, dailyIncome:-30.75, amount:517.33, strategy:'半导体方向主动权益基金，按持仓收益和净值趋势观察。' },
-  { code:'006195', name:'国金量化多因子股票A', type:'股票型基金', account:'—', unitCost:3.3800, latestNav:3.6106, navDate:'07-02(估)', shares:673.52, available:673.52, holdingIncome:155.31, holdingYield:6.82, dailyIncome:-70.57, amount:2431.81, strategy:'量化多因子主动权益基金，当前持有收益为正，继续观察净值趋势。' }
+  { code:'006502', name:'财通集成电路产业股票A', type:'股票型基金', account:'中国银行(尾号1937)', unitCost:8.9880, latestNav:9.1075, navDate:'07-02', shares:55.63, available:55.63, holdingIncome:6.64, holdingYield:1.33, dailyIncome:-41.40, amount:506.64, strategy:'半导体方向主动权益基金，按持仓收益和净值趋势观察。' },
+  { code:'006195', name:'国金量化多因子股票A', type:'股票型基金', account:'—', unitCost:3.3800, latestNav:3.6217, navDate:'07-02', shares:673.52, available:673.52, holdingIncome:162.83, holdingYield:7.15, dailyIncome:-63.04, amount:2439.36, strategy:'量化多因子主动权益基金，当前持有收益为正，继续观察净值趋势。' }
 ];
+
+const FUND_NAV_HISTORY = {
+  '006502': {
+    '2026-06-23': 9.6670, '2026-06-24': 9.9091, '2026-06-25': 10.3751,
+    '2026-06-26': 10.0849, '2026-06-29': 9.7678, '2026-06-30': 9.9465,
+    '2026-07-01': 9.8519, '2026-07-02': 9.1075
+  },
+  '006195': {
+    '2026-06-23': 3.6621, '2026-06-24': 3.7037, '2026-06-25': 3.7059,
+    '2026-06-26': 3.5972, '2026-06-29': 3.6039, '2026-06-30': 3.6956,
+    '2026-07-01': 3.7154, '2026-07-02': 3.6217
+  }
+};
+
+const FUND_BASE_INFO = {
+  '006502': { name:'财通集成电路产业股票A', type:'股票型基金', account:'中国银行(尾号1937)' },
+  '006195': { name:'国金量化多因子股票A', type:'股票型基金', account:'—' }
+};
+
+function rebuildFundHistory() {
+  const fundTrades = (TRANSACTIONS.funds || []).slice().sort((a,b) => a.date.localeCompare(b.date));
+  const fundCodes = Object.keys(FUND_NAV_HISTORY);
+  DAYS.forEach(day => {
+    if (day.funds) return;
+    const sharesMap = {};
+    const costMap = {};
+    fundCodes.forEach(code => {
+      sharesMap[code] = 0;
+      costMap[code] = 0;
+    });
+    fundTrades.forEach(t => {
+      if (t.date <= day.date && sharesMap.hasOwnProperty(t.code)) {
+        sharesMap[t.code] += Number(t.qty || 0);
+        costMap[t.code] += Number(t.price || 0) * Number(t.qty || 0);
+      }
+    });
+    const dayFunds = [];
+    let hasData = false;
+    fundCodes.forEach(code => {
+      const nav = FUND_NAV_HISTORY[code] ? FUND_NAV_HISTORY[code][day.date] : null;
+      const shares = Number(sharesMap[code] || 0);
+      const base = FUND_BASE_INFO[code] || {};
+      if (nav && shares > 0) {
+        hasData = true;
+        const navHistory = FUND_NAV_HISTORY[code] || {};
+        const prevDates = Object.keys(navHistory).filter(d => d < day.date).sort();
+        const prevDate = prevDates.length ? prevDates[prevDates.length - 1] : null;
+        const prevNav = prevDate ? navHistory[prevDate] : nav;
+        const amount = Number((nav * shares).toFixed(2));
+        const totalCost = Number(costMap[code] || 0);
+        const avgCost = totalCost > 0 && shares > 0 ? totalCost / shares : nav;
+        const holdingIncome = Number(((nav - avgCost) * shares).toFixed(2));
+        const holdingYield = Number(((nav / avgCost - 1) * 100).toFixed(2));
+        const dailyIncome = Number(((nav - prevNav) * shares).toFixed(2));
+        const navDate = day.date.slice(5);
+        dayFunds.push({
+          code: code, name: base.name || code, latestNav: nav, navDate: navDate,
+          dailyIncome: dailyIncome, holdingIncome: holdingIncome,
+          holdingYield: holdingYield, amount: amount, shares: shares,
+          unitCost: Number(avgCost.toFixed(4)), available: shares, account: base.account || '—'
+        });
+      }
+    });
+    if (hasData) {
+      day.funds = dayFunds;
+    }
+  });
+}
 
 let DATA_UPDATED_AT = '';
 let IDX_LIVE = null;
@@ -1780,6 +1848,8 @@ function renderSummarySection(stats, d, compact) {
   const tabLabels = { all: '全部', stocks: '证券', funds: '基金' };
   const tabColors = { all: 'var(--blue)', stocks: 'var(--blue)', funds: 'var(--yellow)' };
   const titleHtml = compact ? '' : '<h2>持仓总览</h2>';
+  const isToday = d.date === todayText();
+  const updateTimeText = isToday ? (DATA_UPDATED_AT || d.date + ' 收盘后') : (d.date + ' 收盘后');
   return `<div class="section summary-section">
     ${titleHtml}
     <div class="summary-tab-bar">
@@ -1807,7 +1877,7 @@ function renderSummarySection(stats, d, compact) {
         <div class="unit">${s.dailyPnlPct != null ? maskSignValue(s.dailyPnlPct, true) : ''}</div>
       </div>
     </div>
-    ${!compact ? '<div class="update-time"><span class="update-dot"></span>数据更新时间：${DATA_UPDATED_AT || d.date + \' 收盘后\'}</div>' : ''}
+    ${!compact ? `<div class="update-time"><span class="update-dot"></span>数据更新时间：${updateTimeText}</div>` : ''}
   </div>`;
 }
 
@@ -2042,6 +2112,20 @@ async function refreshFundNavs(forceConfirmed) {
       updatedAt: new Date().toISOString(),
       funds: FUND_PORTFOLIO.map(f => ({ code: f.code, latestNav: f.latestNav, navDate: f.navDate, dailyIncome: f.dailyIncome, holdingIncome: f.holdingIncome, holdingYield: f.holdingYield, amount: f.amount }))
     }));
+  } catch(e) {}
+  // 保存当日基金快照到DAYS数组，供历史日期查看
+  try {
+    const today = todayText();
+    let todayD = DAYS.find(d => d.date === today);
+    if (!todayD) { ensureTodayData(); todayD = DAYS.find(d => d.date === today); }
+    if (todayD) {
+      todayD.funds = FUND_PORTFOLIO.map(f => ({
+        code: f.code, name: f.name, latestNav: f.latestNav, navDate: f.navDate,
+        dailyIncome: f.dailyIncome, holdingIncome: f.holdingIncome,
+        holdingYield: f.holdingYield, amount: f.amount, shares: f.shares,
+        unitCost: f.unitCost, available: f.available, account: f.account
+      }));
+    }
   } catch(e) {}
 }
 
@@ -3826,22 +3910,28 @@ function renderBarChartSVG(data, labels, container, valueType) {
   container.innerHTML = svg;
 }
 
+function getFundSnapshotForDay(day) {
+  if (day && day.funds && Array.isArray(day.funds) && day.funds.length > 0) return day.funds;
+  return FUND_PORTFOLIO;
+}
+
 function getTabDailyPnl(day) {
   const stockPnl = calcPnL(day);
-  const fundDaily = FUND_PORTFOLIO.reduce((s, f) => s + Number(f.dailyIncome || 0), 0);
-  const fundMv = FUND_PORTFOLIO.reduce((s, f) => s + Number(f.amount || 0), 0);
+  const isToday = day.date === todayText();
+  const fundSnap = getFundSnapshotForDay(day);
+  const fundDaily = fundSnap.reduce((s, f) => s + Number(f.dailyIncome || 0), 0);
+  const fundMv = fundSnap.reduce((s, f) => s + Number(f.amount || 0), 0);
   if (summaryTab === 'stocks') {
     return { dailyPnl: stockPnl.dailyPnl, dailyPnlPct: stockPnl.dailyPnlPct };
   }
   if (summaryTab === 'funds') {
-    // 今天基金净值T+1未更新，显示0；历史日期使用API值
-    const isToday = day.date === todayText();
-    const effFund = isToday ? 0 : fundDaily;
-    const dailyPnlPct = fundMv > 0 ? (effFund / fundMv * 100) : null;
-    return { dailyPnl: effFund, dailyPnlPct: dailyPnlPct };
+    // 今天（T日）交易时段基金净值未确认前显示0；盘后由refreshFundNavs更新后会保存快照显示真实值
+    // 历史日期使用day.funds中的快照数据
+    const showFundDaily = isToday ? (day.funds ? fundDaily : 0) : fundDaily;
+    const dailyPnlPct = fundMv > 0 ? (showFundDaily / fundMv * 100) : null;
+    return { dailyPnl: showFundDaily, dailyPnlPct: dailyPnlPct };
   }
-  const isToday = day.date === todayText();
-  const effFund = isToday ? 0 : fundDaily;
+  const effFund = isToday ? (day.funds ? fundDaily : 0) : fundDaily;
   const allDaily = (stockPnl.dailyPnl || 0) + effFund;
   const allMv = stockPnl.mv + fundMv;
   return { dailyPnl: allDaily, dailyPnlPct: allMv > 0 ? (allDaily / allMv * 100) : null };
@@ -4027,6 +4117,8 @@ function renderHome() {
   if (!d) return;
   const idx = DAYS.findIndex(day => day.date === currentDate);
   const prevDay = idx > 0 ? DAYS[idx - 1] : null;
+  const isToday = d.date === todayText();
+  const updateTimeText = isToday ? (DATA_UPDATED_AT || d.date + ' 收盘后') : (d.date + ' 收盘后');
 
   let html = `<div class="page-nav"><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>`;
   html += '<div class="home-grid">';
@@ -4034,7 +4126,7 @@ function renderHome() {
   // Card 1: 持仓总览
   html += `<div class="home-card" onclick="goHoldings()"><div class="home-card-body"><h2>持仓总览</h2>`;
   html += renderSummarySection(stats, d, true);
-  html += `</div><div class="update-time"><span class="update-dot"></span>数据更新时间：${DATA_UPDATED_AT || d.date + ' 收盘后'}</div><div class="card-arrow">查看详情 →</div></div>`;
+  html += `</div><div class="update-time"><span class="update-dot"></span>数据更新时间：${updateTimeText}</div><div class="card-arrow">查看详情 →</div></div>`;
 
   // Card 2: 大盘情绪
   const top3Heat = (d.sectorHeat || []).slice().sort((a,b) => b.pct - a.pct).slice(0,3);
@@ -4057,7 +4149,7 @@ function renderHome() {
   if (prevDay) {
     html += `<div style="font-size:.82rem;color:var(--text-dim);margin-top:6px">昨日对比：上证 ${sign(prevDay.idx.sh[1])}${fmt(prevDay.idx.sh[1])}% · 深证 ${sign(prevDay.idx.sz[1])}${fmt(prevDay.idx.sz[1])}% · 创业板 ${sign(prevDay.idx.cy[1])}${fmt(prevDay.idx.cy[1])}%</div>`;
   }
-  html += `</div><div class="update-time"><span class="update-dot"></span>数据更新时间：${lastLiveUpdateText || DATA_UPDATED_AT || d.date + ' 收盘后'}</div><div class="card-arrow">查看详情 →</div></div>`;
+  html += `</div><div class="update-time"><span class="update-dot"></span>数据更新时间：${isToday ? (lastLiveUpdateText || DATA_UPDATED_AT || d.date + ' 收盘后') : (d.date + ' 收盘后')}</div><div class="card-arrow">查看详情 →</div></div>`;
 
   // Card 3: 待办清单（登录后显示）
   if (currentUser) {
@@ -4207,13 +4299,15 @@ function toggleThemesMore(btn) {
 function renderMarket() {
   const d = DAYS.find(d => d.date === currentDate);
   if (!d) return;
+  const isToday = d.date === todayText();
+  const updateTimeText = isToday ? (lastLiveUpdateText || DATA_UPDATED_AT || d.date + ' 收盘后') : (d.date + ' 收盘后');
 
   let html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>`;
 
   // === 当日数据快照 ===
   html += `<div class="section">
     <h2>当日数据快照 <span class="tag tag-blue">${d.date} ${d.weekday}</span></h2>
-    <div class="update-time"><span class="update-dot"></span>数据更新时间：${lastLiveUpdateText || DATA_UPDATED_AT || d.date + ' 收盘后'}</div>
+    <div class="update-time"><span class="update-dot"></span>数据更新时间：${updateTimeText}</div>
     <div class="idx-grid">
       <div class="idx-card"><div class="name">上证指数</div><div class="pt">${fmt(d.idx.sh[0])}</div><div class="chg ${cls(d.idx.sh[1])}">${sign(d.idx.sh[1])}${fmt(d.idx.sh[1])}%</div></div>
       <div class="idx-card"><div class="name">深证成指</div><div class="pt">${fmt(d.idx.sz[0])}</div><div class="chg ${cls(d.idx.sz[1])}">${sign(d.idx.sz[1])}${fmt(d.idx.sz[1])}%</div></div>
@@ -4479,12 +4573,14 @@ function renderHoldings() {
   }
   if (showFundHoldings) {
     html += `<div id="holdingTabFunds" class="tab-content ${!showStockHoldings ? 'active' : ''}">`;
-  if (FUND_PORTFOLIO.length) {
+  const fundData = getFundSnapshotForDay(d);
+  if (fundData.length) {
     html += `<div class="cards">`;
-    FUND_PORTFOLIO.forEach(f => {
+    fundData.forEach(f => {
       const holdingIncome = Number(f.holdingIncome || 0);
       const holdingYield = Number(f.holdingYield || 0);
       const dailyIncome = Number(f.dailyIncome || 0);
+      const isHistDay = d.date !== todayText();
       html += `<div class="card clickable" onclick="showFundDetail('${f.code}')">
         <div class="card-head">${fundTag(f.code, {price:false})}</div>
         <div class="card-price">${Number(f.latestNav).toFixed(4)}</div>
@@ -4492,12 +4588,12 @@ function renderHoldings() {
         <div class="trade-marker" style="justify-content:flex-start;margin-bottom:10px">${tradeMarkers(f.code, 'funds')}</div>
         <div class="card-grid">
           <span class="l">持有份额</span><span class="v">${Number(f.shares).toFixed(2)} 份</span>
-          <span class="l">可用份额</span><span class="v">${Number(f.available).toFixed(2)} 份</span>
+          <span class="l">可用份额</span><span class="v">${Number(f.available || f.shares).toFixed(2)} 份</span>
           <span class="l">单位成本</span><span class="v">${Number(f.unitCost).toFixed(4)}</span>
           <span class="l">最新净值</span><span class="v">${Number(f.latestNav).toFixed(4)}（${f.navDate || '—'}）</span>
           <span class="l">当前金额</span><span class="v">${fmt(Number(f.amount))}</span>
           <span class="l">持有收益</span><span class="v ${cls(holdingIncome)}">${sign(holdingIncome)}${fmt(holdingIncome)}（${sign(holdingYield)}${fmt(holdingYield)}%）</span>
-          <span class="l">当日盈亏</span><span class="v ${cls(dailyIncome)}">${sign(dailyIncome)}${fmt(dailyIncome)}</span>
+          <span class="l">当日盈亏</span><span class="v ${cls(dailyIncome)}">${isHistDay ? sign(dailyIncome) + fmt(dailyIncome) : sign(dailyIncome) + fmt(dailyIncome)}</span>
           <span class="l">距回本</span><span class="v ${holdingIncome >= 0 ? 'pos' : 'warn'}">${holdingIncome >= 0 ? '（正收益）' : '待回本'}</span>
           <span class="l">预估回本</span><span class="v"><span class="${holdingIncome >= 0 ? 'hl-green' : 'hl-yellow'}">${holdingIncome >= 0 ? '已回本' : '观察中'}</span></span>
           <span class="l">关联账户</span><span class="v">${f.account || '—'}</span>
@@ -4509,7 +4605,7 @@ function renderHoldings() {
       { label:'最新净值', value:f => Number(f.latestNav).toFixed(4), cls:f => '' },
       { label:'单位成本', value:f => Number(f.unitCost).toFixed(4), cls:f => '' },
       { label:'持有份额', value:f => Number(f.shares).toFixed(2), cls:f => '' },
-      { label:'可用份额', value:f => Number(f.available).toFixed(2), cls:f => '' },
+      { label:'可用份额', value:f => Number(f.available || f.shares).toFixed(2), cls:f => '' },
       { label:'当前金额', value:f => fmt(Number(f.amount)), cls:f => '' },
       { label:'持有收益', value:f => `${sign(Number(f.holdingIncome))}${fmt(Number(f.holdingIncome))}\n${sign(Number(f.holdingYield))}${fmt(Number(f.holdingYield))}%`, cls:f => cls(Number(f.holdingIncome)) },
       { label:'当日盈亏', value:f => `${sign(Number(f.dailyIncome || 0))}${fmt(Number(f.dailyIncome || 0))}`, cls:f => cls(Number(f.dailyIncome || 0)) },
@@ -4517,10 +4613,10 @@ function renderHoldings() {
       { label:'预估回本', value:f => Number(f.holdingIncome) >= 0 ? '已回本' : '观察中', cls:f => Number(f.holdingIncome) >= 0 ? 'pos' : 'warn' }
     ];
     html += `<div class="holding-matrix"><table>
-      <thead><tr><th>指标</th>${FUND_PORTFOLIO.map(f => `<th class="hm-stock">${fundTag(f.code, {price:false})}</th>`).join('')}</tr></thead>
+      <thead><tr><th>指标</th>${fundData.map(f => `<th class="hm-stock">${fundTag(f.code, {price:false})}</th>`).join('')}</tr></thead>
       <tbody>${fundRows.map(row => `<tr>
         <td>${row.label}</td>
-        ${FUND_PORTFOLIO.map(f => `<td class="hm-value ${row.cls(f)}">${String(row.value(f)).replace(/\n/g, '<br>')}</td>`).join('')}
+        ${fundData.map(f => `<td class="hm-value ${row.cls(f)}">${String(row.value(f)).replace(/\n/g, '<br>')}</td>`).join('')}
       </tr>`).join('')}</tbody>
     </table></div>`;
   } else {
@@ -4597,9 +4693,11 @@ async function initApp() {
     FUND_PORTFOLIO.forEach(f => { f.dailyIncome = 0; });
   }
   ensureTodayData();
+  rebuildFundHistory();
   await loadPortfolioApi();
   // loadPortfolioApi会替换FUND_PORTFOLIO，重新应用缓存净值（盘后保留最新净值/收益）
   loadFundNavCache();
+  rebuildFundHistory();
   const today = todayText();
   const workerData = await fetchDailyFromWorker(today);
   mergeWorkerDailyData(workerData);
