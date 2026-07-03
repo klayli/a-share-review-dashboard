@@ -1,46 +1,46 @@
 {
   "schema": "a-share-review-dashboard/portfolio/v1",
-  "updatedAt": "2026-07-02 15:00（北京时间）",
+  "updatedAt": "2026-07-03 15:00（北京时间）",
   "intradayPnl": [
     {
       "time": "09:30",
-      "value": -42.8
+      "value": -15.2
     },
     {
       "time": "10:00",
-      "value": -88.6
+      "value": -28.6
     },
     {
       "time": "10:30",
-      "value": -126.4
+      "value": 25.4
     },
     {
       "time": "11:00",
-      "value": -162.2
+      "value": 68.2
     },
     {
       "time": "11:30",
-      "value": -143.1
+      "value": 52.8
     },
     {
       "time": "13:00",
-      "value": -188.7
+      "value": 35.6
     },
     {
       "time": "13:30",
-      "value": -231.6
+      "value": 72.3
     },
     {
       "time": "14:00",
-      "value": -248.3
+      "value": 95.7
     },
     {
       "time": "14:30",
-      "value": -267.0
+      "value": 108.4
     },
     {
       "time": "15:00",
-      "value": -267.0
+      "value": 119.0
     }
   ],
   "transactions": {
@@ -599,14 +599,14 @@
       "type": "股票型基金",
       "account": "中国银行(尾号1937)",
       "unitCost": 8.988,
-      "latestNav": 9.1075,
-      "navDate": "07-02",
+      "latestNav": 9.1154,
+      "navDate": "07-03",
       "shares": 55.63,
       "available": 55.63,
-      "holdingIncome": 6.64,
-      "holdingYield": 1.33,
-      "dailyIncome": -41.40,
-      "amount": 506.64,
+      "holdingIncome": 7.09,
+      "holdingYield": 1.42,
+      "dailyIncome": 0.44,
+      "amount": 507.10,
       "strategy": "半导体方向主动权益基金，按持仓收益和净值趋势观察。"
     },
     {
@@ -615,14 +615,14 @@
       "type": "股票型基金",
       "account": "—",
       "unitCost": 3.38,
-      "latestNav": 3.6217,
-      "navDate": "07-02",
+      "latestNav": 3.6235,
+      "navDate": "07-03",
       "shares": 673.52,
       "available": 673.52,
-      "holdingIncome": 162.83,
-      "holdingYield": 7.15,
-      "dailyIncome": -63.04,
-      "amount": 2439.36,
+      "holdingIncome": 164.00,
+      "holdingYield": 7.20,
+      "dailyIncome": 1.21,
+      "amount": 2440.47,
       "strategy": "量化多因子主动权益基金，当前持有收益为正，继续观察净值趋势。"
     }
   ]

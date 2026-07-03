@@ -1,6 +1,6 @@
 {
   "schema": "a-share-review-dashboard/portfolio/v1",
-  "updatedAt": "2026-06-30 22:40（北京时间）",
+  "updatedAt": "2026-07-03 15:00（北京时间）",
   "intradayPnl": [
     {
       "time": "09:30",
@@ -599,14 +599,14 @@
       "type": "股票型基金",
       "account": "中国银行(尾号1937)",
       "unitCost": 8.988,
-      "latestNav": 9.9465,
-      "navDate": "06-30",
+      "latestNav": 9.1154,
+      "navDate": "07-03",
       "shares": 55.63,
       "available": 55.63,
-      "holdingIncome": 53.32,
-      "holdingYield": 10.66,
-      "dailyIncome": 9.94,
-      "amount": 553.32,
+      "holdingIncome": 7.09,
+      "holdingYield": 1.42,
+      "dailyIncome": 0.44,
+      "amount": 507.10,
       "strategy": "半导体方向主动权益基金，按持仓收益和净值趋势观察。"
     },
     {
@@ -615,14 +615,14 @@
       "type": "股票型基金",
       "account": "—",
       "unitCost": 3.38,
-      "latestNav": 3.6956,
-      "navDate": "06-30",
+      "latestNav": 3.6235,
+      "navDate": "07-03",
       "shares": 673.52,
       "available": 673.52,
-      "holdingIncome": 215.55,
-      "holdingYield": 9.48,
-      "dailyIncome": 61.76,
-      "amount": 2489.06,
+      "holdingIncome": 164.00,
+      "holdingYield": 7.20,
+      "dailyIncome": 1.21,
+      "amount": 2440.47,
       "strategy": "量化多因子主动权益基金，当前持有收益为正，继续观察净值趋势。"
     }
   ]
