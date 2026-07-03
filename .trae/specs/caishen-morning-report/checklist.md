@@ -1,0 +1,12 @@
+- [x] Checkpoint 1: 财神像显示在header中间位置，有浮动/呼吸动画，点击有反馈
+- [x] Checkpoint 2: 财神像在暗色/亮色主题下显示正常，移动端不遮挡其他元素
+- [x] Checkpoint 3: 首页home-grid中显示"金融市场早报"卡片，样式与其他卡片一致
+- [x] Checkpoint 4: 早报卡片显示隔夜外盘摘要和要闻，点击可跳转详情页
+- [x] Checkpoint 5: 面包屑导航包含"早报"入口，可从任意页面跳转
+- [x] Checkpoint 6: 早报详情页完整显示：隔夜外盘、要闻精选、今日关注、新股申购、财经日历、机构观点
+- [x] Checkpoint 7: 历史日期无早报数据时显示"暂无早报"提示，不报错
+- [x] Checkpoint 8: 2233账号（hideAnni）可以看到早报卡片和面包屑入口
+- [x] Checkpoint 9: 亮色/暗色主题切换后财神像和早报样式正常
+- [x] Checkpoint 10: 版本号正确更新，版本说明为"修复了一些问题和BUG。"
+- [x] Checkpoint 11: 本地预览无JS报错，所有页面功能正常
+- [x] Checkpoint 12: 文件已同步到site/目录

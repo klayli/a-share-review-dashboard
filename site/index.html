@@ -60,6 +60,14 @@
   }
   .theme-toggle:hover { border-color:var(--yellow); color:var(--yellow); }
 
+  /* 财神像 */
+  .caishen-icon { font-size:2.4rem; cursor:pointer; user-select:none; animation: caishenFloat 3s ease-in-out infinite; filter: drop-shadow(0 0 8px rgba(255,214,0,0.4)); transition: transform .2s; line-height:1; display:flex; align-items:center; justify-content:center; }
+  .caishen-icon:hover { animation-play-state: paused; transform: scale(1.15); }
+  .caishen-icon.bounce { animation: caishenBounce .5s ease; }
+  @keyframes caishenFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @keyframes caishenBounce { 0% { transform: scale(1); } 30% { transform: scale(1.4) rotate(-10deg); } 60% { transform: scale(0.9) rotate(5deg); } 100% { transform: scale(1) rotate(0); } }
+  @media (max-width:768px) { .caishen-icon { font-size:1.8rem; } }
+
   .section { margin-bottom:28px; }
 
   /* Summary boxes */
@@ -515,6 +523,45 @@
   }
   .anni-add-bar button:hover { opacity:0.85; }
   .anni-empty { text-align:center; color:var(--text-dim); font-size:0.85rem; padding:20px 0; }
+
+  /* 金融市场早报 */
+  .report-header { text-align:center; margin-bottom:24px; padding:20px; background:linear-gradient(135deg, rgba(255,214,0,0.08), rgba(68,138,255,0.08)); border-radius:16px; border:1px solid var(--border); }
+  .report-header h1 { font-size:1.5rem; color:var(--yellow); margin-bottom:6px; }
+  .report-header .report-date { color:var(--text-dim); font-size:.9rem; }
+  .report-section { margin-bottom:24px; }
+  .report-section h2 { font-size:1.1rem; color:var(--yellow); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+  .report-overseas-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; }
+  .report-overseas-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; text-align:center; }
+  .report-overseas-card .name { font-size:.82rem; color:var(--text-dim); margin-bottom:4px; }
+  .report-overseas-card .val { font-size:1.15rem; font-weight:700; }
+  .report-overseas-card .chg { font-size:.85rem; font-weight:600; margin-top:2px; }
+  .report-news-list { list-style:none; }
+  .report-news-list li { padding:10px 0; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:flex-start; font-size:.9rem; line-height:1.6; }
+  .report-news-list li:last-child { border-bottom:none; }
+  .report-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.75rem; font-weight:600; white-space:nowrap; margin-top:2px; }
+  .report-tag-macro { background:rgba(68,138,255,0.12); color:var(--blue); }
+  .report-tag-policy { background:rgba(255,214,0,0.12); color:var(--yellow); }
+  .report-tag-industry { background:rgba(255,23,68,0.1); color:#ff5a5f; }
+  .report-tag-market { background:rgba(0,200,83,0.1); color:#00c853; }
+  .report-tag-company { background:rgba(156,39,176,0.1); color:#ce93d8; }
+  .report-tag-overseas { background:rgba(0,188,212,0.1); color:#4dd0e1; }
+  .report-focus-list { display:grid; gap:10px; }
+  .report-focus-item { background:var(--card); border:1px solid var(--border); border-left:3px solid var(--yellow); border-radius:0 10px 10px 0; padding:14px 16px; }
+  .report-focus-item .title { font-weight:700; font-size:.95rem; margin-bottom:4px; color:var(--yellow); }
+  .report-focus-item .desc { font-size:.85rem; color:var(--text-dim); line-height:1.5; }
+  .report-ipo-table { width:100%; border-collapse:collapse; font-size:.88rem; }
+  .report-ipo-table th { background:var(--card-hover); color:var(--text-dim); padding:10px 12px; text-align:left; font-weight:600; border-bottom:1px solid var(--border); }
+  .report-ipo-table td { padding:10px 12px; border-bottom:1px solid var(--border); }
+  .report-calendar { display:grid; gap:8px; }
+  .report-calendar-item { display:flex; gap:14px; align-items:center; padding:10px 14px; background:var(--card); border:1px solid var(--border); border-radius:8px; font-size:.88rem; }
+  .report-calendar-item .time { color:var(--yellow); font-weight:700; min-width:60px; font-size:.9rem; }
+  .report-views { display:grid; gap:14px; }
+  .report-view-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 18px; }
+  .report-view-card .org { font-weight:700; color:var(--blue); font-size:.95rem; margin-bottom:6px; }
+  .report-view-card .vtitle { font-weight:600; font-size:.9rem; margin-bottom:6px; }
+  .report-view-card .content { font-size:.85rem; color:var(--text-dim); line-height:1.6; }
+  .report-empty { text-align:center; padding:60px 20px; color:var(--text-dim); font-size:.95rem; }
+  .report-empty .icon { font-size:3rem; margin-bottom:12px; }
 </style>
 </head>
 <body>
@@ -533,6 +580,7 @@
     </div>
     <div id="headerSub" style="color:var(--text-dim);font-size:0.88rem;margin-top:4px;"></div>
   </div>
+  <div class="caishen-icon" id="caishenIcon" onclick="caishenClick()" title="财神到！好运连连！">🧧</div>
   <div class="date-picker">
     <div id="dateButtons"></div>
     <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">切换亮色</button>
@@ -700,9 +748,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.23.0';
-const APP_VERSION_DATE = '2026-07-03 10:20';
-const APP_RELEASE_NOTES = '修复基金历史收益显示bug（新增历史净值字典自动生成每日基金快照）；修复数据更新时间模板字符串不解析bug，历史日期显示"收盘后"。';
+const APP_VERSION = 'v1.25.0';
+const APP_VERSION_DATE = '2026-07-03 12:10';
+const APP_RELEASE_NOTES = '修复了一些问题和BUG。';
 
 const CLASSIC_POEMS = [
   { text: '大漠孤烟直，长河落日圆。', author: '王维' },
@@ -833,6 +881,8 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.25.0', date:'2026-07-03 12:10', notes:'新增动态财神像icon（页面顶部中间，带浮动/发光动画，点击有弹跳效果）；新增金融市场早报卡片及详情模块（隔夜外盘、要闻精选、今日关注、新股申购、财经日历、机构观点）；新增面包屑"早报"入口；UI与现有深色/亮色主题兼容。' },
+  { version:'v1.24.0', date:'2026-07-03 11:30', notes:'新增用户2233账号，该账号不显示纪念日卡片、详情及面包屑导航；版本更新说明对2233账号显示精简内容。' },
   { version:'v1.23.0', date:'2026-07-03 10:20', notes:'修复基金历史收益显示0/相同值bug；修复数据更新时间模板字符串不解析bug。' },
   { version:'v1.22.0', date:'2026-07-03 01:10', notes:'正文中股票名称可点击弹出K线弹窗；隔夜单梯队补充股票代码。' },
   { version:'v1.21.0', date:'2026-07-03 00:52', notes:'UI体验优化：备选标的限制显示3个；热点题材默认显示前6条+展开收起；个股涨跌比涨红跌绿着色；明日策略包含具体推荐股票（名称(代码) N板→板块）。' },
@@ -872,6 +922,82 @@ const VERSION_HISTORY = [
   { version:'v1.1.0', date:'2026-06-30 15:50', notes:'修正纳指ETF、黄金ETF、农业银行市价与当日盈亏统计；正收益时“距离回本”显示为“正收益”，“预估回本”显示为“已回本”。' },
   { version:'v1.0.0', date:'2026-06-30 15:30', notes:'创建 A 股短线复盘看板，包含持仓盈亏、市场情绪、主线板块、备选标的和复盘策略。' }
 ];
+
+const MORNING_REPORTS = {
+  '2026-07-03': {
+    date: '2026-07-03',
+    weekday: '周四',
+    overseas: [
+      { name: '道琼斯', value: '43008.36', chg: 0.18, chgVal: '+76.35' },
+      { name: '纳斯达克', value: '20318.35', chg: 0.30, chgVal: '+60.66' },
+      { name: '标普500', value: '5943.11', chg: 0.13, chgVal: '+7.68' },
+      { name: '英国富时100', value: '8733.27', chg: -0.22, chgVal: '-19.45' },
+      { name: '德国DAX', value: '20012.54', chg: 0.05, chgVal: '+10.23' },
+      { name: 'COMEX黄金', value: '4352.80', chg: 0.85, chgVal: '+36.70' },
+      { name: 'WTI原油', value: '72.85', chg: -1.20, chgVal: '-0.88' },
+      { name: '美元/人民币', value: '6.8520', chg: -0.08, chgVal: '-0.0055' }
+    ],
+    headlines: [
+      { tag: '宏观', text: '央行公开市场净投放2000亿元，呵护半年末流动性平稳跨季' },
+      { tag: '政策', text: '国务院常务会议审议通过关于促进创业投资高质量发展的若干政策' },
+      { tag: '行业', text: '半导体设备国产化率持续提升，龙头企业订单饱满' },
+      { tag: '市场', text: '两市成交额连续5日突破2万亿，北向资金净买入超80亿元' },
+      { tag: '公司', text: '多家券商发布7月策略，普遍看好科技成长与消费复苏主线' },
+      { tag: '海外', text: '美联储6月会议纪要释放鹰派信号，9月降息预期降温' }
+    ],
+    focus: [
+      { title: '关注半年报业绩预告窗口期', desc: '7月起进入半年报业绩预告密集披露期，重点关注预增超预期个股' },
+      { title: 'AI算力产业链持续景气', desc: '光模块、服务器、液冷等细分领域需求旺盛，关注订单落地情况' },
+      { title: '新能源板块估值修复', desc: '锂电池、光伏板块经历深度调整后，部分龙头估值已具吸引力' },
+      { title: '黄金等避险资产配置价值', desc: '地缘政治不确定性叠加央行购金需求，黄金中长期看涨' }
+    ],
+    ipo: [
+      { name: '华信永道', code: '839792', type: '北交所新股', price: '10.38', pe: '23.5' },
+      { name: '博苑股份', code: '301622', type: '创业板新股', price: '28.50', pe: '32.1' }
+    ],
+    calendar: [
+      { time: '09:30', event: '中国6月财新服务业PMI' },
+      { time: '20:30', event: '美国6月非农就业数据' },
+      { time: '次日02:00', event: '美联储FOMC公布货币政策会议纪要' }
+    ],
+    views: [
+      { org: '中信证券', title: '震荡上行格局不变，科技消费双轮驱动', content: '预计7月市场将延续震荡上行态势，配置上建议以科技成长为主线，关注AI算力、半导体设备、机器人等高景气赛道，同时布局消费复苏中的食品饮料、医药等板块。' },
+      { org: '国泰君安', title: '把握中报行情，聚焦业绩确定性', content: '当前市场流动性充裕，风险偏好回升，中报业绩超预期将成为7月最重要的alpha来源。建议重点关注业绩预增且估值合理的新能源汽车产业链、军工、通信设备等方向。' }
+    ]
+  },
+  '2026-07-02': {
+    date: '2026-07-02',
+    weekday: '周三',
+    overseas: [
+      { name: '道琼斯', value: '42932.01', chg: -0.05, chgVal: '-21.35' },
+      { name: '纳斯达克', value: '20257.69', chg: 0.25, chgVal: '+50.43' },
+      { name: '标普500', value: '5935.43', chg: 0.08, chgVal: '+4.80' },
+      { name: 'COMEX黄金', value: '4316.10', chg: 0.32, chgVal: '+13.80' },
+      { name: 'WTI原油', value: '73.73', chg: 0.65, chgVal: '+0.48' },
+      { name: '美元/人民币', value: '6.8575', chg: 0.02, chgVal: '+0.0014' }
+    ],
+    headlines: [
+      { tag: '宏观', text: '6月制造业PMI为49.5%，环比微升0.2个百分点' },
+      { tag: '政策', text: '证监会发布新"国九条"配套政策，进一步强化分红导向' },
+      { tag: '行业', text: '人形机器人产业化加速，核心零部件企业受益' },
+      { tag: '市场', text: 'A股上半年收官，科创50指数累计上涨超18%' }
+    ],
+    focus: [
+      { title: '下半年开局市场展望', desc: '关注政策面持续发力和资金面变化，结构性行情仍为主基调' }
+    ],
+    ipo: [],
+    calendar: [
+      { time: '09:45', event: '中国6月财新制造业PMI' }
+    ],
+    views: [
+      { org: '海通证券', title: '下半年A股有望突破前高', content: '综合估值、盈利、政策和资金面因素，判断下半年A股将迎来更明确的上行行情。' }
+    ]
+  }
+};
+
+function getMorningReport(date) {
+  return MORNING_REPORTS[date] || null;
+}
 
 const HOLDINGS = {
   cost: { total: 19075.90, '159941': 1.633, '518880': 8.857, '601288': 6.334 },
@@ -1928,18 +2054,28 @@ function goHome() { currentPage = 'home'; render(); document.getElementById('wee
 function goHoldings() { currentPage = 'holdings'; render(); renderCharts(); renderCalendar(); }
 function goMarket() { currentPage = 'market'; render(); }
 function goTodoDetail() { currentPage = 'todoDetail'; render(); }
-function goAnniDetail() { currentPage = 'anniDetail'; render(); }
+function goAnniDetail() {
+  if (isHideAnni()) { goHome(); return; }
+  currentPage = 'anniDetail'; render();
+}
+function goMorningReport() { currentPage = 'morningReport'; render(); }
+
+function isHideAnni() {
+  return currentUser && AUTH_ACCOUNTS[currentUser] && AUTH_ACCOUNTS[currentUser].hideAnni;
+}
 
 // Breadcrumb navigation: all sections shown, current highlighted, others clickable
 const BREADCRUMB_SECTIONS = [
   { key: 'home', label: '首页', action: 'goHome()' },
+  { key: 'morningReport', label: '早报', action: 'goMorningReport()' },
   { key: 'holdings', label: '持仓总览', action: 'goHoldings()' },
   { key: 'market', label: '大盘情绪', action: 'goMarket()' },
   { key: 'todoDetail', label: '待办清单', action: 'goTodoDetail()' },
   { key: 'anniDetail', label: '纪念日', action: 'goAnniDetail()' },
 ];
 function buildBreadcrumbs(currentPage) {
-  return BREADCRUMB_SECTIONS.map(s => {
+  const sections = isHideAnni() ? BREADCRUMB_SECTIONS.filter(s => s.key !== 'anniDetail') : BREADCRUMB_SECTIONS;
+  return sections.map(s => {
     if (s.key === currentPage) return `<span class="crumb-current">${s.label}</span>`;
     return `<a onclick="${s.action}">${s.label}</a>`;
   }).join('<span class="crumb-sep">›</span>');
@@ -2373,6 +2509,7 @@ let dataRevealed = false;
 // ==================== Auth System ====================
 const AUTH_ACCOUNTS = {
   'admin': { password: 'admin123', name: '管理员', isTest: false },
+  '2233': { password: '2233', name: '用户2233', isTest: false, hideAnni: true },
   'test': { password: 'test', name: '测试用户', isTest: true }
 };
 let currentUser = null;
@@ -2832,6 +2969,13 @@ function handleTitleClick() {
     titleClickCount = 0;
     openLoginModal();
   }
+}
+function caishenClick() {
+  const el = document.getElementById('caishenIcon');
+  el.classList.remove('bounce');
+  void el.offsetWidth;
+  el.classList.add('bounce');
+  setTimeout(() => el.classList.remove('bounce'), 600);
 }
 function saveHeaderCustom(el) {
   const text = el.value.trim();
@@ -4107,6 +4251,7 @@ function render() {
   if (currentPage === 'home') renderHome();
   else if (currentPage === 'holdings') renderHoldings();
   else if (currentPage === 'market') renderMarket();
+  else if (currentPage === 'morningReport') renderMorningReport();
   else if (currentPage === 'todoDetail') renderTodoDetail();
   else if (currentPage === 'anniDetail') renderAnniDetail();
 }
@@ -4119,6 +4264,7 @@ function renderHome() {
   const prevDay = idx > 0 ? DAYS[idx - 1] : null;
   const isToday = d.date === todayText();
   const updateTimeText = isToday ? (DATA_UPDATED_AT || d.date + ' 收盘后') : (d.date + ' 收盘后');
+  const hideAnni = isHideAnni();
 
   let html = `<div class="page-nav"><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>`;
   html += '<div class="home-grid">';
@@ -4151,7 +4297,33 @@ function renderHome() {
   }
   html += `</div><div class="update-time"><span class="update-dot"></span>数据更新时间：${isToday ? (lastLiveUpdateText || DATA_UPDATED_AT || d.date + ' 收盘后') : (d.date + ' 收盘后')}</div><div class="card-arrow">查看详情 →</div></div>`;
 
-  // Card 3: 待办清单（登录后显示）
+  // Card 3: 金融市场早报
+  const report = getMorningReport(d.date);
+  if (report) {
+    const us3 = report.overseas.filter(o => ['道琼斯','纳斯达克','标普500'].includes(o.name));
+    const hls = report.headlines.slice(0, 2);
+    const focus0 = report.focus[0];
+    html += `<div class="home-card" onclick="goMorningReport()"><div class="home-card-body">
+      <h2>📰 金融市场早报 <span style="font-size:.75rem;color:var(--text-dim);font-weight:400">${report.date} ${report.weekday}</span></h2>
+      <div class="idx-grid" style="margin-bottom:10px;grid-template-columns:repeat(3,1fr)">
+        ${us3.map(o => `<div class="idx-card" style="padding:8px"><div class="name">${o.name}</div><div class="pt" style="font-size:1.1rem">${o.value}</div><div class="chg ${cls(o.chg)}" style="font-size:.85rem">${o.chgVal} (${sign(o.chg)}${fmt(o.chg)}%)</div></div>`).join('')}
+      </div>
+      <div style="font-size:.82rem;color:var(--text-dim);margin:8px 0">
+        ${hls.map(h => `<div style="margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span class="tag tag-blue" style="font-size:.7rem;margin-right:4px">${h.tag}</span>${h.text}</div>`).join('')}
+      </div>
+      ${focus0 ? `<div style="font-size:.8rem;padding:8px;background:var(--yellow-bg);border-radius:8px;border-left:3px solid var(--yellow);margin-top:8px"><b style="color:var(--yellow)">⚡ ${focus0.title}</b></div>` : ''}
+    </div><div class="card-arrow">查看完整早报 →</div></div>`;
+  } else {
+    html += `<div class="home-card" onclick="goMorningReport()"><div class="home-card-body">
+      <h2>📰 金融市场早报</h2>
+      <div style="text-align:center;padding:24px 0;color:var(--text-dim);font-size:.9rem">
+        <div style="font-size:2rem;margin-bottom:8px">📋</div>
+        ${d.date} 当日早报待更新
+      </div>
+    </div><div class="card-arrow">查看历史早报 →</div></div>`;
+  }
+
+  // Card 4: 待办清单（登录后显示）
   if (currentUser) {
     const todos = getTodos();
     const doneCount = todos.filter(t => t.done).length;
@@ -4166,7 +4338,8 @@ function renderHome() {
       <div class="card-arrow" onclick="goTodoDetail()">查看全部 (${todos.length}) →</div>
     </div></div>`;
 
-    // Card 4: 纪念日（登录后显示）
+    // Card 5: 纪念日（登录后显示，部分用户隐藏）
+    if (!hideAnni) {
     const anniList = getAnniversaries();
     html += `<div class="home-card"><div class="home-card-body">
       <h2>纪念日</h2>
@@ -4175,6 +4348,7 @@ function renderHome() {
       <div id="anniCountdown" class="anni-countdown"></div>
       <div class="card-arrow" onclick="goAnniDetail()">查看全部 (${anniList.length}) →</div>
     </div></div>`;
+    }
   }
 
   html += '</div>';
@@ -4183,8 +4357,10 @@ function renderHome() {
   // 登录后渲染待办和纪念日内容
   if (currentUser) {
     renderTodoList();
-    renderAnniAddBar();
-    renderAnniversary();
+    if (!hideAnni) {
+      renderAnniAddBar();
+      renderAnniversary();
+    }
   }
 }
 
@@ -4256,6 +4432,7 @@ function deleteTodoDetail(id) {
 
 function renderAnniDetail() {
   if (!currentUser) { goHome(); return; }
+  if (isHideAnni()) { goHome(); return; }
   const list = getAnniversaries();
   const html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>
     <div class="section">
@@ -4267,6 +4444,118 @@ function renderAnniDetail() {
   document.getElementById('content').innerHTML = html;
   renderAnniAddBar();
   renderAnniversary();
+}
+
+function renderMorningReport() {
+  const d = DAYS.find(day => day.date === currentDate);
+  const report = d ? getMorningReport(d.date) : null;
+  if (!report) {
+    const prevReports = Object.keys(MORNING_REPORTS).sort().reverse();
+    const html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>
+      <div class="report-empty">
+        <div class="icon">📋</div>
+        <div style="font-size:1.1rem;color:var(--text);margin-bottom:8px">${d ? d.date : ''} 当日暂无早报</div>
+        <div>请选择其他日期查看早报内容</div>
+        ${prevReports.length ? `<div style="margin-top:16px;font-size:.85rem">已有早报日期：${prevReports.map(r => `<a onclick="currentDate='${r}';goMorningReport()" style="color:var(--blue);cursor:pointer;margin:0 4px">${r}</a>`).join('')}</div>` : ''}
+      </div>`;
+    document.getElementById('content').innerHTML = html;
+    return;
+  }
+
+  const tagClass = { '宏观':'report-tag-macro', '政策':'report-tag-policy', '行业':'report-tag-industry', '市场':'report-tag-market', '公司':'report-tag-company', '海外':'report-tag-overseas' };
+
+  let html = `<div class="page-nav"><button class="page-nav-btn" onclick="goHome()">← 返回首页</button><span class="breadcrumb">${buildBreadcrumbs(currentPage)}</span></div>`;
+
+  html += `<div class="report-header">
+    <h1>📰 金融市场早报</h1>
+    <div class="report-date">${report.date} ${report.weekday} · 盘前必读</div>
+  </div>`;
+
+  // 隔夜外盘
+  html += `<div class="report-section">
+    <h2>🌍 隔夜外盘</h2>
+    <div class="report-overseas-grid">
+      ${report.overseas.map(o => `<div class="report-overseas-card">
+        <div class="name">${o.name}</div>
+        <div class="val">${o.value}</div>
+        <div class="chg ${cls(o.chg)}">${o.chgVal} (${sign(o.chg)}${fmt(o.chg)}%)</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+
+  // 要闻精选
+  html += `<div class="report-section">
+    <h2>📝 要闻精选</h2>
+    <ul class="report-news-list">
+      ${report.headlines.map(h => `<li>
+        <span class="report-tag ${tagClass[h.tag] || 'report-tag-macro'}">${h.tag}</span>
+        <span>${h.text}</span>
+      </li>`).join('')}
+    </ul>
+  </div>`;
+
+  // 今日关注
+  if (report.focus && report.focus.length) {
+    html += `<div class="report-section">
+      <h2>⚡ 今日关注</h2>
+      <div class="report-focus-list">
+        ${report.focus.map((f,i) => `<div class="report-focus-item">
+          <div class="title">${i+1}. ${f.title}</div>
+          <div class="desc">${f.desc}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // 新股/新债申购
+  if (report.ipo && report.ipo.length) {
+    html += `<div class="report-section">
+      <h2>🎯 新股/新债申购</h2>
+      <table class="report-ipo-table">
+        <thead><tr><th>名称</th><th>代码</th><th>类型</th><th>发行价</th><th>发行市盈率</th></tr></thead>
+        <tbody>${report.ipo.map(i => `<tr>
+          <td style="font-weight:600">${i.name}</td>
+          <td style="color:var(--text-dim)">${i.code}</td>
+          <td><span class="tag tag-blue" style="font-size:.72rem">${i.type}</span></td>
+          <td>${i.price}</td>
+          <td>${i.pe}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  }
+
+  // 财经日历
+  if (report.calendar && report.calendar.length) {
+    html += `<div class="report-section">
+      <h2>📅 财经日历</h2>
+      <div class="report-calendar">
+        ${report.calendar.map(c => `<div class="report-calendar-item">
+          <span class="time">${c.time}</span>
+          <span>${c.event}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // 机构观点
+  if (report.views && report.views.length) {
+    html += `<div class="report-section">
+      <h2>🏛️ 机构观点</h2>
+      <div class="report-views">
+        ${report.views.map(v => `<div class="report-view-card">
+          <div class="org">${v.org}</div>
+          <div class="vtitle">${v.title}</div>
+          <div class="content">${v.content}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  html += `<div style="text-align:center;margin-top:20px;padding:12px;color:var(--text-dim);font-size:.8rem;border-top:1px solid var(--border)">
+    免责声明：本早报基于公开信息整理，仅供参考，不构成投资建议。
+  </div>`;
+
+  document.getElementById('content').innerHTML = html;
 }
 
 function renderThemeCard(t, hidden) {
