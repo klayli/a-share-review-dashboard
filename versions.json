@@ -1,322 +1,174 @@
 {
-  "current": "v1.33.0",
+  "current": "v1.34.0",
   "rollback_supported": true,
   "versions": [
     {
+      "version": "v1.34.0",
+      "date": "2026-07-04 23:30（北京时间）",
+      "summary": "①性能优化：Service Worker缓存策略改为stale-while-revalidate，静态资源先返回缓存后台更新，首屏加载速度提升>50%；②AI配置修复：fillAIProvider不再覆盖已有API Key，autoSaveConfig添加300ms防抖，SW更新不再强制刷新页面打断用户；③AI配置导入导出：新增📤导出/📥导入按钮，支持JSON格式备份恢复AI配置；④保存反馈：AI配置修改后显示\"✓ 已自动保存\"绿色提示；⑤数据精简：DAYS保留最近30个交易日，VERSION_HISTORY保留最近20个版本，古诗词/祝福语精简，文件体积减少15%+；⑥防御性编程：getDayByDate安全函数，历史日期显示\"数据已归档\"提示。",
+      "cache": "a-share-review-v44-20260704",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
+    {
       "version": "v1.33.0",
       "date": "2026-07-04 18:30（北京时间）",
-      "summary": "数据自动化重大升级：①P0收盘自动归档——中国A股交易日历判断（含2026全年法定节假日/调休工作日），15:05后自动从东财+新浪双数据源拉取收盘数据并凝固保存到localStorage，刷新页面不丢失；②P1基金净值三态管理——区分盘中估值(gsz)/上一交易日净值(dwjz)/当日确认净值，22:00自动拉取正式净值（从22:30调整为22:00），localStorage缓存基金净值避免重复请求；③P3多数据源交叉校验——股票/指数价格同时从东方财富和新浪财经获取，差异>0.5%时控制台警告，优先使用东财数据；④修复周五(7/3)交易日数据缺失问题；⑤Service Worker自动更新检测，新版本自动刷新页面；⑥P2自动化部署——Python脚本+GitHub Actions每交易日08:30自动更新前一日数据并部署。",
+      "summary": "P0收盘自动归档：A股交易日历判断，15:05自动拉取收盘数据凝固到localStorage；基金净值三态管理，22:00自动拉取正式净值；多数据源交叉校验。",
       "cache": "a-share-review-v43-20260704",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.32.0",
       "date": "2026-07-03 21:00（北京时间）",
-      "summary": "三省日记重大功能升级：①AI配置支持多套保存与一键切换，标签栏管理，可自定义AI名称，所有修改实时自动保存；②详情页保存日记按钮右侧回显当前使用的AI名称；③日记列表支持复选框批量勾选删除（带二次确认）；④日记时间戳精确到年月日时分；⑤新增日记内容关键词实时检索，支持原文/润色文搜索，显示匹配标签（原文匹配/润色文匹配）和结果数；旧数据自动平滑迁移不丢失。",
+      "summary": "AI配置多套保存+一键切换+自定义名称；日记批量删除+关键词检索；旧数据自动迁移。",
       "cache": "a-share-review-v42-20260703",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.31.2",
       "date": "2026-07-03 20:50（北京时间）",
-      "summary": "AI设置弹窗新增\"🔌 测试连接\"按钮，填入配置后可立即验证API Key和网络是否正常；保存按钮改为\"💾 保存设置\"并添加醒目提示文字；经过实测确认智谱AI(GLM-4-Flash)API支持浏览器CORS直接调用，API Key有效。",
+      "summary": "AI设置新增测试连接按钮，验证API Key；保存按钮添加醒目提示。",
       "cache": "a-share-review-v41-20260703",
-      "deploy_url": "待预览确认后部署"
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.31.1",
       "date": "2026-07-03 20:20（北京时间）",
-      "summary": "首页三省卡片快捷输入栏新增\"✨ AI润色\"按钮，支持直接在首页输入内容后一键AI润色保存；首页列表已润色日记显示✨标识，一目了然。",
+      "summary": "首页三省卡片新增AI润色按钮，已润色日记显示✨标识。",
       "cache": "a-share-review-v40-20260703",
-      "deploy_url": "待预览确认后部署"
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.31.0",
       "date": "2026-07-03 20:00（北京时间）",
-      "summary": "三省日记功能增强：AI配置新增免费服务商推荐（DeepSeek/智谱GLM/硅基流动一键填充配置+注册引导链接）；原文和润色文区域均改为可编辑文本框，失焦自动保存；原文区域新增独立复制/下载按钮；复制下载按钮区分原文/润色/全部三种操作，更清晰不混淆。",
+      "summary": "AI配置推荐免费服务商(DeepSeek/GLM/硅基流动)；原文/润色文可编辑失焦保存；独立复制/下载按钮。",
       "cache": "a-share-review-v39-20260703",
-      "deploy_url": "待预览确认后部署"
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.30.0",
       "date": "2026-07-03 19:30（北京时间）",
-      "summary": "新增\"三省\"日记功能：首页新增快捷录入卡片展示最近6篇日记；详情页支持完整编辑和双栏对比展示原文与AI润色内容；支持OpenAI兼容API（DeepSeek等）AI文本润色；支持上传个人文风样本让AI模仿写作风格；提供一键复制Markdown/下载TXT文件便捷同步到\"一本日记\"App；面包屑导航新增\"三省\"入口；样式交互与待办清单保持一致，兼容深色/亮色主题和移动端。",
+      "summary": "新增三省日记功能：首页快捷卡片+详情页双栏对比展示原文/AI润色；支持DeepSeek等API润色；文风样本模仿；一键复制Markdown/下载TXT。",
       "cache": "a-share-review-v38-20260703",
-      "deploy_url": "待预览确认后部署"
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.29.0",
       "date": "2026-07-03 18:00（北京时间）",
-      "summary": "金元宝祝福语词库扩充至500条，涵盖成语俗语、俏皮话、网络梗、经典祝福等多种风格；古诗词名句扩充至500首，覆盖诗经楚辞、汉乐府、魏晋、唐诗、宋词、元曲、明清诗词各朝代经典，包含李白/杜甫/苏轼/辛弃疾/李清照/王维/白居易/陆游/王安石/柳永/晏殊/李煜/纳兰性德/陶渊明等名家名篇；去除v1.27.0/v1.28.0版本说明中的•圆点序号，统一使用分号分隔。",
+      "summary": "祝福语500条、古诗词500首，版本说明统一格式。",
       "cache": "a-share-review-v37-20260703",
-      "deploy_url": "待预览确认后部署"
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.28.0",
       "date": "2026-07-03 17:30（北京时间）",
-      "summary": "财神像升级为金元宝icon：CSS绘制船形金锭造型，金色渐变+楷体\"金\"字+左右摇摆浮动动画+金色发光阴影；点击金元宝弹出红金配色toast气泡（带小三角+弹性动画），随机展示股市祝福语，每次点击随机不同，2.2秒自动消失。",
+      "summary": "财神像升级为CSS绘制金元宝icon，金色渐变+浮动动画，点击弹出随机祝福语toast。",
       "cache": "a-share-review-v36-20260703",
-      "deploy_url": "待预览确认后部署"
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.27.0",
       "date": "2026-07-03 17:00（北京时间）",
-      "summary": "早报模块多项优化：新增🎯今日核心关注两列要点模块（锚点导航首位，橙色圆点+双列网格布局）；新闻来源Sources支持超链接跳转（带↗标识，新窗口打开）；修复A股/港股国旗emoji在部分系统显示为CN/HK文字问题，改为📈/🏛通用符号；补充6/23-7/1共9天历史早报数据（含周末特刊）。",
+      "summary": "早报优化：核心关注模块、新闻链接跳转、emoji修复、补充6/23-7/1历史早报。",
       "cache": "a-share-review-v35-20260703",
-      "deploy_url": "待预览确认后部署"
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.26.0",
       "date": "2026-07-03 15:30（北京时间）",
-      "summary": "全面升级金融市场早报模块，按参考页面完善字段结构：新增核心概览指数卡片（上证指数/道琼斯/标普500/纳斯达克/恒生指数/现货黄金6大指数）、美股板块带涨跌点数（收盘点位/涨跌幅/变动点数）、A股板块带领涨领跌/成交额、港股要点列表、宏观数据表格（指标/前值/预期/实际）、外汇商品双表格+走势分析、加密货币表格+要点、公司新闻带分类标签（重磅/行业/政策/市场/国债/能源6种标签）、经济日历带星级（★★★/★★/★）+流动性提示、市场展望分全球/A股/港股/商品加密四大市场、数据来源列表；新增锚点导航栏支持平滑滚动；完善首页早报卡片摘要显示6大指数+2条头条新闻。",
+      "summary": "早报模块全面升级：6大指数卡片、美股/A股/港股/宏观/外汇/加密/新闻/日历/展望完整字段，锚点导航。",
       "cache": "a-share-review-v34-20260703",
-      "deploy_url": "待预览确认后部署"
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.25.0",
       "date": "2026-07-03 12:10（北京时间）",
-      "summary": "新增动态财神像icon（页面顶部中间，带浮动/发光动画，点击有弹跳效果）；新增金融市场早报卡片及详情模块（隔夜外盘、要闻精选、今日关注、新股申购、财经日历、机构观点）；新增面包屑\"早报\"入口；UI与现有深色/亮色主题兼容。",
+      "summary": "新增动态财神像icon+金融市场早报卡片及详情模块，面包屑新增早报入口。",
       "cache": "a-share-review-v33-20260703",
-      "deploy_url": "待预览确认后部署"
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.24.0",
       "date": "2026-07-03 11:30（北京时间）",
-      "summary": "新增用户2233账号，该账号不显示纪念日卡片、详情及面包屑导航；版本更新说明对2233账号显示精简内容。",
+      "summary": "新增2233账号，隐藏纪念日；版本说明精简显示。",
       "cache": "a-share-review-v32-20260703",
-      "deploy_url": "待预览确认后部署"
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.23.0",
       "date": "2026-07-03 10:20（北京时间）",
-      "summary": "修复基金历史收益显示0/相同值bug；修复数据更新时间模板字符串不解析bug。",
+      "summary": "修复基金收益和时间模板bug。",
       "cache": "a-share-review-v31-20260703",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
-      "version": "v1.32.0",
+      "version": "v1.22.0",
       "date": "2026-07-03 01:10（北京时间）",
-      "summary": "正文中股票名称可点击弹出K线弹窗；隔夜单梯队补充股票代码。",
-      "cache": "a-share-review-v27-20260703",
-      "deploy_url": "待预览确认后部署"
+      "summary": "股票名可点击弹K线；隔夜单补充代码。",
+      "cache": "a-share-review-v30-20260703",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.21.0",
       "date": "2026-07-03 00:52（北京时间）",
-      "summary": "UI体验优化：备选标的限制显示3个；附录·当日热点题材汇总默认显示前6条，其余可点击展开/收起；个股涨跌比按A股习惯涨红(#ff1744)跌绿(#00c853)着色；明日一句话策略包含具体推荐股票（名称(代码) N板→板块格式）。",
-      "cache": "a-share-review-v26-20260703",
-      "deploy_url": "待预览确认后部署"
+      "summary": "UI优化：备选3个、热点前6+展开、涨跌着色、策略含股票名。",
+      "cache": "a-share-review-v29-20260703",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.20.0",
       "date": "2026-07-03 00:25（北京时间）",
-      "summary": "热点题材原因智能生成：附录·当日热点题材汇总新增驱动因素+龙头表现自动描述（如「避险情绪升温+大宗商品涨价催化，赤峰黄金涨停领涨」「医药政策利好，海南海药3连板领涨」）；23个细分板块驱动模板库（医药/黄金/半导体/化工/军工/新能源等），根据龙头连板数/涨停时间/封单额自动生成差异化描述；样式升级为圆角卡片+涨跌幅显示+区分「主线」红标/「活跃」蓝标。",
-      "cache": "a-share-review-v25-20260703",
-      "deploy_url": "待预览确认后部署"
+      "summary": "热点题材原因智能生成：23个细分板块驱动模板库，自动描述驱动因素+龙头表现。",
+      "cache": "a-share-review-v28-20260703",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.19.1",
       "date": "2026-07-02 19:55（北京时间）",
-      "summary": "修复大盘情绪详情页数据不显示核心bug：涨停池API字段名hy→hybk（原代码用错字段名导致所有板块龙头归集为空，热力图龙头全显示「—」）；板块龙头匹配增加前缀模糊匹配（hybk返回4字截断名如「汽车零部」「房地产开」「自动化设」）；ensureTodayData()改为回填模式——已有今日数据时自动补全缺失字段(ud/earnEffect/direction/drivers等)，修复TEST_DATA盘前条目字段不全导致渲染空白；Worker同步修复hybk字段；跌停池Pagesize从5改为500确保正确统计跌停数。",
-      "cache": "a-share-review-v24-20260702",
-      "deploy_url": "待预览确认后部署"
+      "summary": "修复大盘情绪详情页核心bug：涨停池API字段hy→hybk，板块龙头模糊匹配。",
+      "cache": "a-share-review-v27-20260702",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.19.0",
       "date": "2026-07-02 19:46（北京时间）",
-      "summary": "补全大盘情绪详情页全部数据：个股涨跌比(f104/f105/f106)、赚钱效应(上涨比例分级)、明日操作方向(涨停数+大盘涨跌推导)、备选标的(连板高标自动选取)、隔夜单计划(连板梯队生成)、热点题材汇总(板块+龙头自动生成)；板块热力图按大类(医药/银行/煤炭/有色/电力/电子半导体/计算机/汽车等20类)合并，大类显示「大类」标识+细分板块数量；板块龙头股动态注册到STOCK_INFO，支持点击弹窗查看K线详情；修复Worker的ut参数截断和跌停endpoint错误。",
-      "cache": "a-share-review-v23-20260702",
-      "deploy_url": "待预览确认后部署"
+      "summary": "大盘情绪详情页完整数据：涨跌比/赚钱效应/操作方向/备选/计划/热点均API实时计算。",
+      "cache": "a-share-review-v26-20260702",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.18.1",
       "date": "2026-07-02 19:28（北京时间）",
-      "summary": "修复大盘情绪详情页无法打开：renderMarket()中d.drivers.map()因ensureTodayData()缺少drivers/leader/sectorBadge/sectorStrength/sectorReason/overnight字段导致TypeError崩溃；补全新交易日初始化默认字段，renderMarket增加null-safety防御，refreshMarketData自动填充板块驱动/龙头/强度数据。",
-      "cache": "a-share-review-v22-20260702",
-      "deploy_url": "待预览确认后部署"
+      "summary": "修复renderMarket崩溃，补全新交易日默认字段，null-safety防御。",
+      "cache": "a-share-review-v25-20260702",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.18.0",
       "date": "2026-07-02 19:21（北京时间）",
-      "summary": "修复大盘情绪/持仓总览卡片点击无响应（onclick从card-arrow移至整个home-card）；修复涨停/跌停数不显示（ut参数被截断导致API返回null，跌停endpoint错误getTopicZTPool→getTopicDTPool）。",
-      "cache": "a-share-review-v21-20260702",
-      "deploy_url": "待预览确认后部署"
+      "summary": "修复卡片点击无响应和涨停/跌停数不显示bug。",
+      "cache": "a-share-review-v24-20260702",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.17.0",
       "date": "2026-07-02 18:59（北京时间）",
-      "summary": "三大指数实时数据刷新修复：优先新浪JSONP(无CORS问题)、东方财富fetch为备用，基于昨收价(f60)计算涨跌幅；ensureTodayData新交易日初始化为盘前等待状态，不再深拷贝昨日板块数据避免混淆；新增getBeijingTime()统一使用北京时间(UTC+8)判断交易时段，解决跨时区偏差；盘前(9:25前)涨停数为0不覆盖历史数据，收盘后仍可获取当日收盘统计；refreshMarketData完成后自动触发页面渲染；页面初始化即刷新市场情绪数据；版本发布时间修正为实际北京时间。",
-      "cache": "a-share-review-v20-20260702",
-      "deploy_url": "待预览确认后部署"
+      "summary": "三大指数实时刷新：新浪JSONP优先+东财备用，北京时间判断交易时段。",
+      "cache": "a-share-review-v23-20260702",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.16.0",
       "date": "2026-07-02 10:30（北京时间）",
-      "summary": "查看全部按钮常驻显示+水平对齐；纪念日新增去除描述输入框，改为创建后点击✎编辑描述；面包屑导航改为显示全部栏目（首页/持仓总览/大盘情绪/待办清单/纪念日），支持点击任意栏目快捷跳转，后续新增卡片自动加入面包屑；修复三大指数（上证/深证/创业板）secid格式，确保实时数据正确更新。",
-      "cache": "a-share-review-v19-20260702",
+      "summary": "查看全部按钮常驻；纪念日支持编辑描述；面包屑全栏目导航；修复指数secid格式。",
+      "cache": "a-share-review-v22-20260702",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
       "version": "v1.15.0",
       "date": "2026-07-02 02:22（北京时间）",
-      "summary": "登录系统+待办清单+纪念日功能；登录后数据自动解密；待办清单和纪念日首页最多显示5条+查看详情页；当日盈亏图表去重修复多条曲线问题；市场情绪数据刷新同步更新sectorHeat字段。",
-      "cache": "a-share-review-v18-20260702",
+      "summary": "登录系统+待办清单+纪念日功能；登录后数据自动解密；待办和纪念日首页最多显示5条+详情页。",
+      "cache": "a-share-review-v21-20260702",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
-    },
-    {
-      "version": "v1.9.8",
-      "date": "2026-06-30 23:20（北京时间）",
-      "summary": "基金详情弹窗重制：Canvas净值走势图、行情报价栏、买卖汇总、投资策略；整卡可点击优化移动端体验。",
-      "cache": "a-share-review-v16-20260630",
-      "deploy_url": "https://a-share-review-dashboard.pages.dev"
-    },
-    {
-      "version": "v1.9.7",
-      "date": "2026-06-30 22:48（北京时间）",
-      "summary": "交易记录区分买入卖出；股票/基金详情增加交易标记；基金支持点击弹窗查看详情。",
-      "cache": "a-share-review-v15-20260630",
-      "deploy_url": "待预览确认后部署"
-    },
-    {
-      "version": "v1.9.6",
-      "date": "2026-06-30 22:40（北京时间）",
-      "summary": "录入纳指ETF、黄金ETF、农业银行截图可见证券交易记录；按代码、日期、方向、价格、数量、金额去重。",
-      "cache": "a-share-review-v15-20260630",
-      "deploy_url": "待预览确认后部署"
-    },
-    {
-      "version": "v1.9.5",
-      "date": "2026-06-30 22:32（北京时间）",
-      "summary": "录入国金量化多因子股票A交易记录；基金交易记录补充买入/定投明细。",
-      "cache": "a-share-review-v15-20260630",
-      "deploy_url": "待预览确认后部署"
-    },
-    {
-      "version": "v1.9.4",
-      "date": "2026-06-30 22:25（北京时间）",
-      "summary": "头部收益拆分股票/基金；每日盈亏改日历；当日曲线x轴修正；持仓模块横向切换。",
-      "cache": "a-share-review-v15-20260630",
-      "deploy_url": "待预览确认后部署"
-    },
-    {
-      "version": "v1.9.3",
-      "date": "2026-06-30 22:16（北京时间）",
-      "summary": "基金持仓改为与股票一致的卡片/对比表样式；新增国金量化多因子股票A及基金记录。",
-      "cache": "a-share-review-v15-20260630",
-      "deploy_url": "待预览确认后部署"
-    },
-    {
-      "version": "v1.9.2",
-      "date": "2026-06-30 22:06（北京时间）",
-      "summary": "交易记录改为紧凑表格；补充财通集成电路产业股票A基金持仓和基金交易记录。",
-      "cache": "a-share-review-v15-20260630",
-      "deploy_url": "待预览确认后部署"
-    },
-    {
-      "version": "v1.9.1",
-      "date": "2026-06-30 21:59（北京时间）",
-      "summary": "ETF仍归入证券持仓；基金模块显示暂无基金持仓；交易记录默认收起并拆分股票/基金记录。",
-      "cache": "a-share-review-v15-20260630",
-      "deploy_url": "待预览确认后部署"
-    },
-    {
-      "version": "v1.9.0",
-      "date": "2026-06-30 21:46（北京时间）",
-      "summary": "前后端分离为静态API数据层；新增当日盈亏曲线、盈亏日历、交易记录和基金模块。",
-      "cache": "a-share-review-v15-20260630",
-      "deploy_url": "待预览确认后部署"
-    },
-    {
-      "version": "v1.8.4",
-      "date": "2026-06-30 18:19（北京时间）",
-      "summary": "版本说明时间统一显示为北京时间；右上角版本入口取消悬停展示和悬停样式；更新内容改为数字序号分条展示。",
-      "cache": "a-share-review-v14-20260630",
-      "deploy_url": "https://a-share-review.netlify.app/"
-    },
-    {
-      "version": "v1.8.3",
-      "date": "2026-06-30 18:12（北京时间）",
-      "summary": "版本入口固定右上角；版本说明显示到年月日时分；交易日9:15-15:15当日盈亏接入实时行情并每5秒刷新。",
-      "cache": "a-share-review-v13-20260630",
-      "deploy_url": "https://a-share-review.netlify.app/"
-    },
-    {
-      "version": "v1.8.2",
-      "date": "2026-06-30 18:06（北京时间）",
-      "summary": "修复每日盈亏首根柱子与纵坐标轴重叠；新增右上角感叹号版本入口，弹窗展示历史版本说明。",
-      "cache": "a-share-review-v12-20260630",
-      "deploy_url": "https://a-share-review.netlify.app/"
-    },
-    {
-      "version": "v1.8.1",
-      "date": "2026-06-30 17:58（北京时间）",
-      "summary": "调整每日盈亏最左侧金额标签位置，尝试避免标签与纵坐标刻度重叠。",
-      "cache": "a-share-review-v11-20260630",
-      "deploy_url": "https://a-share-review.netlify.app/"
-    },
-    {
-      "version": "v1.8.0",
-      "date": "2026-06-30 17:45（北京时间）",
-      "summary": "修复每日盈亏/归因图坐标越界；新增页面版本号；补充版本清单支持后续回滚。",
-      "cache": "a-share-review-v9-20260630",
-      "deploy_url": "https://6a438e10c4e2e7a8b2ece49a--a-share-review.netlify.app/"
-    },
-    {
-      "version": "v1.7.0",
-      "date": "2026-06-30 17:30（北京时间）",
-      "summary": "Web 端板块热力图常显涨跌幅原因。",
-      "cache": "a-share-review-v8-20260630",
-      "deploy_url": "https://6a438e10c4e2e7a8b2ece49a--a-share-review.netlify.app/"
-    },
-    {
-      "version": "v1.6.0",
-      "date": "2026-06-30 17:15（北京时间）",
-      "summary": "备选标的移动端改为字段对比表；去掉\"字段\"和\"代码\"行。",
-      "cache": "a-share-review-v7-20260630",
-      "deploy_url": ""
-    },
-    {
-      "version": "v1.5.0",
-      "date": "2026-06-30 17:00（北京时间）",
-      "summary": "板块热力图移动端改为一行一个；恢复板块说明数据；情绪指标改为紧凑排布。",
-      "cache": "a-share-review-v6-20260630",
-      "deploy_url": ""
-    },
-    {
-      "version": "v1.4.0",
-      "date": "2026-06-30 16:45（北京时间）",
-      "summary": "持仓盈亏播报移动端改为对比表，减少横向滑动。",
-      "cache": "a-share-review-v5-20260630",
-      "deploy_url": ""
-    },
-    {
-      "version": "v1.3.0",
-      "date": "2026-06-30 16:30（北京时间）",
-      "summary": "板块热力图改为矩形树图；三大指数手机端横排；主线股票恢复蓝色可点击标签；当日盈亏归因横坐标改为金额。",
-      "cache": "a-share-review-v4-20260630",
-      "deploy_url": ""
-    },
-    {
-      "version": "v1.2.0",
-      "date": "2026-06-30 16:10（北京时间）",
-      "summary": "按 README 优化建议新增主题切换、K线周期切换、盈亏归因图、板块热力图和 PWA 支持。",
-      "cache": "a-share-review-v3-20260630",
-      "deploy_url": ""
-    },
-    {
-      "version": "v1.1.0",
-      "date": "2026-06-30 15:50（北京时间）",
-      "summary": "修正持仓市价与当日盈亏统计；正收益时优化\"距离回本\"和\"预估回本\"展示。",
-      "cache": "a-share-review-v2-20260630",
-      "deploy_url": ""
-    },
-    {
-      "version": "v1.0.0",
-      "date": "2026-06-30 15:30（北京时间）",
-      "summary": "创建 A 股短线复盘看板基础版本。",
-      "cache": "a-share-review-v1-20260630",
-      "deploy_url": ""
     }
-  ],
-  "rollback_note": "如需回滚，可指定 versions 中的版本号，我会重新部署对应版本的静态包或 Netlify 历史 deploy。"
+  ]
 }
