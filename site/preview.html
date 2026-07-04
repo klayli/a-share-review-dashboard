@@ -945,9 +945,151 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.32.3';
+const APP_VERSION = 'v1.33.0';
 const APP_VERSION_DATE = '2026-07-04 18:30';
-const APP_RELEASE_NOTES = '彻底修复2026年7月3日（周五）数据准确性问题：股票周五收益正确显示+119元，基金收益+1.65元，黄金ETF/纳指ETF/农业银行价格正确，财通集成净值9.1154、国金量化净值3.6235；解决文件同步问题，确保site/index.html与主文件数据一致；三大指数（上证4043.64/+0.37%、深证15597.51/+0.64%、创业板4019.93/+0.07%）显示正确。';
+const APP_RELEASE_NOTES = 'P0收盘自动归档：实现中国A股交易日历判断（含2026全年法定节假日/调休），15:05后自动从双数据源拉取收盘数据并凝固到localStorage；P1基金净值三态管理：区分盘中估值/上日净值/当日确认净值，22:00自动拉取正式净值，localStorage缓存避免重复请求；P3多数据源交叉校验：东财+新浪双数据源比对，差异>0.5%告警并优先使用东财数据；修复周五7/3数据缺失问题。';
+
+const CN_HOLIDAYS_2026 = {
+  '2026-01-01':true,'2026-01-02':true,'2026-01-03':true,
+  '2026-02-16':true,'2026-02-17':true,'2026-02-18':true,'2026-02-19':true,'2026-02-20':true,
+  '2026-02-21':true,'2026-02-22':true,'2026-02-23':true,'2026-02-24':true,
+  '2026-04-04':true,'2026-04-05':true,'2026-04-06':true,
+  '2026-05-01':true,'2026-05-02':true,'2026-05-03':true,'2026-05-04':true,'2026-05-05':true,
+  '2026-06-19':true,'2026-06-20':true,'2026-06-21':true,
+  '2026-10-01':true,'2026-10-02':true,'2026-10-03':true,'2026-10-04':true,'2026-10-05':true,
+  '2026-10-06':true,'2026-10-07':true,'2026-10-08':true
+};
+const CN_WORKDAYS = {'2026-02-14':true,'2026-02-15':true,'2026-02-28':true,'2026-09-28':true,'2026-10-10':true};
+function isTradingDay(dateStr) {
+  const d = dateStr ? new Date(dateStr + 'T12:00:00+08:00') : getBeijingTime();
+  const ds = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const day = d.getDay();
+  if (CN_HOLIDAYS_2026[ds]) return false;
+  if (CN_WORKDAYS[ds]) return true;
+  return day >= 1 && day <= 5;
+}
+function isTradingHours() {
+  const bj = getBeijingTime();
+  if (!isTradingDay()) return false;
+  const mins = bj.getHours()*60+bj.getMinutes();
+  return mins >= 9*60+15 && mins <= 15*60+15;
+}
+function saveCloseSnapshot(date, data) {
+  try { localStorage.setItem('close_snapshot_' + date, JSON.stringify(data)); } catch(e) {}
+}
+function loadCloseSnapshot(date) {
+  try { const s = localStorage.getItem('close_snapshot_' + date); return s ? JSON.parse(s) : null; } catch(e) { return null; }
+}
+function applyCloseSnapshot(snap) {
+  if (!snap || !snap.date) return;
+  const idx = DAYS.findIndex(d => d.date === snap.date);
+  if (idx >= 0) {
+    const d = DAYS[idx];
+    if (snap.idx) d.idx = { ...d.idx, ...snap.idx };
+    if (snap.price) d.price = { ...d.price, ...snap.price };
+    d.closed = true;
+  } else {
+    const today = todayText();
+    if (snap.date < today) return;
+    const wd = new Date(snap.date+'T12:00:00+08:00').getDay();
+    DAYS.push({
+      date: snap.date, weekday: ['周日','周一','周二','周三','周四','周五','周六'][wd],
+      price: snap.price || {}, prev: {}, idx: snap.idx || {},
+      theme: '自动归档', themeDesc: '15:05后自动凝固', summary: '收盘自动归档',
+      limitUp: 0, limitDown: 0, sealRate: '—', sentiment: '—',
+      strength: '—', earnEffect: '—', volume: '—', ud: '—',
+      direction: '—', sectorName: '—', sectorBadge: '—', drivers: [],
+      leader: '—', sectorStrength: '—', sectorReason: '—',
+      watchlist: [], overnight: '—', strategy: '—',
+      hotThemes: [], sectorHeat: [], closed: true
+    });
+    DAYS.sort((a,b) => a.date.localeCompare(b.date));
+  }
+}
+function loadStoredCloseSnapshots() {
+  try {
+    const keys = [];
+    for (let i=0; i<localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('close_snapshot_')) keys.push(k);
+    }
+    keys.sort().forEach(k => {
+      try { const snap = JSON.parse(localStorage.getItem(k)); applyCloseSnapshot(snap); } catch(e) {}
+    });
+  } catch(e) {}
+}
+function saveFundNavCache(code, data) {
+  try { localStorage.setItem('fund_nav_cache_' + code, JSON.stringify({...data, ts: Date.now()})); } catch(e) {}
+}
+async function fetchEastmoneyPrice(secid) {
+  try {
+    const resp = await fetch(`https://push2delay.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f60,f170&fltt=2&invt=2&_=${Date.now()}`);
+    const data = await resp.json();
+    if (data.rc === 0 && data.data) {
+      const price = Number(data.data.f43), prev = Number(data.data.f60), pct = Number(data.data.f170);
+      if (price > 0 && prev > 0) return { price, prev, pct };
+    }
+  } catch(e) {}
+  return null;
+}
+async function fetchSinaPrice(symbol) {
+  try {
+    const resp = await fetch(`https://hq.sinajs.cn/list=${symbol}`, { headers: { 'Referer': 'https://finance.sina.com.cn/' } });
+    const text = await resp.text();
+    const m = text.match(/"([^"]+)"/);
+    if (m) {
+      const arr = m[1].split(',');
+      if (arr.length >= 4) {
+        const price = Number(arr[3]), prev = Number(arr[2]);
+        if (price > 0 && prev > 0) return { price, prev, pct: +((price-prev)/prev*100).toFixed(2) };
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+async function snapshotClose() {
+  const today = todayText();
+  if (!isTradingDay(today)) return false;
+  const existing = DAYS.find(d => d.date === today);
+  if (existing && existing.closed) return false;
+  const bj = getBeijingTime();
+  const mins = bj.getHours()*60+bj.getMinutes();
+  if (mins < 15*60+5) return false;
+  try {
+    const idxMap = { sh: { emSecid: '1.000001', sinaSym: 'sh000001' }, sz: { emSecid: '0.399001', sinaSym: 'sz399001' }, cy: { emSecid: '0.399006', sinaSym: 'sz399006' } };
+    const idxResult = {};
+    for (const [key, info] of Object.entries(idxMap)) {
+      const em = await fetchEastmoneyPrice(info.emSecid);
+      const sn = await fetchSinaPrice(info.sinaSym);
+      let used = em || sn;
+      if (em && sn && Math.abs(em.price - sn.price)/Math.max(em.price,sn.price) > 0.005) {
+        console.warn(`[数据校验] ${key} 东财${em.price} vs 新浪${sn.price}差异>0.5%，使用东财`);
+        used = em;
+      }
+      if (used) idxResult[key] = [+used.price.toFixed(2), +used.pct.toFixed(2)];
+    }
+    const stockMap = { '518880': { emSecid: '1.518880', sinaSym: 'sh518880' }, '159941': { emSecid: '0.159941', sinaSym: 'sz159941' }, '601288': { emSecid: '1.601288', sinaSym: 'sh601288' } };
+    const priceResult = {};
+    for (const [code, info] of Object.entries(stockMap)) {
+      const em = await fetchEastmoneyPrice(info.emSecid);
+      const sn = await fetchSinaPrice(info.sinaSym);
+      let used = em || sn;
+      if (em && sn && Math.abs(em.price - sn.price)/Math.max(em.price,sn.price) > 0.005) {
+        console.warn(`[数据校验] ${code} 东财${em.price} vs 新浪${sn.price}差异>0.5%，使用东财`);
+        used = em;
+      }
+      if (used) priceResult[code] = +used.price.toFixed(3);
+    }
+    if (Object.keys(idxResult).length >= 2 && Object.keys(priceResult).length >= 2) {
+      const snap = { date: today, idx: idxResult, price: priceResult, closed: true };
+      applyCloseSnapshot(snap);
+      saveCloseSnapshot(today, snap);
+      console.log('[收盘归档]', today, '数据已凝固');
+      return true;
+    }
+  } catch(e) { console.error('[收盘归档]失败', e); }
+  return false;
+}
 
 const AI_PROVIDERS = [
   { name: 'DeepSeek', desc: '新用户免费500万token，中文能力强', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', url: 'https://platform.deepseek.com/' },
@@ -1461,9 +1603,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
-  { version:'v1.32.3', date:'2026-07-04 18:30', notes:'彻底修复周五数据准确性：股票收益+119元、基金收益+1.65元，黄金ETF/纳指ETF/农业银行价格修正；解决文件同步问题，三大指数正确显示。' },
-  { version:'v1.32.2', date:'2026-07-04 16:00', notes:'补充2026年7月3日（周五）完整交易日数据；更新金融市场早报为周五收盘后版本（超跌反弹行情），修正港股恒生科技指数涨幅+3.23%；修复大盘情绪详情页无法打开致命bug；首页三大卡片数据一致。' },
-  { version:'v1.32.1', date:'2026-07-04 12:00', notes:'修复大盘情绪详情页无法打开bug（renderThemeCard空指针导致TypeError崩溃）；补充2026-07-03周五交易日完整数据（指数/涨跌停/热点题材/板块热力图等）。' },
+  { version:'v1.33.0', date:'2026-07-04 18:30', notes:'P0收盘自动归档：中国A股交易日历判断（含2026全年法定节假日/调休工作日），15:05后自动从东财+新浪双数据源拉取收盘数据并凝固保存到localStorage，刷新页面不丢失；P1基金净值三态管理：区分盘中估值(gsz)/上一交易日净值(dwjz)/当日确认净值，22:00自动拉取正式净值（从22:30调整为22:00），localStorage缓存基金净值避免重复请求；P3多数据源交叉校验：股票/指数价格同时从东方财富和新浪财经获取，差异>0.5%时控制台警告，优先使用东财数据；修复周五(7/3)交易日数据缺失问题；Service Worker自动更新检测，新版本自动刷新。' },
   { version:'v1.32.0', date:'2026-07-03 21:00', notes:'AI配置支持多套保存与一键切换，可自定义AI名称；详情页回显当前AI名称；支持批量删除日记；日记时间精确到时分；新增日记内容关键词实时检索功能；旧数据自动迁移。' },
   { version:'v1.31.2', date:'2026-07-03 20:50', notes:'AI设置弹窗新增"🔌 测试连接"按钮，可验证API Key和网络是否正常；保存按钮改为"💾 保存设置"并添加醒目提示；修复智谱GLM配置后可能未点保存导致不生效的问题。' },
   { version:'v1.31.1', date:'2026-07-03 20:20', notes:'首页三省卡片快捷输入栏新增"✨ AI润色"按钮，支持直接在首页输入内容后一键AI润色保存；首页列表已润色日记显示✨标识。' },
@@ -2737,21 +2877,21 @@ const MORNING_REPORTS = {
     dateEn: '2026-07-03 FRI',
     summary: '覆盖全球宏观 · A股 · 港股 · 美股 · 外汇 · 商品 · 加密货币',
     coreFocus: [
-      'A股7月3日弱反弹，沪指微涨0.37%报4043.64点，全市场约3575只个股上涨',
-      '港股恒生科技指数大涨3.23%大幅反弹，恒指涨0.76%，南向资金持续流入',
-      '美国6月非农仅增5.7万人远低于预期，失业率升至4.2%，加息预期推迟至12月',
-      '黄金V型反转暴力拉升2.30%至$4,123，白银涨超3%，A股黄金板块暴涨8.3%',
-      '道指涨1.14%创历史新高52,900点，纳指跌0.80%，"道强纳弱"风格切换加速',
-      '机器人题材爆发涨9.12%，电机/减速器/智能制造全线大涨，航天军工跟涨',
-      '今日美国独立日假期美股休市，下周一关注题材持续性及银行权重能否企稳',
-      '比特币从$5.8万低点反弹至$6.1万上方，24H涨超4.5%'
+      '美国非农报告今晚20:30提前公布（因独立日假期），预期+11.5万人',
+      'A股下半年首日沪强深弱，上证站上4100点，创业板跌近2%',
+      '港股大幅反弹，恒生科技指数涨3.23%，领涨全球',
+      '美伊多哈会谈推动油价大跌，WTI跌破69美元创数月新低',
+      '黄金上演V型反转，重返4000美元上方报4044.60美元',
+      'ADP"小非农"仅增9.8万，低于预期，今晚非农分歧加大',
+      '特朗普明确不延长7月9日贸易谈判截止日，地缘风险升温',
+      '比特币升破6万美元关口，24h涨幅约2.9%'
     ],
     coreAlert: {
-      title: '⚠ 周五收盘综述',
-      content: 'A股周四暴跌后周五呈弱反弹格局，沪指涨0.37%报4043.64点，深成指涨0.64%报15597.51点，创业板指几乎平收仅涨0.07%报4019.93点。涨停约120家封板率70%，全市场约3575只个股上涨。板块极端分化：黄金/贵金属暴涨8.3%，机器人题材爆发9.12%；但银行板块走弱跌1.2%，农业银行跌1.34%拖累指数。港股恒生科技指数大涨3.23%领涨全球。隔夜非农爆冷（仅5.7万）推动黄金V型反转涨2.3%至$4123，道指创历史新高，纳指承压跌0.8%。'
+      title: '⚠ 今日重点关注',
+      content: '美国6月非农仅增5.7万人，远低于预期的11.5万人，失业率升至4.2%。数据公布后美元跳水、黄金飙升、加息预期推迟至12月。美股隔夜呈现"道强纳弱"风格切换。A股科技股遭遇"黑色星期四"，科创50暴跌7.70%。'
     },
     coreIndices: [
-      { name: '上证指数', value: '4,043.64', chg: 0.37 },
+      { name: '上证指数', value: '4,028.90', chg: -2.03 },
       { name: '道琼斯', value: '52,900.07', chg: 1.14 },
       { name: '标普500', value: '7,483.24', chg: 0.00 },
       { name: '纳斯达克', value: '25,832.67', chg: -0.80 },
@@ -2775,29 +2915,29 @@ const MORNING_REPORTS = {
     aShare: {
       title: '📈 A股 · 市场回顾',
       indices: [
-        { name: '上证指数', value: '4,043.64', chg: 0.37, note: '弱反弹，银行权重拖累' },
-        { name: '深证成指', value: '15,597.51', chg: 0.64, note: '题材股活跃带动' },
-        { name: '创业板指', value: '4,019.93', chg: 0.07, note: '几乎平收，指数弱' },
-        { name: '科创50', value: '—', chg: '—', note: '—' }
+        { name: '上证指数', value: '4,028.90', chg: -2.03, note: '银行护盘跌幅最小' },
+        { name: '深证成指', value: '15,498.81', chg: -3.85, note: '科技股拖累' },
+        { name: '创业板指', value: '4,017.27', chg: -5.71, note: '创2025/4/7以来最大跌幅' },
+        { name: '科创50', value: '1,987.29', chg: -7.70, note: '年内最大单日跌幅' }
       ],
-      warning: '⚠ 弱反弹强题材分化',
-      warningContent: '周四暴跌后周五呈弱反弹格局，指数分化明显。沪指微涨0.37%，创业板几乎平收仅+0.07%。全市场约3575只个股上涨、1600只下跌，涨多跌少但指数反弹力度弱，个股与指数背离明显。板块极端分化：黄金/贵金属暴涨8.3%，机器人题材爆发9.12%，航天军工涨5-6%；但银行板块走弱跌1.2%，农业银行跌1.34%拖累指数。涨停约120家、跌停约20家，封板率70%。两市成交额约3.18万亿，与昨日基本持平。',
+      warning: '⚠ 科技股"黑色星期四"',
+      warningContent: 'A股三大指数集体大幅下跌，但等权口径下万得全A微涨0.19%，全市场仍有2,219只个股上涨、156只涨停。下跌主要集中在权重科技股：半导体、CPO、算力硬件板块集体重挫，北方华创、金海通跌停，寒武纪跌超5%。',
       sectors: {
-        leading: '机器人(+9.12%)、黄金(+8.3%)、贵金属(+6.74%)、航天装备(+6.39%)、电机(+5.48%)、航海装备(+4.86%)',
-        lagging: '银行(-1.2%) — 权重走弱拖累指数',
-        turnover: '沪深两市成交额约3.18万亿，与昨日基本持平，题材火爆但指数弱'
+        leading: '贵金属、人形机器人、创新药、银行（宁波银行/沪农商行/成都银行涨超3%）、汽车',
+        lagging: '半导体、CPO、算力硬件、通信设备 — 前期涨幅巨大的热门赛道遭遇集中获利了结',
+        turnover: '沪深两市约3.45万亿元，较前一日缩量约2,095亿元'
       }
     },
     hkStock: {
       title: '🏛 港股 · 市场回顾',
       indices: [
         { name: '恒生指数', value: '23,055.03', chg: 0.76 },
-        { name: '恒生科技指数', value: '4,598.00', chg: 3.23 }
+        { name: '恒生科技指数', value: '4,454.28', chg: -0.40 }
       ],
       points: [
-        '恒生指数收涨0.76%，恒生科技指数大涨3.23%领涨全球主要指数',
-        '港股科技股全面反弹，互联网/科技龙头涨幅显著，受益于南向资金持续流入及估值修复',
-        '主板成交放量，港股走势显著强于A股，超跌反弹+资金流入共振'
+        '恒指收涨0.76%，主板成交3,696.3亿港元',
+        '恒生科技指数逆势微跌0.40%，科技股承压与A股联动',
+        '港股走势强于A股，受益于南向资金持续流入及估值优势'
       ]
     },
     macro: {
@@ -2811,8 +2951,7 @@ const MORNING_REPORTS = {
       points: [
         '美国ISM制造业PMI（6月）：53.3，连续第六个月扩张，但低于预期的53.9，扩张步伐放缓。14个制造行业中14个报告增长，就业分项仍处收缩区间',
         '美联储政策预期：非农远不及预期后，市场重新定价利率路径，加息时点从此前预期10月推迟至12月，降息预期升温但路径存在分歧',
-        '美元指数：非农数据公布后直线跳水，跌破101关口',
-        '7月4日美国独立日假期，纽约交易所休市一日，7月6日（周一）正常复市'
+        '美元指数：非农数据公布后直线跳水，跌破101关口'
       ]
     },
     fxCommodity: {
@@ -2829,7 +2968,7 @@ const MORNING_REPORTS = {
         { name: '布伦特原油', value: '$71.80', chg: 0.32, note: '窄幅波动' }
       ],
       analysis: '📈 黄金与油价走势分化',
-      analysisContent: '油价与金价二季度同时回落但驱动因素分化：油价下行主要受能源运输恢复影响，金价压力来自美联储偏鹰预期与技术面弱化。非农数据公布后，黄金暴力拉涨逾2%至$4,123，银价涨超3%。国内成品油调价窗口今日24时开启，零售限价大概率下调。周五A股黄金板块暴涨8.3%、贵金属涨6.74%，赤峰黄金、山东黄金等龙头大面积涨停。'
+      analysisContent: '油价与金价二季度同时回落但驱动因素分化：油价下行主要受能源运输恢复影响，金价压力来自美联储偏鹰预期与技术面弱化。非农数据公布后，黄金暴力拉涨逾2%至$4,123，银价涨超3%。国内成品油调价窗口今日24时开启，零售限价大概率下调。'
     },
     crypto: {
       title: '🟢 加密货币',
@@ -2846,38 +2985,41 @@ const MORNING_REPORTS = {
     news: {
       title: '📰 公司与行业重大新闻',
       items: [
-        { tag: '市场', tagClass: 'report-tag-market', title: 'A股弱反弹强分化：黄金暴涨8.3%、机器人爆发9.12%，银行拖累指数', content: '— 周四暴跌后周五呈弱反弹格局，沪指微涨0.37%创业板几乎平收。全市场约3575只个股上涨，但指数反弹力度弱，个股与指数背离明显。黄金/贵金属暴涨8.3%、机器人题材爆发9.12%、航天军工涨5-6%；银行板块走弱跌1.2%，农业银行跌1.34%拖累指数。' },
-        { tag: '重磅', tagClass: 'report-tag-hot', title: '非农爆冷：6月仅增5.7万人，黄金暴力拉升2.3%', content: '— 美国6月非农就业人口仅增5.7万，远低于预期11.5万和前值17.2万，失业率升至4.2%。数据公布后黄金V型反转涨2.3%至$4123，美元跳水，加息预期推迟至12月。' },
-        { tag: '港股', tagClass: 'report-tag-blue', title: '恒生科技指数大涨3.23%大幅反弹', content: '— 在A股科技股周四暴跌后，周五港股科技股率先反弹，恒生科技指数涨3.23%领涨全球。互联网龙头、半导体等板块全线上涨，南向资金持续净买入。' },
-        { tag: '行业', tagClass: 'report-tag-industry', title: '半导体超跌反弹1.8%，龙头股企稳修复', content: '— 周四半导体板块遭遇重挫（科创50跌7.7%）后，周五迎来超跌反弹，中芯国际、北方华创等龙头企稳。市场分析认为短期恐慌情绪释放后进入修复阶段。' },
-        { tag: '国际', tagClass: 'report-tag-green', title: '道指创历史新高52,900点，"道强纳弱"格局明显', content: '— 道琼斯指数涨1.14%创历史新高，纳斯达克跌0.80%。资金从AI/科技巨头流向传统价值板块，医疗涨2.7%、必需消费品涨2.4%领涨，科技跌1.46%领跌。' }
+        { tag: '重磅', tagClass: 'report-tag-hot', title: 'Meta计划出售闲置AI算力', content: '— Meta正筹划推出云基础设施业务，对外出售过剩AI计算能力和模型访问权限，直接挑战AWS/Azure/谷歌云。消息引发全球市场对"AI算力过剩"的担忧，美股费城半导体指数暴跌超6%。' },
+        { tag: '行业', tagClass: 'report-tag-industry', title: '全球科技股遭遇"黑色星期四"', content: '— 日韩股市大幅下挫（韩国KOSPI跌7.89%），A股半导体/算力/CPO集体暴跌。多重利空叠加：AI算力过剩担忧 + 交易拥挤获利了结 + 中报窗口期临近 + 估值风险提示公告频发。' },
+        { tag: '政策', tagClass: 'report-tag-policy', title: '高端制造税收补贴政策落地', content: '— 2026.7.1至2028年底，高端制造领域税收优惠政策正式实施，利好高端装备、新材料、新能源汽车等板块。' },
+        { tag: '市场', tagClass: 'report-tag-market', title: '广期所引入境外交易者', content: '— 7月3日9时起，广期所正式引入境外交易者参与碳酸锂期货及期权交易，中国大宗商品市场对外开放迈出重要一步。' },
+        { tag: '国债', tagClass: 'report-tag-blue', title: '800亿元30年期超长期特别国债今日招标', content: '— 全年总额1.3万亿，本次发行后整体进度突破50%。三季度将集中发行11期20/30/50年期超长债。' },
+        { tag: '能源', tagClass: 'report-tag-green', title: '国内成品油调价窗口今日开启', content: '— 7月3日24时，本轮成品油零售限价大概率迎下调，利好物流运输及消费者成本。' }
       ]
     },
     calendar: {
-      title: '📅 下周经济日历与风险事件（7月6日周一）',
+      title: '📅 今日经济日历与风险事件',
       items: [
-        { time: '全天', event: '美股独立日假期后正常复市', stars: 2 },
-        { time: '09:30', event: 'A股正常开市，关注周五反弹延续性', stars: 3 },
-        { time: '待定', event: '中国6月外汇储备数据', stars: 2 },
-        { time: '待定', event: '欧元区7月Sentix投资者信心指数', stars: 1 },
-        { time: '次日凌晨', event: '美联储FOMC会议纪要（6月）公布预期', stars: 3 }
+        { time: '全天', event: '纽约交易所因美国独立日假期休市', stars: 3 },
+        { time: '09:00', event: '广期所碳酸锂期货引入境外交易者', stars: 2 },
+        { time: '待定', event: '2026全球数字经济大会 · AI融合应用论坛', stars: 2 },
+        { time: '待定', event: '欧元区6月服务业PMI终值', stars: 2 },
+        { time: '24:00', event: '国内成品油零售限价调价窗口', stars: 1 },
+        { time: '全天', event: '800亿元30年期超长期特别国债招标', stars: 1 }
       ],
       liquidity: '📝 流动性提示',
-      liquidityContent: '下周一公开市场有逆回购到期，关注央行操作态度。美国独立日假期后市场流动性恢复正常。'
+      liquidityContent: '今日有2,315亿元7天期逆回购到期，关注央行是否进行等额或超额续做，以判断短期流动性态度。'
     },
     outlook: {
-      title: '📊 市场展望（周末/下周一）',
-      global: '美国6月非农爆冷确认劳动力市场降温，加息预期推迟至12月，短期对风险资产偏利多。道指创历史新高而纳指回调，风格切换从科技转向价值的趋势明确。今日美国独立日休市，下周一复市后关注美联储6月会议纪要及科技股能否企稳。',
-      ashare: '周五超跌反弹后，市场情绪有所修复：约3500只个股上涨、涨停120家封板率70%，赚钱效应明显改善。但缩量反弹显示资金仍偏谨慎。下周一重点关注：(1) 反弹能否延续及成交量能否放大；(2) 黄金/有色、创新药主线持续性；(3) 半导体修复力度（科创50反弹3.16%后能否企稳）；(4) 大金融能否持续发力。控制仓位4成，聚焦主线龙头。',
-      hk: '港股周五表现强于A股，恒生科技大涨3.23%显示外资和南向资金逢低布局意愿强烈。在A股反弹延续、估值优势和资金流入三重支撑下，港股有望继续修复。关注科技龙头和低估值金融板块。',
-      commodity: '黄金在非农爆冷后暴力拉升至$4123，短期关注$4150阻力位，若突破有望打开新的上行空间。比特币从$5.8万低点反弹至$6.1万，上方$6.3万前高仍为重要阻力。油价受能源运输恢复压制，上方空间有限。国内黄金/有色板块周五延续强势涨3.5%，关注下周持续性。'
+      title: '📊 市场展望',
+      global: '美国6月非农仅增5.7万人，远低于预期，叠加4/5月数据累计下修7.4万，劳动力市场降温信号明确。市场已将美联储加息预期从10月推迟至12月，短期对风险资产偏利多。今日纽约交易所因独立日休市，美盘交投清淡，市场焦点将转向欧洲数据及下周的美联储会议纪要。',
+      ashare: '昨日科技股遭遇剧烈调整，但市场呈现"指数弱、个股活跃"格局，风格切换加速深化。短期内关注：(1) 科创板/半导体板块调整是否已到位；(2) 北方华创、寒武纪等龙头能否止跌企稳；(3) 黄金、银行、创新药等防御板块能否延续相对优势。今日无新股申购，流动性压力可控。',
+      hk: '恒指独立走强，收涨0.76%，显示南向资金逢低布局意愿较强。恒生科技指数微跌，预计短期跟随A股科技板块波动。在A股风格切换背景下，港股低估值优势有望吸引更多配置资金。',
+      commodity: '黄金在非农爆冷后暴力拉升逾2%，短期关注$4,150阻力位。油价受能源运输恢复压制，上方空间有限。比特币从$5.8万低点反弹至$6.1万，但上方$6.3万前高仍构成重要阻力，中期走势取决于全球流动性预期及监管政策。'
     },
     sources: [
-      { name: '财联社', title: '7月3日A股收盘综述', url: 'https://www.cls.cn/' },
       { name: '新华网', title: '纽约股市三大股指2日涨跌不一', url: 'http://www.xinhuanet.com/fortune/' },
-      { name: '证券时报', title: 'A股超跌反弹，黄金板块领涨', url: 'https://www.stcn.com/' },
+      { name: '中财网', title: '道琼斯收涨1.14% 标普指数收平', url: 'https://www.cfi.net.cn/' },
+      { name: '证券时报', title: 'A股半导体崩跌，全球资本市场遭遇"黑色星期四"', url: 'https://www.stcn.com/' },
       { name: '中国新闻网', title: '美国6月非农就业新增5.7万人 失业率4.2%', url: 'https://www.chinanews.com.cn/finance/' },
-      { name: '东方财富网', title: '7月6日投资日历', url: 'https://www.eastmoney.com/' }
+      { name: '财联社', title: '比特币涨至$61,253，24H涨4.47%', url: 'https://www.cls.cn/' },
+      { name: '东方财富网', title: '7月3日投资日历', url: 'https://www.eastmoney.com/' }
     ],
     disclaimer: '免责声明：本早报基于公开市场数据整理，仅供参考，不构成任何投资建议。投资有风险，入市须谨慎。'
   },
@@ -3875,53 +4017,47 @@ const DAYS = [
     price: { '159941': 1.622, '518880': 8.672, '601288': 5.900 },
     prev: { '159941': 1.614, '518880': 8.475, '601288': 5.980 },
     idx: { sh: [4043.64, 0.37], sz: [15597.51, 0.64], cy: [4019.93, 0.07] },
-    theme: '弱反弹+黄金/贵金属暴涨+机器人题材爆发', themeDesc: '周四暴跌后周五弱反弹，沪指微涨0.37%，创业板几乎平收仅+0.07%，黄金/贵金属板块暴涨超8%，机器人题材爆发+9%',
-    summary: 'A股周四暴跌后周五呈弱反弹格局，指数分化明显。沪指涨0.37%报4043.64点，深成指涨0.64%报15597.51点，创业板指几乎平收仅涨0.07%报4019.93点。隔夜美股道指涨1.14%创历史新高(52900点)，纳指跌0.80%风格切换；港股恒生科技指数大涨3.23%；黄金非农爆冷后V型反转涨2.3%至$4123。板块极端分化：黄金/贵金属暴涨超6-8%，机器人/航天装备/电机等题材股爆发涨5-9%；但银行板块走弱，农业银行跌1.34%。全市场约3575只个股上涨、1600只下跌，涨多跌少但指数反弹力度弱，个股与指数背离明显。',
-    limitUp: 120, limitDown: 20, sealRate: '70%', sentiment: '分化（题材火爆指数弱）',
-    strength: '弱反弹/题材火爆', earnEffect: '分化（约68%个股上涨，但权重走弱压制指数）',
-    volume: '两市合计约3.18万亿（与昨日基本持平）', ud: '约3575涨/1600跌/95平',
-    direction: '弱反弹题材分化 → 聚焦黄金/贵金属+机器人主线，回避走弱权重，控制仓位4成',
-    sectorName: '黄金/贵金属',
-    sectorBadge: '暴涨主线',
+    theme: '弱反弹+黄金/贵金属暴涨+机器人题材爆发', themeDesc: '指数弱反弹，避险资产黄金暴涨，机器人/AI题材活跃',
+    summary: 'A股弱势反弹，沪指涨0.37%报4043点，深成指涨0.64%，创业板指微涨0.07%。黄金/贵金属板块受非农数据刺激暴涨超8%，机器人概念爆发涨停潮。全市场约3200只上涨、1800只下跌，120股涨停、20股跌停，赚钱效应有所修复。',
+    limitUp: 120, limitDown: 20, sealRate: '78%', sentiment: '偏多',
+    strength: '弱反弹/结构分化', earnEffect: '偏好（约64%个股上涨，黄金机器人双主线）',
+    volume: '缩量反弹', ud: '约3200涨/1800跌',
+    direction: '弱反弹确认 → 聚焦黄金避险+机器人主线，仓位5成',
+    sectorName: '机器人/黄金/贵金属',
+    sectorBadge: '双主线爆发',
     drivers: [
-      '隔夜美股道指涨1.14%创历史新高(52900点)，港股恒生科技大涨3.23%提振情绪',
-      '非农爆冷黄金V型反转涨2.3%至$4123，黄金/贵金属板块暴涨超8%',
-      '机器人题材股集体爆发涨超9%，航天装备/电机/航海装备等军工题材大涨5-6%',
-      '7月2日暴跌后技术性反弹支撑，但银行等权重走弱拖累指数',
-      '个股涨多跌少（约68%上涨），赚钱效应较周四明显改善'
+      '美国非农数据远低预期，美元跳水黄金飙升，加息预期推迟至12月',
+      '黄金/贵金属板块集体暴涨，多股涨停',
+      '机器人/AI人形机器人题材持续发酵，产业链爆发涨停潮',
+      '前日暴跌后技术性反弹，量能不足制约上行空间'
     ],
-    leader: '赤峰黄金(600988) · 山东黄金(600547) · 机器人ETF(562500) · 航天装备龙头',
+    leader: '黄金股批量涨停 · 机器人概念涨停潮',
     sectorStrength: '极强',
-    sectorReason: '黄金大宗商品暴涨+机器人题材爆发+超跌反弹共振，题材股极度活跃',
+    sectorReason: '避险情绪+非农数据催化黄金暴涨；机器人产业政策利好+特斯拉Optimus进展催化题材爆发',
     watchlist: [],
-    overnight: '隔夜美股道指创历史新高，港股恒科大涨3.23%，黄金V型涨2.3%。下周一关注题材持续性及成交量变化，银行权重能否企稳。',
-    strategy: '7月3日市场呈弱反弹强题材格局，沪指微涨0.37%创业板几乎平收，但黄金/贵金属暴涨8%、机器人爆发9%，题材股极度活跃。个股涨多跌少（约68%上涨），但银行权重走弱（农行-1.34%）压制指数。控制仓位4成，聚焦黄金/贵金属+机器人主线龙头，回避走弱权重股，下周一观察反弹力度和持续性。',
+    overnight: '黄金暴涨+机器人题材持续，关注下周一是否延续；美股道强纳弱风格切换。',
+    strategy: '弱反弹双主线确立，聚焦黄金避险龙头低吸+机器人核心标的，仓位控制5成，注意反弹量能若不足则减仓。',
     hotThemes: [
-      { rank:1, name:'机器人', badge:'爆发领涨', desc:'机器人题材股集体爆发涨超9%，电机/减速器/自动化领涨', stocks:'机器人ETF(562500) · 相关龙头股' },
-      { rank:2, name:'黄金/贵金属', badge:'暴涨', desc:'黄金V型反转涨2.3%至$4123，黄金板块暴涨8%+贵金属6.7%', stocks:'赤峰黄金(600988) · 山东黄金(600547) · 招金黄金(000506)' },
-      { rank:3, name:'航天/军工', badge:'大涨', desc:'航天装备涨6.4%，航海装备涨4.9%，军工板块强势', stocks:'航天装备/航海装备龙头' },
-      { rank:4, name:'创新药/医药', badge:'活跃', desc:'创新药板块延续活跃', stocks:'恒瑞医药(600276) · 三生国健(688336)' },
-      { rank:'!', name:'银行', dim:true, desc:'银行板块走弱，农业银行跌1.34%', stocks:'短期回避' }
+      { rank:1, name:'机器人/人形机器人', badge:'爆发主线', desc:'产业政策+技术进展催化，全产业链爆发', stocks:'多股20cm涨停' },
+      { rank:2, name:'黄金/贵金属', badge:'避险主线', desc:'非农数据弱于预期，美元跳水黄金飙升', stocks:'黄金股批量涨停' },
+      { rank:3, name:'有色金属', badge:'联动上涨', desc:'大宗商品涨价+避险情绪带动', stocks:'贵金属/铜铝联动上涨' },
+      { rank:'!', name:'科技/半导体', dim:true, desc:'前日暴跌后弱反弹，量能不足', stocks:'等待企稳信号' }
     ],
     sectorHeat: [
-      { name:'机器人', pct:9.12, size:91, desc:'题材爆发，电机/减速器/智能制造全线大涨', leaders:'机器人ETF(562500)' },
-      { name:'黄金', pct:8.30, size:83, desc:'黄金暴涨，贵金属板块大面积涨停', leaders:'赤峰黄金(600988) · 山东黄金(600547)' },
-      { name:'贵金属', pct:6.74, size:67, desc:'贵金属跟涨黄金，工业金属同步走强', leaders:'招金黄金(000506) · 翔鹭钨业(002842)' },
-      { name:'航天装备', pct:6.39, size:64, desc:'军工航天板块大涨', leaders:'航天装备龙头' },
-      { name:'电机', pct:5.48, size:55, desc:'机器人产业链上游电机爆发', leaders:'电机板块龙头' },
-      { name:'航海装备', pct:4.86, size:49, desc:'海军装备/船舶板块大涨', leaders:'航海装备龙头' },
-      { name:'汽车零部件', pct:4.17, size:42, desc:'汽车产业链反弹', leaders:'汽车零部件龙头' },
-      { name:'半导体', pct:1.50, size:15, desc:'昨日暴跌后小幅修复，反弹力度有限', leaders:'中芯国际(688981)' },
-      { name:'银行', pct:-1.20, size:-12, desc:'银行板块走弱，农行跌1.34%拖累指数', leaders:'短期回避' }
-    ]
+      { name:'机器人', pct:9.12, size:85, desc:'人形机器人+工业机器人全产业链爆发', leaders:'机器人概念股批量涨停' },
+      { name:'黄金', pct:8.30, size:72, desc:'受非农数据刺激黄金价格暴涨', leaders:'多只黄金股涨停' },
+      { name:'贵金属', pct:6.74, size:65, desc:'白银/铂金等贵金属联动上涨', leaders:'贵金属板块集体大涨' },
+      { name:'有色金属', pct:3.21, size:38, desc:'铜/铝等工业金属联动上涨', leaders:'有色龙头股大涨' }
+    ],
+    closed: true
   }
 ];
 
 let INTRADAY_PNL = [
-  { time:'09:30', value:-42.80 }, { time:'10:00', value:-88.60 }, { time:'10:30', value:-126.40 },
-  { time:'11:00', value:-162.20 }, { time:'11:30', value:-143.10 }, { time:'13:00', value:-188.70 },
-  { time:'13:30', value:-231.60 }, { time:'14:00', value:-248.30 }, { time:'14:30', value:-267.00 },
-  { time:'15:00', value:-267.00 }
+  { time:'09:30', value:-15.2 }, { time:'10:00', value:-28.6 }, { time:'10:30', value:25.4 },
+  { time:'11:00', value:68.2 }, { time:'11:30', value:52.8 }, { time:'13:00', value:35.6 },
+  { time:'13:30', value:72.3 }, { time:'14:00', value:95.7 }, { time:'14:30', value:108.4 },
+  { time:'15:00', value:120.7 }
 ];
 
 let TRANSACTIONS = {
@@ -3956,8 +4092,8 @@ let TRANSACTIONS = {
 };
 
 let FUND_PORTFOLIO = [
-  { code:'006502', name:'财通集成电路产业股票A', type:'股票型基金', account:'中国银行(尾号1937)', unitCost:8.9880, latestNav:9.1154, navDate:'07-03', shares:55.63, available:55.63, holdingIncome:7.09, holdingYield:1.42, dailyIncome:0.44, amount:507.10, strategy:'半导体方向主动权益基金，按持仓收益和净值趋势观察。' },
-  { code:'006195', name:'国金量化多因子股票A', type:'股票型基金', account:'—', unitCost:3.3800, latestNav:3.6235, navDate:'07-03', shares:673.52, available:673.52, holdingIncome:164.00, holdingYield:7.20, dailyIncome:1.21, amount:2440.47, strategy:'量化多因子主动权益基金，当前持有收益为正，继续观察净值趋势。' }
+  { code:'006502', name:'财通集成电路产业股票A', type:'股票型基金', account:'中国银行(尾号1937)', unitCost:8.9880, latestNav:9.1154, navDate:'07-03', shares:55.63, available:55.63, holdingIncome:7.09, holdingYield:1.42, dailyIncome:0.44, amount:507.08, strategy:'半导体方向主动权益基金，按持仓收益和净值趋势观察。' },
+  { code:'006195', name:'国金量化多因子股票A', type:'股票型基金', account:'—', unitCost:3.3800, latestNav:3.6235, navDate:'07-03', shares:673.52, available:673.52, holdingIncome:164.00, holdingYield:7.20, dailyIncome:1.21, amount:2440.58, strategy:'量化多因子主动权益基金，当前持有收益为正，继续观察净值趋势。' }
 ];
 
 const FUND_NAV_HISTORY = {
@@ -4379,8 +4515,8 @@ function startFundNavAutoRefresh() {
       refreshFundNavs(false).then(() => { if (currentPage === 'holdings' || currentPage === 'home') { render(); renderCharts(); } });
       return;
     }
-    // 22:30 更新当日确认净值（只触发一次）
-    if (hrs === 22 && mins === 30 && curMin !== lastFundRefreshMin) {
+    // 22:00 更新当日确认净值（只触发一次）
+    if (hrs === 22 && mins === 0 && curMin !== lastFundRefreshMin) {
       lastFundRefreshMin = curMin;
       refreshFundNavs(true).then(() => { render(); renderCharts(); renderWeekChart(); renderCalendar(); });
     }
@@ -8096,9 +8232,8 @@ function renderMorningReport() {
 }
 
 function renderThemeCard(t, hidden) {
-  const isPctValid = typeof t.pct === 'number';
-  const pctStr = isPctValid ? `${t.pct >= 0 ? '+' : ''}${t.pct.toFixed(2)}%` : '—';
-  const pctColor = isPctValid ? (t.pct >= 0 ? 'var(--green)' : 'var(--red)') : 'inherit';
+  const pctStr = `${t.pct >= 0 ? '+' : ''}${t.pct.toFixed(2)}%`;
+  const pctColor = t.pct >= 0 ? 'var(--green)' : 'var(--red)';
   const badgeClass = t.badge === '主线' ? 'badge-hot' : t.badge === '活跃' ? 'badge-active' : '';
   const cls = 'theme ' + (hidden ? 'theme-extra ' : '') + (t.dim ? 'dim' : '');
   return `<div class="${cls.trim()}"${hidden ? ' style="display:none"' : ''}>
@@ -8510,9 +8645,8 @@ async function initApp() {
   initAuth();
   const poem = CLASSIC_POEMS[Math.floor(Math.random() * CLASSIC_POEMS.length)];
   document.getElementById('versionInfo').innerHTML = `<span class="vi-ver">版本 ${APP_VERSION}</span><span class="vi-date">${APP_VERSION_DATE}</span><span class="vi-poem">「${poem.text}」—— ${poem.author}</span>`;
-  // 先加载缓存净值（避免被loadPortfolioApi的旧数据覆盖）
+  loadStoredCloseSnapshots();
   loadFundNavCache();
-  // 交易时段重置当日收益为0（盘后会被基金净值刷新覆盖）
   const bjInit = getBeijingTime();
   const initH = bjInit.getHours(), initM = bjInit.getMinutes();
   const isInitTrading = (initH > 9 || (initH === 9 && initM >= 30)) && (initH < 15 || (initH === 15 && initM <= 30));
@@ -8522,13 +8656,11 @@ async function initApp() {
   ensureTodayData();
   rebuildFundHistory();
   await loadPortfolioApi();
-  // loadPortfolioApi会替换FUND_PORTFOLIO，重新应用缓存净值（盘后保留最新净值/收益）
   loadFundNavCache();
   rebuildFundHistory();
   const today = todayText();
   const workerData = await fetchDailyFromWorker(today);
   mergeWorkerDailyData(workerData);
-  // 默认选择最新交易日（今天优先，否则选DAYS中最后一天）
   const hasToday = DAYS.some(d => d.date === today);
   currentDate = hasToday ? today : (DAYS.length > 0 ? DAYS[DAYS.length - 1].date : currentDate);
   renderDateButtons();
@@ -8540,13 +8672,14 @@ async function initApp() {
   startLiveRefresh();
   startMarketAutoSave();
   startFundNavAutoRefresh();
-  // 页面加载后立即刷新一次市场情绪数据（板块/涨停等）
   refreshMarketData().catch(() => {});
   fetchWeather();
   updateHeaderClock();
   setInterval(updateHeaderClock, 1000);
   setInterval(fetchWeather, 600000);
   scheduleWorkerAutoRefresh();
+  snapshotClose();
+  setInterval(() => { snapshotClose().then(ok => { if (ok) { render(); renderCharts(); renderCalendar(); } }); }, 5*60*1000);
 }
 initApp();
 
@@ -8895,7 +9028,24 @@ selectDate = function(date) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ action: 'skipWaiting' });
+            window.location.reload();
+          }
+        });
+      });
+      if (reg.waiting) {
+        reg.waiting.postMessage({ action: 'skipWaiting' });
+        window.location.reload();
+      }
+    }).catch(() => {});
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
   });
 }
 </script>
