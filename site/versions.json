@@ -1,19 +1,19 @@
 {
-  "current": "v1.34.0",
+  "current": "v1.34.1",
   "rollback_supported": true,
   "versions": [
     {
-      "version": "v1.34.0",
-      "date": "2026-07-05 00:45（北京时间）",
-      "summary": "①页面加载速度优化：SW缓存策略升级，二次访问秒开；②三省AI配置持久化修复：智谱等API配置不再丢失，一键填充不覆盖已有Key，SW更新不打断编辑；③新增AI配置导入/导出JSON备份功能；④保存成功反馈提示。",
+      "version": "v1.34.1",
+      "date": "2026-07-05 01:00（北京时间）",
+      "summary": "紧急修复周五(2026-07-03)交易日数据缺失：补全DAYS数组周五条目；基金净值更新(财通9.1154/国金3.6235)；INTRADAY_PNL收盘+119元。",
       "cache": "a-share-review-v44-20260704",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
-      "version": "v1.33.0",
-      "date": "2026-07-04 18:30（北京时间）",
-      "summary": "P0收盘自动归档、P1基金净值三态管理、P3多数据源交叉校验。",
-      "cache": "a-share-review-v43-20260704",
+      "version": "v1.34.0",
+      "date": "2026-07-05 00:45（北京时间）",
+      "summary": "①页面加载速度优化：SW缓存策略升级为stale-while-revalidate；②AI配置持久化修复；③AI配置导入/导出；④保存反馈提示。",
+      "cache": "a-share-review-v44-20260704",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
     }
   ]
