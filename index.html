@@ -950,9 +950,29 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.34.2';
-const APP_VERSION_DATE = '2026-07-05 01:30';
-const APP_RELEASE_NOTES = '数据紧急修复：从新浪财经+天天基金API获取真实行情数据，修正周五(2026-07-03)三大指数为上证4043.64(+0.37%)/深证15597.51(+0.64%)/创业板4019.93(+0.07%)；股票收盘价修正为黄金ETF8.672/纳指ETF1.622/农业银行5.900；周五股票当日收益+119元，基金+1.65元，合计+121元；周四数据验证正确(上证4028.90/-2.03%等)。';
+const APP_VERSION = 'v1.35.0';
+const APP_VERSION_DATE = '2026-07-05 14:00';
+const APP_RELEASE_NOTES = '恢复P0-P3自动更新功能：P0收盘自动归档（2026年A股交易日历+15:05双源拉取凝固数据到localStorage）；P1基金净值三态管理+22:00自动拉取确认净值（修正原22:30）；P3多数据源交叉校验（东财+新浪差异>0.5%警告，优先东财）；SW缓存自动更新。';
+
+// 2026年中国A股法定节假日（休市）
+const CN_HOLIDAYS = {
+  '2026-01-01': true, '2026-01-02': true, '2026-01-03': true,
+  '2026-02-16': true, '2026-02-17': true, '2026-02-18': true, '2026-02-19': true, '2026-02-20': true, '2026-02-21': true, '2026-02-22': true, '2026-02-23': true,
+  '2026-04-04': true, '2026-04-05': true, '2026-04-06': true,
+  '2026-05-01': true, '2026-05-02': true, '2026-05-03': true, '2026-05-04': true, '2026-05-05': true,
+  '2026-06-19': true, '2026-06-20': true, '2026-06-21': true,
+  '2026-09-25': true, '2026-09-26': true, '2026-09-27': true,
+  '2026-10-01': true, '2026-10-02': true, '2026-10-03': true, '2026-10-04': true, '2026-10-05': true, '2026-10-06': true, '2026-10-07': true, '2026-10-08': true
+};
+
+// 2026年调休工作日（周末上班）
+const CN_WORKDAYS = {
+  '2026-02-14': true, '2026-02-15': true,
+  '2026-02-28': true,
+  '2026-04-26': true,
+  '2026-09-28': true,
+  '2026-10-10': true, '2026-10-11': true
+};
 
 const AI_PROVIDERS = [
   { name: 'DeepSeek', desc: '新用户免费500万token，中文能力强', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', url: 'https://platform.deepseek.com/' },
@@ -1466,6 +1486,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.35.0', date:'2026-07-05 14:00', notes:'恢复P0-P3自动更新功能：P0收盘自动归档（2026年A股交易日历含法定节假日/调休工作日，15:05后自动从东财+新浪双数据源拉取收盘数据凝固到DAYS数组并保存localStorage，刷新不丢失；页面加载时自动补录未归档数据）；P1基金净值三态管理+22:00自动拉取确认净值（修正原22:30错误，交易日历替代简单周末判断）；P3多数据源交叉校验（东财+新浪价格差异>0.5%控制台警告，优先使用东财数据）；SW缓存自动更新。' },
   { version:'v1.34.2', date:'2026-07-05 01:30', notes:'数据紧急修复(真实API数据)：从新浪财经K线API+天天基金净值API获取7/2-7/3真实行情，修正周五三大指数：上证4043.64(+0.37%)、深证15597.51(+0.64%)、创业板4019.93(+0.07%)；修正周五股票收盘价：黄金ETF8.672(+2.32%)、纳指ETF1.622(+0.50%)、农业银行5.900(-1.34%)；周五股票当日收益+119元(黄金+118/纳指+49/农行-48)，基金+1.65元，合计+121元；周四数据验证正确(上证4028.90/-2.03%、深证15498.81/-3.85%、创业板4017.27/-5.71%)；INTRADAY_PNL分时数据更新，收盘+120.7元。' },
   { version:'v1.34.1', date:'2026-07-05 01:00', notes:'紧急修复周五(2026-07-03)交易日数据缺失：补全DAYS数组周五完整条目；指数更新为上证4060+0.77%/深证15620+0.78%/创业板4035+0.44%；股票价格按用户提供数据更新(黄金ETF8.172/纳指ETF1.522/农业银行5.90)；基金净值更新至7/3(财通9.1154/国金3.6235)；INTRADAY_PNL分时数据更新，收盘收益+119元；FUND_PORTFOLIO同步更新。' },
   { version:'v1.34.0', date:'2026-07-05 00:45', notes:'①页面加载速度优化：SW缓存策略改为stale-while-revalidate，静态资源先缓存后更新，二次访问秒开；②AI配置持久化修复：fillAIProvider不覆盖已有API Key，autoSave防抖300ms，SW更新提示手动刷新不打断编辑；③新增AI配置导入/导出JSON备份功能；④配置修改后显示"✓ 已自动保存"提示。' },
@@ -4370,8 +4391,8 @@ function startFundNavAutoRefresh() {
     const bjNow = getBeijingTime();
     const hrs = bjNow.getHours();
     const mins = bjNow.getMinutes();
-    const day = bjNow.getDay();
-    if (day === 0 || day === 6) return; // 周末不更新
+    const today = todayText(bjNow);
+    if (!isTradingDay(today)) return;
     const curMin = hrs * 60 + mins;
     // 交易时段：9:30-15:00 每10分钟更新估算净值
     const inTrading = curMin >= 9*60+30 && curMin <= 15*60;
@@ -4380,8 +4401,8 @@ function startFundNavAutoRefresh() {
       refreshFundNavs(false).then(() => { if (currentPage === 'holdings' || currentPage === 'home') { render(); renderCharts(); } });
       return;
     }
-    // 22:30 更新当日确认净值（只触发一次）
-    if (hrs === 22 && mins === 30 && curMin !== lastFundRefreshMin) {
+    // 22:00 更新当日确认净值（只触发一次）
+    if (hrs === 22 && mins === 0 && curMin !== lastFundRefreshMin) {
       lastFundRefreshMin = curMin;
       refreshFundNavs(true).then(() => { render(); renderCharts(); renderWeekChart(); renderCalendar(); });
     }
@@ -5669,6 +5690,19 @@ function fmt(v, d=2) { return v != null ? v.toFixed(d) : '—'; }
 function sign(v) { return v >= 0 ? '+' : ''; }
 function cls(v) { return v >= 0 ? 'pos' : 'neg'; }
 function pad2(n) { return String(n).padStart(2, '0'); }
+function isTradingDay(dateStr) {
+  const d = dateStr ? new Date(dateStr + 'T12:00:00+08:00') : getBeijingTime();
+  const ds = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const day = d.getDay();
+  if (CN_HOLIDAYS[ds]) return false;
+  if (CN_WORKDAYS[ds]) return true;
+  return day >= 1 && day <= 5;
+}
+function isTradingHours(now) {
+  const bj = getBeijingTime(now);
+  const hrs = bj.getHours(), mins = bj.getMinutes();
+  return (hrs > 9 || (hrs === 9 && mins >= 30)) && (hrs < 15 || (hrs === 15 && mins <= 0));
+}
 function getBeijingTime(now = new Date()) {
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
   return new Date(utc + 8 * 3600000);
@@ -6858,14 +6892,13 @@ function startMarketAutoSave() {
     const bj = getBeijingTime();
     const hrs = bj.getHours();
     const mins = bj.getMinutes();
-    const day = bj.getDay();
-    // 仅交易日 9:25-16:00 期间执行
+    const today = todayText(bj);
+    if (!isTradingDay(today)) return;
     if (hrs < 9 || (hrs === 9 && mins < 25)) return;
     if (hrs >= 16) return;
-    if (day === 0 || day === 6) return;
 
     // 更新当天 DAYS 数据中的指数快照
-    const todayD = DAYS.find(dd => dd.date === todayText());
+    const todayD = DAYS.find(dd => dd.date === today);
     if (todayD && IDX_LIVE) {
       if (IDX_LIVE.sh) todayD.idx.sh = IDX_LIVE.sh;
       if (IDX_LIVE.sz) todayD.idx.sz = IDX_LIVE.sz;
@@ -6879,6 +6912,181 @@ function startMarketAutoSave() {
       console.log('[市场数据] 15:30 自动保存完成');
     }
   }, 30 * 60 * 1000); // 每30分钟
+
+  // P0: 每分钟检查15:05收盘归档
+  setInterval(() => {
+    const bj = getBeijingTime();
+    const today = todayText(bj);
+    if (!isTradingDay(today)) return;
+    const mins = bj.getHours() * 60 + bj.getMinutes();
+    if (mins < 15 * 60 + 5 || mins > 15 * 60 + 30) return;
+    const todayD = DAYS.find(dd => dd.date === today);
+    if (todayD && todayD.closed) return;
+    snapshotClose();
+  }, 60 * 1000);
+}
+
+// === P0: 收盘自动归档（15:05后凝固数据）===
+const CLOSE_SNAPSHOT_KEY = 'closeSnapshots';
+
+function saveCloseSnapshot(date, data) {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CLOSE_SNAPSHOT_KEY) || '{}');
+    stored[date] = data;
+    localStorage.setItem(CLOSE_SNAPSHOT_KEY, JSON.stringify(stored));
+    console.log(`[收盘归档] ${date} 已保存到localStorage`);
+  } catch(e) {
+    console.warn('[收盘归档] 保存失败:', e);
+  }
+}
+
+function loadStoredCloseSnapshots() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CLOSE_SNAPSHOT_KEY) || '{}');
+    Object.keys(stored).forEach(date => {
+      const snap = stored[date];
+      if (!snap || !snap.closed) return;
+      let day = DAYS.find(d => d.date === date);
+      if (!day) {
+        day = { date, idx: { ...snap.idx }, price: { ...snap.price }, closed: true };
+        const idx = DAYS.findIndex(d => d.date > date);
+        if (idx === -1) DAYS.push(day); else DAYS.splice(idx, 0, day);
+      } else {
+        day.idx = { ...snap.idx };
+        day.price = { ...snap.price };
+        day.closed = true;
+      }
+    });
+    console.log('[收盘归档] 已从localStorage恢复归档数据');
+  } catch(e) {
+    console.warn('[收盘归档] 加载失败:', e);
+  }
+}
+
+async function fetchEastmoneyPrice(secid) {
+  try {
+    const url = `https://push2delay.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f60,f170&fltt=2&invt=2&_=${Date.now()}`;
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const data = await r.json();
+    if (data.rc === 0 && data.data) {
+      const price = Number(data.data.f43);
+      const prev = Number(data.data.f60);
+      if (price > 0) return { price, prev };
+    }
+  } catch(e) {}
+  return null;
+}
+
+function fetchSinaPrice(sinaCode) {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    const varName = 'hq_str_' + sinaCode;
+    const cleanup = () => {
+      script.remove();
+      try { delete window[varName]; } catch(e) { window[varName] = null; }
+    };
+    script.src = `https://hq.sinajs.cn/list=${sinaCode}&_=${Date.now()}`;
+    script.charset = 'gbk';
+    script.async = true;
+    script.onload = () => {
+      const raw = window[varName];
+      cleanup();
+      if (!raw) { resolve(null); return; }
+      const parts = raw.split(',');
+      if (parts.length >= 4) {
+        const prev = parseFloat(parts[2]);
+        const price = parseFloat(parts[3]);
+        if (price > 0 && prev > 0) resolve({ price, prev });
+        else resolve(null);
+      } else resolve(null);
+    };
+    script.onerror = () => { cleanup(); resolve(null); };
+    document.body.appendChild(script);
+    setTimeout(() => { cleanup(); resolve(null); }, 8000);
+  });
+}
+
+async function getVerifiedPrice(secid, sinaCode) {
+  const em = await fetchEastmoneyPrice(secid);
+  const sina = await fetchSinaPrice(sinaCode);
+  if (em && sina) {
+    const diff = Math.abs(em.price - sina.price) / em.price;
+    if (diff > 0.005) {
+      console.warn(`[多源校验] ${sinaCode} 东财${em.price} vs 新浪${sina.price} 差异${(diff*100).toFixed(2)}%，使用东财数据`);
+    }
+    return em;
+  }
+  return em || sina;
+}
+
+async function snapshotClose() {
+  const today = todayText();
+  if (!isTradingDay(today)) return false;
+  const todayD = DAYS.find(d => d.date === today);
+  if (todayD && todayD.closed) return false;
+  const bj = getBeijingTime();
+  const mins = bj.getHours() * 60 + bj.getMinutes();
+  if (mins < 15 * 60 + 5) return false;
+
+  console.log('[收盘归档] 开始归档', today);
+  ensureTodayData();
+  const day = DAYS.find(d => d.date === today);
+  if (!day) return false;
+
+  // 三大指数
+  const idxMap = [
+    { secid: '1.000001', key: 'sh', sina: 'sh000001' },
+    { secid: '0.399001', key: 'sz', sina: 'sz399001' },
+    { secid: '0.399006', key: 'cy', sina: 'sz399006' }
+  ];
+  for (const { secid, key, sina } of idxMap) {
+    const p = await getVerifiedPrice(secid, sina);
+    if (p) {
+      const pct = ((p.price - p.prev) / p.prev) * 100;
+      day.idx[key] = [Number(p.price.toFixed(2)), Number(pct.toFixed(2))];
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+
+  // 持仓股票
+  const stockMap = {
+    '518880': { secid: '1.518880', sina: 'sh518880' },
+    '159941': { secid: '0.159941', sina: 'sz159941' },
+    '601288': { secid: '1.601288', sina: 'sh601288' }
+  };
+  if (!day.price) day.price = {};
+  if (!day.prev) day.prev = {};
+  for (const [code, { secid, sina }] of Object.entries(stockMap)) {
+    const p = await getVerifiedPrice(secid, sina);
+    if (p) {
+      day.price[code] = Number(p.price.toFixed(3));
+      day.prev[code] = Number(p.prev.toFixed(3));
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+
+  // 查找上一交易日设置prev（如果API没返回正确的prev）
+  const dayIdx = DAYS.findIndex(d => d.date === today);
+  if (dayIdx > 0) {
+    const prevDay = DAYS[dayIdx - 1];
+    if (prevDay && prevDay.price) {
+      Object.keys(prevDay.price).forEach(code => {
+        if (day.price[code] && !day.prev[code]) day.prev[code] = prevDay.price[code];
+      });
+    }
+  }
+
+  day.closed = true;
+  const snap = { date: today, idx: { ...day.idx }, price: { ...day.price }, prev: { ...day.prev }, closed: true };
+  saveCloseSnapshot(today, snap);
+
+  // 刷新市场情绪数据
+  try { await refreshMarketData(); } catch(e) {}
+  saveMarketData();
+
+  console.log('[收盘归档] 归档完成:', day.idx, day.price);
+  return true;
 }
 
 function saveMarketData() {
@@ -8626,6 +8834,8 @@ async function initApp() {
   // loadPortfolioApi会替换FUND_PORTFOLIO，重新应用缓存净值（盘后保留最新净值/收益）
   loadFundNavCache();
   rebuildFundHistory();
+  // P0: 先从localStorage恢复历史收盘归档数据
+  loadStoredCloseSnapshots();
   const today = todayText();
   const workerData = await fetchDailyFromWorker(today);
   mergeWorkerDailyData(workerData);
@@ -8648,6 +8858,19 @@ async function initApp() {
   setInterval(updateHeaderClock, 1000);
   setInterval(fetchWeather, 600000);
   scheduleWorkerAutoRefresh();
+  // P0: 页面加载后，如果当前时间>15:05且当日是交易日但未归档，立即补录
+  setTimeout(() => {
+    const bj = getBeijingTime();
+    const mins = bj.getHours() * 60 + bj.getMinutes();
+    const t = todayText(bj);
+    if (isTradingDay(t) && mins >= 15 * 60 + 5) {
+      const td = DAYS.find(d => d.date === t);
+      if (!td || !td.closed) {
+        console.log('[收盘归档] 检测到当日未归档，自动补录');
+        snapshotClose().then(ok => { if (ok) { render(); renderCharts(); renderCalendar(); } });
+      }
+    }
+  }, 3000);
 }
 initApp();
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'a-share-review-v44-20260704';
+const CACHE_NAME = 'a-share-review-v45-20260705';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/icon.svg', '/api/portfolio.json'];
 
 self.addEventListener('install', event => {
