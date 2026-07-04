@@ -1,18 +1,18 @@
 {
-  "current": "v1.34.2",
+  "current": "v1.35.0",
   "rollback_supported": true,
   "versions": [
     {
-      "version": "v1.34.2",
-      "date": "2026-07-05 01:30（北京时间）",
-      "summary": "真实API数据修复：新浪财经+天天基金API获取7/3真实行情，周五指数上证4043.64(+0.37%)/深证15597.51(+0.64%)/创业板4019.93(+0.07%)；股票黄金8.672/纳指1.622/农行5.90；股票收益+119元。",
-      "cache": "a-share-review-v44-20260704",
+      "version": "v1.35.0",
+      "date": "2026-07-05 14:00（北京时间）",
+      "summary": "恢复P0-P3自动更新：交易日历+15:05收盘自动归档到localStorage+基金22:00拉净值+多数据源交叉校验",
+      "cache": "a-share-review-v45-20260705",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
-      "version": "v1.34.1",
-      "date": "2026-07-05 01:00（北京时间）",
-      "summary": "紧急修复周五数据缺失（使用用户提供数据，后被v1.34.2修正为真实API数据）",
+      "version": "v1.34.2",
+      "date": "2026-07-05 01:30（北京时间）",
+      "summary": "真实API数据修复：新浪财经+天天基金API获取7/3真实行情",
       "cache": "a-share-review-v44-20260704",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
     }
