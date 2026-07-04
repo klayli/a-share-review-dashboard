@@ -1,18 +1,18 @@
 {
-  "current": "v1.34.1",
+  "current": "v1.34.2",
   "rollback_supported": true,
   "versions": [
     {
-      "version": "v1.34.1",
-      "date": "2026-07-05 01:00（北京时间）",
-      "summary": "紧急修复周五(2026-07-03)交易日数据缺失：补全DAYS数组周五条目；基金净值更新(财通9.1154/国金3.6235)；INTRADAY_PNL收盘+119元。",
+      "version": "v1.34.2",
+      "date": "2026-07-05 01:30（北京时间）",
+      "summary": "真实API数据修复：新浪财经+天天基金API获取7/3真实行情，周五指数上证4043.64(+0.37%)/深证15597.51(+0.64%)/创业板4019.93(+0.07%)；股票黄金8.672/纳指1.622/农行5.90；股票收益+119元。",
       "cache": "a-share-review-v44-20260704",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
     },
     {
-      "version": "v1.34.0",
-      "date": "2026-07-05 00:45（北京时间）",
-      "summary": "①页面加载速度优化：SW缓存策略升级为stale-while-revalidate；②AI配置持久化修复；③AI配置导入/导出；④保存反馈提示。",
+      "version": "v1.34.1",
+      "date": "2026-07-05 01:00（北京时间）",
+      "summary": "紧急修复周五数据缺失（使用用户提供数据，后被v1.34.2修正为真实API数据）",
       "cache": "a-share-review-v44-20260704",
       "deploy_url": "https://a-share-review-dashboard.pages.dev"
     }
