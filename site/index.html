@@ -730,7 +730,7 @@
       <span id="headerWeather" style="font-size:.8rem;color:var(--text-dim);background:var(--card);padding:2px 10px;border-radius:10px;border:1px solid var(--border);margin-left:6px"></span>
     </div>
     <div id="headerCustom" style="text-align:center;margin:6px auto 2px;max-width:90%">
-      <input id="headerCustomInput" type="text" placeholder="点击编辑顶部显示内容" style="width:100%;max-width:400px;font-size:.88rem;color:var(--blue);background:var(--card);padding:4px 16px;border:1px dashed var(--border);border-radius:8px;text-align:center;outline:none" onblur="saveHeaderCustom(this)" onfocus="this.placeholder=''" title="点击编辑顶部内容">
+      <input id="headerCustomInput" type="text" placeholder="点击编辑顶部显示内容" autocomplete="off" style="width:100%;max-width:400px;font-size:.88rem;color:var(--blue);background:var(--card);padding:4px 16px;border:1px dashed var(--border);border-radius:8px;text-align:center;outline:none" onblur="saveHeaderCustom(this)" onfocus="this.placeholder=''" title="点击编辑顶部内容">
     </div>
     <div id="headerSub" style="color:var(--text-dim);font-size:0.88rem;margin-top:4px;"></div>
   </div>
@@ -818,19 +818,19 @@
     </div>
     <div class="form-field">
       <label>AI名称</label>
-      <input type="text" id="aiConfigName" placeholder="给这个AI起个名字，如我的DeepSeek" oninput="autoSaveAIConfig()">
+      <input type="text" id="aiConfigName" placeholder="给这个AI起个名字，如我的DeepSeek" autocomplete="off" oninput="autoSaveAIConfig()">
     </div>
     <div class="form-field">
       <label>Base URL</label>
-      <input type="text" id="aiBaseUrl" placeholder="https://api.deepseek.com/v1" oninput="autoSaveAIConfig()">
+      <input type="text" id="aiBaseUrl" placeholder="https://api.deepseek.com/v1" autocomplete="off" oninput="autoSaveAIConfig()">
     </div>
     <div class="form-field">
       <label>API Key</label>
-      <input type="password" id="aiApiKey" placeholder="sk-..." oninput="autoSaveAIConfig()">
+      <input type="password" id="aiApiKey" placeholder="sk-..." autocomplete="off" oninput="autoSaveAIConfig()">
     </div>
     <div class="form-field">
       <label>Model</label>
-      <input type="text" id="aiModel" placeholder="deepseek-chat" oninput="autoSaveAIConfig()">
+      <input type="text" id="aiModel" placeholder="deepseek-chat" autocomplete="off" oninput="autoSaveAIConfig()">
     </div>
     <div class="form-field">
       <label>我的文风样本</label>
@@ -950,9 +950,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.35.0';
-const APP_VERSION_DATE = '2026-07-05 14:00';
-const APP_RELEASE_NOTES = '恢复P0-P3自动更新功能：P0收盘自动归档（2026年A股交易日历+15:05双源拉取凝固数据到localStorage）；P1基金净值三态管理+22:00自动拉取确认净值（修正原22:30）；P3多数据源交叉校验（东财+新浪差异>0.5%警告，优先东财）；SW缓存自动更新。';
+const APP_VERSION = 'v1.36.0';
+const APP_VERSION_DATE = '2026-07-05 19:30';
+const APP_RELEASE_NOTES = '云端数据同步：待办清单/纪念日/三省日记/顶部自定义/AI配置全部支持云端KV存储，登录后自动加载、修改后2秒自动同步，跨设备数据一致；修复早报数据不更新（交易日历替代简单周末判断，支持法定节假日和调休工作日）；日期选择器倒序排列（最新日期在最前）；修复输入时浏览器提示保存密码问题（所有输入框添加autocomplete="off"）；顶部自定义内容改为按用户隔离存储。';
 
 // 2026年中国A股法定节假日（休市）
 const CN_HOLIDAYS = {
@@ -1486,6 +1486,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.36.0', date:'2026-07-05 19:30', notes:'云端数据同步：待办清单/纪念日/三省日记/顶部自定义/AI配置全部支持云端KV存储，登录后自动从云端加载数据、修改后2秒防抖自动同步到Cloudflare KV，跨设备数据一致；修复早报数据不更新问题（ensureTodayData使用isTradingDay交易日历替代简单周末判断，支持法定节假日和调休工作日）；顶部日期选择器倒序排列（最新日期在最前）；修复输入时浏览器提示保存密码问题（所有输入框添加autocomplete="off"属性）；顶部自定义内容改为按用户隔离存储，多账号互不干扰。' },
   { version:'v1.35.0', date:'2026-07-05 14:00', notes:'恢复P0-P3自动更新功能：P0收盘自动归档（2026年A股交易日历含法定节假日/调休工作日，15:05后自动从东财+新浪双数据源拉取收盘数据凝固到DAYS数组并保存localStorage，刷新不丢失；页面加载时自动补录未归档数据）；P1基金净值三态管理+22:00自动拉取确认净值（修正原22:30错误，交易日历替代简单周末判断）；P3多数据源交叉校验（东财+新浪价格差异>0.5%控制台警告，优先使用东财数据）；SW缓存自动更新。' },
   { version:'v1.34.2', date:'2026-07-05 01:30', notes:'数据紧急修复(真实API数据)：从新浪财经K线API+天天基金净值API获取7/2-7/3真实行情，修正周五三大指数：上证4043.64(+0.37%)、深证15597.51(+0.64%)、创业板4019.93(+0.07%)；修正周五股票收盘价：黄金ETF8.672(+2.32%)、纳指ETF1.622(+0.50%)、农业银行5.900(-1.34%)；周五股票当日收益+119元(黄金+118/纳指+49/农行-48)，基金+1.65元，合计+121元；周四数据验证正确(上证4028.90/-2.03%、深证15498.81/-3.85%、创业板4017.27/-5.71%)；INTRADAY_PNL分时数据更新，收盘+120.7元。' },
   { version:'v1.34.1', date:'2026-07-05 01:00', notes:'紧急修复周五(2026-07-03)交易日数据缺失：补全DAYS数组周五完整条目；指数更新为上证4060+0.77%/深证15620+0.78%/创业板4035+0.44%；股票价格按用户提供数据更新(黄金ETF8.172/纳指ETF1.522/农业银行5.90)；基金净值更新至7/3(财通9.1154/国金3.6235)；INTRADAY_PNL分时数据更新，收盘收益+119元；FUND_PORTFOLIO同步更新。' },
@@ -4815,7 +4816,7 @@ function closeLoginModal() {
   document.getElementById('loginModal').classList.remove('show');
 }
 
-function doLogin() {
+async function doLogin() {
   const user = document.getElementById('loginUser').value.trim();
   const pass = document.getElementById('loginPass').value;
   const errEl = document.getElementById('loginError');
@@ -4830,11 +4831,13 @@ function doLogin() {
     if (isTestUser()) {
       applyTestData();
     }
-    ensureTodayData();
     localStorage.setItem('dashboard_auth', JSON.stringify({ username: user }));
+    await loadFromCloud();
+    ensureTodayData();
     closeLoginModal();
     updateAuthUI();
     updateTestModeBadge();
+    loadHeaderCustom();
     render();
     renderCharts();
     renderCalendar();
@@ -4869,6 +4872,69 @@ function initAuth() {
   updateTestModeBadge();
 }
 
+// ==================== Cloud Sync ====================
+let cloudSyncTimer = null;
+let cloudSyncInProgress = false;
+let cloudSyncEnabled = true;
+
+function scheduleCloudSync() {
+  if (!currentUser || !cloudSyncEnabled) return;
+  if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(() => saveToCloud(), 2000);
+}
+
+async function saveToCloud() {
+  if (!currentUser || cloudSyncInProgress) return;
+  cloudSyncInProgress = true;
+  try {
+    const data = {
+      headerCustom: localStorage.getItem('headerCustom_' + currentUser) || localStorage.getItem('headerCustomText') || '',
+      todos: JSON.parse(localStorage.getItem('todos_' + currentUser) || '[]'),
+      anniversaries: JSON.parse(localStorage.getItem('anni_' + currentUser) || '[]'),
+      diaries: JSON.parse(localStorage.getItem('diary_' + currentUser) || '[]'),
+      aiConfigs: localStorage.getItem('ai_configs_' + currentUser) || null,
+      aiActiveConfig: localStorage.getItem('ai_active_config_' + currentUser) || null
+    };
+    const oldGlobal = localStorage.getItem('headerCustomText');
+    if (oldGlobal && !localStorage.getItem('headerCustom_' + currentUser)) {
+      localStorage.setItem('headerCustom_' + currentUser, oldGlobal);
+      data.headerCustom = oldGlobal;
+    }
+    const res = await fetch('/api/user/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user: currentUser, data })
+    });
+    if (res.ok) {
+      console.log('[云端同步] 数据已同步到云端');
+    }
+  } catch(e) {
+    console.log('[云端同步] 同步失败（本地已保存）:', e.message);
+  } finally {
+    cloudSyncInProgress = false;
+  }
+}
+
+async function loadFromCloud() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch('/api/user/data?user=' + encodeURIComponent(currentUser), { cache: 'no-store' });
+    if (!res.ok) return;
+    const result = await res.json();
+    if (!result.success || !result.data) return;
+    const cloud = result.data;
+    if (cloud.todos) localStorage.setItem('todos_' + currentUser, JSON.stringify(cloud.todos));
+    if (cloud.anniversaries) localStorage.setItem('anni_' + currentUser, JSON.stringify(cloud.anniversaries));
+    if (cloud.diaries) localStorage.setItem('diary_' + currentUser, JSON.stringify(cloud.diaries));
+    if (cloud.headerCustom) localStorage.setItem('headerCustom_' + currentUser, cloud.headerCustom);
+    if (cloud.aiConfigs) localStorage.setItem('ai_configs_' + currentUser, cloud.aiConfigs);
+    if (cloud.aiActiveConfig) localStorage.setItem('ai_active_config_' + currentUser, cloud.aiActiveConfig);
+    console.log('[云端同步] 已从云端加载数据');
+  } catch(e) {
+    console.log('[云端同步] 加载云端数据失败（使用本地数据）:', e.message);
+  }
+}
+
 // ==================== Todo List ====================
 function getTodos() {
   if (!currentUser) return [];
@@ -4881,6 +4947,7 @@ function getTodos() {
 function saveTodos(todos) {
   if (!currentUser) return;
   localStorage.setItem('todos_' + currentUser, JSON.stringify(todos));
+  scheduleCloudSync();
 }
 
 function addTodo() {
@@ -4984,6 +5051,7 @@ function getDiaries() {
 function saveDiaries(diaries) {
   if (!currentUser) return;
   localStorage.setItem('diary_' + currentUser, JSON.stringify(diaries));
+  scheduleCloudSync();
 }
 
 function addDiaryFromHome(text, date) {
@@ -5158,6 +5226,7 @@ function saveAIConfigs(configs, activeId) {
   if (activeId !== undefined) {
     localStorage.setItem('ai_active_config_' + currentUser, JSON.stringify(activeId));
   }
+  scheduleCloudSync();
 }
 
 function getActiveAIConfigId() {
@@ -5212,6 +5281,7 @@ function saveStyleSamples(text) {
 function setActiveAIConfig(id) {
   if (!currentUser) return;
   localStorage.setItem('ai_active_config_' + currentUser, JSON.stringify(id));
+  scheduleCloudSync();
 }
 
 function addAIConfig(name, baseUrl, model, apiKey) {
@@ -5256,6 +5326,7 @@ function getAnniversaries() {
 function saveAnniversaries(list) {
   if (!currentUser) return;
   localStorage.setItem('anni_' + currentUser, JSON.stringify(list));
+  scheduleCloudSync();
 }
 
 function addAnniversary() {
@@ -5289,7 +5360,7 @@ function showAnniDescEditor(id) {
   info.innerHTML = `
     <div class="anni-name">${escapeHtml(item.name)}</div>
     <div class="anni-desc-edit">
-      <input type="text" id="anniDescEdit_${id}" value="${escapeHtml(item.desc || '')}" placeholder="添加描述...">
+      <input type="text" id="anniDescEdit_${id}" value="${escapeHtml(item.desc || '')}" placeholder="添加描述..." autocomplete="off">
       <button onclick="saveAnniDesc(${id})">保存</button>
       <button class="cancel" onclick="renderAnniversary()">取消</button>
     </div>
@@ -5372,7 +5443,7 @@ function renderAnniAddBar() {
   let dayOpts = '<option value="">日</option>';
   for (let d = 1; d <= 31; d++) dayOpts += `<option value="${d}">${d}日</option>`;
   bar.innerHTML = `
-    <input class="anni-name-in" id="anniNameInput" type="text" placeholder="纪念日名称">
+    <input class="anni-name-in" id="anniNameInput" type="text" placeholder="纪念日名称" autocomplete="off">
     <select id="anniMonthSelect">${monthOpts}</select>
     <select id="anniDaySelect">${dayOpts}</select>
     <button onclick="addAnniversary()">添加</button>
@@ -5673,15 +5744,38 @@ function ingotClick() {
 }
 function saveHeaderCustom(el) {
   const text = el.value.trim();
-  if (text) {
-    localStorage.setItem('headerCustomText', text);
-    el.style.color = 'var(--text)';
+  if (currentUser) {
+    const key = 'headerCustom_' + currentUser;
+    if (text) {
+      localStorage.setItem(key, text);
+      el.style.color = 'var(--text)';
+    } else {
+      localStorage.removeItem(key);
+    }
+    scheduleCloudSync();
+  } else {
+    if (text) {
+      localStorage.setItem('headerCustomText', text);
+      el.style.color = 'var(--text)';
+    }
   }
 }
 function loadHeaderCustom() {
   const el = document.getElementById('headerCustomInput');
   if (el) {
-    const saved = localStorage.getItem('headerCustomText');
+    let saved = null;
+    if (currentUser) {
+      saved = localStorage.getItem('headerCustom_' + currentUser);
+      if (!saved) {
+        const oldGlobal = localStorage.getItem('headerCustomText');
+        if (oldGlobal) {
+          localStorage.setItem('headerCustom_' + currentUser, oldGlobal);
+          saved = oldGlobal;
+        }
+      }
+    } else {
+      saved = localStorage.getItem('headerCustomText');
+    }
     if (saved) { el.value = saved; el.style.color = 'var(--text)'; }
   }
 }
@@ -5724,8 +5818,7 @@ function getWeekdayText(now = new Date()) {
 function ensureTodayData() {
   const today = todayText();
   const bj = getBeijingTime();
-  const day = bj.getDay();
-  const isWeekday = day >= 1 && day <= 5;
+  const isTrading = isTradingDay(today);
   const defaults = {
     price: {},
     theme: '等待开盘',
@@ -5777,7 +5870,7 @@ function ensureTodayData() {
     }
     return;
   }
-  if (!isWeekday) return;
+  if (!isTrading) return;
   const latest = latestDay();
   if (!latest) return;
   const todayData = {
@@ -5850,8 +5943,9 @@ function renderWeekChart() {
 
 function renderDateButtons() {
   const el = document.getElementById('dateButtons');
+  const sortedDays = [...DAYS].sort((a, b) => b.date.localeCompare(a.date));
   el.innerHTML = `<select onchange="selectDate(this.value)" id="dateSelect">
-    ${DAYS.map(d => `<option value="${d.date}" ${d.date === currentDate ? 'selected' : ''}>${d.date} ${d.weekday}</option>`).join('')}
+    ${sortedDays.map(d => `<option value="${d.date}" ${d.date === currentDate ? 'selected' : ''}>${d.date} ${d.weekday}</option>`).join('')}
   </select>
   <button onclick="navDate(-1)">◀ 前一天</button>
   <button onclick="navDate(1)">后一天 ▶</button>
@@ -7165,8 +7259,8 @@ function renderSanxingDetail() {
         </div>
       </div>
       <div class="diary-add-area">
-        <input type="date" id="diaryDetailDate" value="${todayText()}">
-        <textarea id="diaryDetailInput" placeholder="记录今日所思所感..." rows="4"></textarea>
+        <input type="date" id="diaryDetailDate" value="${todayText()}" autocomplete="off">
+        <textarea id="diaryDetailInput" placeholder="记录今日所思所感..." rows="4" autocomplete="off"></textarea>
         <div class="diary-add-actions">
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn-secondary" onclick="polishDiaryNew()" id="polishNewBtn" disabled>✨ AI润色</button>
@@ -7182,7 +7276,7 @@ function renderSanxingDetail() {
         <button class="btn-small btn-danger" onclick="batchDeleteDiaries()" id="batchDeleteBtn" disabled>🗑️ 批量删除</button>
         <span id="selectedCount" style="color:var(--text-dim);font-size:.8rem"></span>
         <span style="flex:1"></span>
-        <input type="text" id="diarySearchInput" placeholder="🔍 搜索日记..." oninput="onDiarySearch(this.value)" onkeydown="if(event.key==='Escape')this.value='';onDiarySearch('')" class="diary-search-input">
+        <input type="text" id="diarySearchInput" placeholder="🔍 搜索日记..." autocomplete="off" oninput="onDiarySearch(this.value)" onkeydown="if(event.key==='Escape')this.value='';onDiarySearch('')" class="diary-search-input">
         <span id="searchResultInfo" style="color:var(--text-dim);font-size:.8rem;white-space:nowrap"></span>
       </div>
       <div id="diaryListDetail"></div>
@@ -7974,7 +8068,7 @@ function renderHome() {
     html += `<div class="home-card"><div class="home-card-body">
       <h2>待办清单 <span class="tag tag-blue" style="font-size:.72rem">${AUTH_ACCOUNTS[currentUser]?.name || currentUser}</span></h2>
       <div class="todo-add-bar">
-        <input type="text" id="todoInput" placeholder="输入待办事项，回车添加" onkeydown="if(event.key==='Enter') addTodo()">
+        <input type="text" id="todoInput" placeholder="输入待办事项，回车添加" autocomplete="off" onkeydown="if(event.key==='Enter') addTodo()">
         <button onclick="addTodo()">添加</button>
       </div>
       <div id="todoListContainer" data-mode="home"></div>
@@ -7999,7 +8093,7 @@ function renderHome() {
     html += `<div class="home-card"><div class="home-card-body">
       <h2>📝 三省</h2>
       <div class="todo-add-bar">
-        <input type="text" id="diaryInput" placeholder="记录今日所思，回车添加" onkeydown="if(event.key==='Enter') addDiaryHome()">
+        <input type="text" id="diaryInput" placeholder="记录今日所思，回车添加" autocomplete="off" onkeydown="if(event.key==='Enter') addDiaryHome()">
         <button onclick="addDiaryHome()">添加</button>
         <button onclick="addDiaryHomePolish(this)" style="background:var(--yellow);color:#000;font-weight:600">✨ AI润色</button>
       </div>
@@ -8032,7 +8126,7 @@ function renderTodoDetail() {
       <h2>待办清单 <span class="tag tag-blue" style="font-size:.72rem">${AUTH_ACCOUNTS[currentUser]?.name || currentUser}</span></h2>
       <div class="update-time">${todos.length > 0 ? `共 ${todos.length} 项 · 已完成 ${doneCount} 项` : ''}</div>
       <div class="todo-add-bar">
-        <input type="text" id="todoInput" placeholder="输入待办事项，回车添加" onkeydown="if(event.key==='Enter') addTodoDetail()">
+        <input type="text" id="todoInput" placeholder="输入待办事项，回车添加" autocomplete="off" onkeydown="if(event.key==='Enter') addTodoDetail()">
         <button onclick="addTodoDetail()">添加</button>
       </div>
       <div id="todoListContainer" data-mode="detail"></div>
@@ -8817,6 +8911,9 @@ async function initApp() {
   initTheme();
   initAuth();
   initAIConfigImport();
+  if (currentUser) {
+    await loadFromCloud();
+  }
   const poem = CLASSIC_POEMS[Math.floor(Math.random() * CLASSIC_POEMS.length)];
   document.getElementById('versionInfo').innerHTML = `<span class="vi-ver">版本 ${APP_VERSION}</span><span class="vi-date">${APP_VERSION_DATE}</span><span class="vi-poem">「${poem.text}」—— ${poem.author}</span>`;
   // 先加载缓存净值（避免被loadPortfolioApi的旧数据覆盖）

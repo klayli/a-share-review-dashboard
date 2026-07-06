@@ -1,7 +1,14 @@
 {
-  "current": "v1.35.0",
+  "current": "v1.36.0",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.36.0",
+      "date": "2026-07-05 19:30（北京时间）",
+      "summary": "云端数据同步：待办/纪念日/三省/顶部自定义/AI配置KV云端存储+自动同步；修复早报不更新+日期倒序+密码提示bug",
+      "cache": "a-share-review-v46-20260705",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
     {
       "version": "v1.35.0",
       "date": "2026-07-05 14:00（北京时间）",
