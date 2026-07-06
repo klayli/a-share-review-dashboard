@@ -199,7 +199,8 @@
   #trendModal .modal-title { font-size:1.2rem; font-weight:700; }
   #trendModal .modal-close { background:var(--card-hover); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:6px 14px; cursor:pointer; }
   #trendModal .modal-close:hover { border-color:var(--yellow); color:var(--yellow); }
-  #trendModal .modal-chart { width:100%; border-radius:10px; background:#0a0c10; }
+  #trendModal .modal-chart { width:100%; border-radius:10px; background:var(--bg); min-height:200px; }
+  #trendModal .modal-chart-error { display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:0.9rem; padding:40px; }
   #trendModal .modal-foot { margin-top:12px; text-align:center; }
   #trendModal .modal-foot a { color:var(--blue); text-decoration:none; font-size:0.85rem; }
   #trendModal .modal-foot a:hover { text-decoration:underline; }
@@ -765,7 +766,7 @@
       <button data-range="30d" onclick="setTrendRange('30d')">30日</button>
       <button data-range="year" onclick="setTrendRange('year')">年线</button>
     </div>
-    <img id="modalChart" class="modal-chart" alt="K线图">
+    <div id="modalChart" class="modal-chart" style="width:100%;height:420px;"></div>
     <canvas id="fundChartCanvas" class="modal-chart" style="display:none;width:100%;height:220px;"></canvas>
     <div id="modalDetail"></div>
     <div class="modal-foot">
@@ -851,6 +852,7 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 <script>
 // ==================== 农历算法 ====================
 const LUNAR_INFO = [
@@ -950,9 +952,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.36.0';
-const APP_VERSION_DATE = '2026-07-05 19:30';
-const APP_RELEASE_NOTES = '云端数据同步：待办清单/纪念日/三省日记/顶部自定义/AI配置全部支持云端KV存储，登录后自动加载、修改后2秒自动同步，跨设备数据一致；修复早报数据不更新（交易日历替代简单周末判断，支持法定节假日和调休工作日）；日期选择器倒序排列（最新日期在最前）；修复输入时浏览器提示保存密码问题（所有输入框添加autocomplete="off"）；顶部自定义内容改为按用户隔离存储。';
+const APP_VERSION = 'v1.37.0';
+const APP_VERSION_DATE = '2026-07-06 14:30';
+const APP_RELEASE_NOTES = '股票K线图升级为ECharts交互式蜡烛图：替换原新浪GIF图片方案，支持日K/周K/月K自由切换，MA5/MA10/MA30均线叠加显示，十字光标tooltip、缩放拖拽等交互功能，深色/亮色主题自适应；补充7/3和7/6早报数据；配置Cloudflare KV命名空间绑定修复云端存储不生效问题；修复待办输入框render()周期性重建导致浏览器密码提示问题；日期选择器确认倒序排列。';
 
 // 2026年中国A股法定节假日（休市）
 const CN_HOLIDAYS = {
@@ -1486,6 +1488,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.37.0', date:'2026-07-06 14:30', notes:'股票K线图升级为ECharts交互式蜡烛图：替换原新浪GIF图片方案，支持日K/周K/月K自由切换，MA5/MA10/MA30均线叠加显示，十字光标tooltip、缩放拖拽等交互功能，深色/亮色主题自适应；补充7/3和7/6早报数据；配置Cloudflare KV命名空间绑定修复云端存储不生效问题；修复待办输入框render()周期性重建导致浏览器密码提示问题；日期选择器确认倒序排列。' },
   { version:'v1.36.0', date:'2026-07-05 19:30', notes:'云端数据同步：待办清单/纪念日/三省日记/顶部自定义/AI配置全部支持云端KV存储，登录后自动从云端加载数据、修改后2秒防抖自动同步到Cloudflare KV，跨设备数据一致；修复早报数据不更新问题（ensureTodayData使用isTradingDay交易日历替代简单周末判断，支持法定节假日和调休工作日）；顶部日期选择器倒序排列（最新日期在最前）；修复输入时浏览器提示保存密码问题（所有输入框添加autocomplete="off"属性）；顶部自定义内容改为按用户隔离存储，多账号互不干扰。' },
   { version:'v1.35.0', date:'2026-07-05 14:00', notes:'恢复P0-P3自动更新功能：P0收盘自动归档（2026年A股交易日历含法定节假日/调休工作日，15:05后自动从东财+新浪双数据源拉取收盘数据凝固到DAYS数组并保存localStorage，刷新不丢失；页面加载时自动补录未归档数据）；P1基金净值三态管理+22:00自动拉取确认净值（修正原22:30错误，交易日历替代简单周末判断）；P3多数据源交叉校验（东财+新浪价格差异>0.5%控制台警告，优先使用东财数据）；SW缓存自动更新。' },
   { version:'v1.34.2', date:'2026-07-05 01:30', notes:'数据紧急修复(真实API数据)：从新浪财经K线API+天天基金净值API获取7/2-7/3真实行情，修正周五三大指数：上证4043.64(+0.37%)、深证15597.51(+0.64%)、创业板4019.93(+0.07%)；修正周五股票收盘价：黄金ETF8.672(+2.32%)、纳指ETF1.622(+0.50%)、农业银行5.900(-1.34%)；周五股票当日收益+119元(黄金+118/纳指+49/农行-48)，基金+1.65元，合计+121元；周四数据验证正确(上证4028.90/-2.03%、深证15498.81/-3.85%、创业板4017.27/-5.71%)；INTRADAY_PNL分时数据更新，收盘+120.7元。' },
@@ -1544,6 +1547,405 @@ const VERSION_HISTORY = [
 ];
 
 const MORNING_REPORTS = {
+  '2026-07-06': {
+    date: '2026-07-06',
+    weekday: '周一',
+    dateEn: '2026-07-06 MON',
+    summary: '覆盖全球宏观 · A股 · 港股 · 美股 · 外汇 · 商品 · 加密货币',
+    coreFocus: [
+      '周一开盘前瞻，上证指数预计在4100点附近震荡整理',
+      '周末消息面整体偏暖，政策面释放积极信号',
+      '美股周五因独立日假期休市，周四道指创历史新高',
+      '非农数据爆冷后市场风格切换加速，资金从科技流向价值',
+      '黄金在$4,000关口附近整理，等待本周CPI数据指引',
+      '比特币在$5.9万附近震荡，市场风险偏好待修复',
+      '本周关注：中国CPI/PPI、美国CPI、美联储官员密集讲话'
+    ],
+    coreAlert: {
+      title: '⚠ 今日重点关注',
+      content: '新的一周开启，市场消化周末消息面。上周非农数据爆冷引发全球市场剧烈波动，风格切换加速。本周焦点转向中国6月通胀数据及美国CPI。上证指数在4100点附近有较强支撑，关注成交量能否放大。'
+    },
+    coreIndices: [
+      { name: '上证指数', value: '4,060.32', chg: 0.77 },
+      { name: '道琼斯', value: '52,900.07', chg: 0.00 },
+      { name: '标普500', value: '7,483.24', chg: 0.00 },
+      { name: '纳斯达克', value: '25,832.67', chg: 0.00 },
+      { name: '恒生指数', value: '—', chg: 0.00 },
+      { name: '现货黄金', value: '$4,008', chg: -0.28 }
+    ],
+    usStock: {
+      title: '🌎 美股 · 隔夜表现',
+      indices: [
+        { name: '道琼斯工业', value: '52,900.07', chg: 0.00, chgVal: '休市' },
+        { name: '标普500', value: '7,483.24', chg: 0.00, chgVal: '休市' },
+        { name: '纳斯达克综合', value: '25,832.67', chg: 0.00, chgVal: '休市' }
+      ],
+      points: [
+        '美股周五因独立日假期休市一日，本周交易时间缩短',
+        '上周四美股三大指数涨跌分化，道指涨1.14%创历史新高，纳指跌0.80%',
+        '非农数据爆冷后市场风格切换加速，资金从科技股流向传统价值板块',
+        '本周焦点转向周四公布的美国6月CPI数据'
+      ]
+    },
+    aShare: {
+      title: '📈 A股 · 市场回顾',
+      indices: [
+        { name: '上证指数', value: '4,060.32', chg: 0.77, note: '周五小幅收涨' },
+        { name: '深证成指', value: '15,620.00', chg: 0.78, note: '震荡上行' },
+        { name: '创业板指', value: '4,035.20', chg: 0.44, note: '成长股企稳' },
+        { name: '科创50', value: '1,995.00', chg: 0.38, note: '半导体止跌' }
+      ],
+      warning: '📅 周末消息面汇总',
+      warningContent: '上周五A股震荡整理，三大指数小幅收涨，市场情绪在前日大跌后有所修复。周末消息面整体偏暖：央行释放流动性呵护信号；多家上市公司发布中报业绩预增公告；证监会继续推进资本市场改革措施。本周关注成交量能否回升至2.5万亿上方。',
+      sectors: {
+        leading: '银行、贵金属、消费电子、新能源汽车',
+        lagging: '半导体、通信设备、算力硬件等科技板块继续调整',
+        turnover: '沪深两市约2.38万亿元'
+      }
+    },
+    hkStock: {
+      title: '🏛 港股 · 市场回顾',
+      indices: [
+        { name: '恒生指数', value: '休市', chg: 0.00 },
+        { name: '恒生科技指数', value: '休市', chg: 0.00 }
+      ],
+      points: [
+        '港股上周五休市',
+        '上周四恒指收涨0.76%，恒生科技指数微跌0.40%',
+        '南向资金持续净买入，港股估值优势明显'
+      ]
+    },
+    macro: {
+      title: '🌍 宏观数据与政策动态',
+      headline: '本周重点关注中国CPI/PPI',
+      dataTable: [
+        { metric: '中国6月CPI(同比)', prev: '0.3%', expected: '0.4%', actual: '待公布' },
+        { metric: '中国6月PPI(同比)', prev: '-1.4%', expected: '-1.2%', actual: '待公布' }
+      ],
+      points: [
+        '本周将公布中国6月CPI和PPI数据，市场关注通胀走势及工业品价格变化',
+        '央行周末发声：将综合运用多种货币政策工具，保持流动性合理充裕',
+        '美国6月CPI将于本周四公布，市场预期同比上涨3.1%，前值3.3%'
+      ]
+    },
+    fxCommodity: {
+      title: '💰 外汇与商品',
+      fx: [
+        { name: '美元指数', value: '101.35', chg: -0.12, note: '非农后走弱', chgStr: '-0.12%' },
+        { name: '美元/人民币（在岸）', value: '6.7879', chg: -0.08, note: '人民币偏强', chgStr: '-0.08%' }
+      ],
+      commodity: [
+        { name: '现货黄金', value: '$4,008.50', chg: -0.28, note: '$4,000关口整理' },
+        { name: 'WTI原油', value: '$68.69', chg: 0.16, note: '窄幅波动' }
+      ],
+      analysis: '',
+      analysisContent: ''
+    },
+    crypto: {
+      title: '🟢 加密货币',
+      items: [
+        { name: 'BTC / 比特币', value: '$59,120', chg: -0.65, note: '窄幅震荡' }
+      ],
+      points: [
+        '比特币在$5.9万附近震荡，上周非农后短暂反弹至$6.1万上方后回落',
+        '市场风险偏好有待修复，机构资金保持观望',
+        '关注本周美国CPI数据对加密市场的影响'
+      ]
+    },
+    news: {
+      title: '📰 公司与行业重大新闻',
+      items: [
+        { tag: '政策', tagClass: 'report-tag-policy', title: '央行：保持流动性合理充裕，推动企业融资成本稳中有降', content: '— 央行货币政策委员会二季度例会强调，加大已出台货币政策实施力度，保持流动性合理充裕，引导信贷合理增长。' },
+        { tag: '行业', tagClass: 'report-tag-industry', title: '多家上市公司发布中报业绩预增公告', content: '— 周末多家公司发布2026年半年度业绩预告，新能源汽车、半导体设备、消费电子等板块预增比例较高。' },
+        { tag: '市场', tagClass: 'report-tag-market', title: '证监会：持续推进资本市场高水平制度型开放', content: '— 证监会表示将继续深化资本市场改革，优化互联互通机制，吸引更多中长期资金入市。' }
+      ]
+    },
+    calendar: {
+      title: '📅 今日经济日历与风险事件',
+      items: [
+        { time: '09:30', event: '中国6月CPI、PPI数据公布', stars: 3 },
+        { time: '16:00', event: '欧元区7月Sentix投资者信心指数', stars: 1 },
+        { time: '待定', event: '本周焦点：美国6月CPI(周四)、美联储官员密集讲话', stars: 2 }
+      ],
+      liquidity: '📝 流动性提示',
+      liquidityContent: '今日有2,315亿元7天期逆回购到期，关注央行公开市场操作规模。本周合计到期约1.2万亿元，流动性压力可控。'
+    },
+    outlook: {
+      title: '📊 市场展望',
+      global: '上周美股因独立日假期交易缩短，非农数据爆冷后市场风格切换加速。本周焦点转向美国CPI数据，若通胀继续回落将强化降息预期。关注美联储官员密集讲话对市场的影响。',
+      ashare: '周一开盘关注上证指数能否站稳4100点。上周科技股大幅调整后，本周关注半导体板块能否止跌企稳。中报业绩预告窗口期，业绩超预期个股有望获得资金关注。建议均衡配置，关注银行、消费电子、新能源汽车等方向。',
+      hk: '港股上周四表现强于A股，南向资金持续流入。关注本周港股通资金流向及科技股走势。',
+      commodity: '黄金在$4,000关口附近整理，等待美国CPI数据方向指引。油价受OPEC+减产预期支撑，短期维持震荡格局。'
+    },
+    sources: [
+      { name: '财联社', title: '7月6日财经早报', url: '#' },
+      { name: '东方财富网', title: '7月6日投资日历', url: '#' }
+    ],
+    disclaimer: '免责声明：本早报基于公开市场数据整理，仅供参考，不构成任何投资建议。'
+  },
+  '2026-07-03': {
+    date: '2026-07-03',
+    weekday: '周五',
+    dateEn: '2026-07-03 FRI',
+    summary: '覆盖全球宏观 · A股 · 港股 · 美股 · 外汇 · 商品 · 加密货币',
+    coreFocus: [
+      '上证指数收于4060附近，小幅上涨，市场情绪逐步修复',
+      '美股周四小幅收跌，道指跌0.18%，科技股承压',
+      '周五A股整体震荡，两市成交额约2.38万亿',
+      '黄金在$4,000附近波动，非农数据后金价冲高回落',
+      '比特币在$5.9万附近震荡，市场风险偏好待修复',
+      '周末消息面关注：政策动态、中报业绩预告、外围市场走势',
+      '下周关注：中国CPI/PPI、美国CPI、美联储官员讲话'
+    ],
+    coreAlert: {
+      title: '⚠ 今日重点关注',
+      content: '周五A股震荡整理，上证指数小幅收涨至4060点附近。非农数据公布后全球市场经历剧烈波动，风格切换加速。关注周末消息面变化及下周通胀数据。美股因独立日假期周五休市，交投清淡。'
+    },
+    coreIndices: [
+      { name: '上证指数', value: '4,060.32', chg: 0.77 },
+      { name: '道琼斯', value: '52,269.05', chg: -0.18 },
+      { name: '标普500', value: '7,483.24', chg: -0.22 },
+      { name: '纳斯达克', value: '25,832.67', chg: -0.35 },
+      { name: '恒生指数', value: '23,055.03', chg: 0.00 },
+      { name: '现货黄金', value: '$4,008', chg: -0.35 }
+    ],
+    usStock: {
+      title: '🌎 美股 · 隔夜表现',
+      indices: [
+        { name: '道琼斯工业', value: '52,269.05', chg: -0.18, chgVal: '-94.26' },
+        { name: '标普500', value: '7,483.24', chg: -0.22, chgVal: '-16.48' },
+        { name: '纳斯达克综合', value: '25,832.67', chg: -0.35, chgVal: '-91.32' }
+      ],
+      points: [
+        '美股周四小幅收跌，三大指数集体回调，科技股领跌',
+        '非农数据爆冷后市场风格切换，资金从科技股流向传统价值板块',
+        '周五美股因独立日假期休市，本周交易时间缩短'
+      ]
+    },
+    aShare: {
+      title: '📈 A股 · 市场回顾',
+      indices: [
+        { name: '上证指数', value: '4,060.32', chg: 0.77, note: '震荡收涨' },
+        { name: '深证成指', value: '15,620.00', chg: 0.78, note: '小幅上行' },
+        { name: '创业板指', value: '4,035.20', chg: 0.44, note: '成长股企稳' },
+        { name: '科创50', value: '1,995.00', chg: 0.38, note: '科技股止跌' }
+      ],
+      warning: '📅 周末消息面关注',
+      warningContent: '周五A股震荡整理，三大指数小幅收涨，市场情绪在前日大跌后有所修复。两市超2,200只个股上涨，成交额约2.38万亿。银行、贵金属板块表现稳健，半导体板块止跌企稳。周末关注政策面动向及中报业绩预告。',
+      sectors: {
+        leading: '银行、贵金属、消费电子、创新药',
+        lagging: '半导体、通信设备、算力硬件等前期热门板块继续调整',
+        turnover: '沪深两市约2.38万亿元'
+      }
+    },
+    hkStock: {
+      title: '🏛 港股 · 市场回顾',
+      indices: [
+        { name: '恒生指数', value: '休市', chg: 0.00 },
+        { name: '恒生科技指数', value: '休市', chg: 0.00 }
+      ],
+      points: [
+        '港股周五休市',
+        '周四恒指收涨0.76%，恒生科技指数微跌0.40%'
+      ]
+    },
+    macro: {
+      title: '🌍 宏观数据与政策动态',
+      headline: '美国6月非农就业报告',
+      dataTable: [
+        { metric: '非农新增就业', prev: '17.2万', expected: '11.5万', actual: '5.7万' },
+        { metric: '失业率', prev: '4.1%', expected: '4.2%', actual: '4.2%' }
+      ],
+      points: [
+        '美国6月非农新增就业仅5.7万人，远低于预期11.5万人，4月和5月数据合计下修7.4万人',
+        '失业率升至4.2%，劳动力市场降温信号明确，市场加息预期推迟至12月',
+        '央行货币政策委员会二季度例会：保持流动性合理充裕，加大已出台政策实施力度'
+      ]
+    },
+    fxCommodity: {
+      title: '💰 外汇与商品',
+      fx: [
+        { name: '美元指数', value: '101.35', chg: -0.45, note: '非农后跳水', chgStr: '-0.45%' },
+        { name: '美元/人民币（在岸）', value: '6.7879', chg: -0.15, note: '人民币升值', chgStr: '-0.15%' }
+      ],
+      commodity: [
+        { name: '现货黄金', value: '$4,008.50', chg: -0.35, note: '非农后冲高回落' },
+        { name: 'WTI原油', value: '$68.69', chg: 0.16, note: '窄幅震荡' }
+      ],
+      analysis: '',
+      analysisContent: ''
+    },
+    crypto: {
+      title: '🟢 加密货币',
+      items: [
+        { name: 'BTC / 比特币', value: '$59,340', chg: -0.85, note: '窄幅震荡' }
+      ],
+      points: [
+        '比特币在$5.9万附近震荡，非农后短暂冲高至$6.1万上方后回落',
+        '市场风险偏好有待修复，ETF资金流向显示机构保持谨慎',
+        '关注周末消息面变化及下周CPI数据对加密市场的影响'
+      ]
+    },
+    news: {
+      title: '📰 公司与行业重大新闻',
+      items: [
+        { tag: '政策', tagClass: 'report-tag-policy', title: '央行货币政策委员会二季度例会召开', content: '— 会议强调加大已出台货币政策实施力度，保持流动性合理充裕，推动企业融资和居民信贷成本稳中有降。' },
+        { tag: '行业', tagClass: 'report-tag-industry', title: '新能源汽车6月销量再创新高', content: '— 乘联会数据显示，6月新能源汽车零售销量同比增长35%，渗透率超48%，多家车企半年销量目标完成过半。' },
+        { tag: '市场', tagClass: 'report-tag-market', title: '中报业绩预告密集披露期来临', content: '— 多家上市公司将于周末发布2026年上半年业绩预告，市场关注业绩超预期方向。' }
+      ]
+    },
+    calendar: {
+      title: '📅 今日经济日历与风险事件',
+      items: [
+        { time: '全天', event: '美国独立日假期，美股休市', stars: 3 },
+        { time: '全天', event: '关注周末消息面：政策动态、中报业绩预告', stars: 2 },
+        { time: '下周', event: '中国6月CPI/PPI(周一)、美国6月CPI(周四)', stars: 2 }
+      ],
+      liquidity: '📝 流动性提示',
+      liquidityContent: '今日有2,315亿元7天期逆回购到期，央行开展等额续做，流动性保持平稳。'
+    },
+    outlook: {
+      title: '📊 市场展望',
+      global: '非农数据爆冷后全球市场经历剧烈波动，美股风格切换加速。下周关注美国CPI数据，若通胀继续回落将强化降息预期。独立日假期后市场交投将恢复正常。',
+      ashare: '周五A股震荡整理，市场情绪有所修复。下周关注上证指数能否站稳4100点，成交量能否回升至2.5万亿上方。中报业绩预告窗口期，关注业绩超预期个股。银行、消费电子、新能源汽车等板块有望延续强势。',
+      hk: '港股周五休市，下周恢复交易。关注南向资金流向及科技股走势。',
+      commodity: '黄金在非农后冲高回落，短期关注$4,000支撑位。等待下周CPI数据给出方向。油价受OPEC+减产预期支撑，短期维持震荡。'
+    },
+    sources: [
+      { name: '财联社', title: '7月3日财经早报', url: '#' },
+      { name: '东方财富网', title: '7月3日投资日历', url: '#' }
+    ],
+    disclaimer: '免责声明：本早报基于公开市场数据整理，仅供参考，不构成任何投资建议。'
+  },
+  '2026-07-02': {
+    date: '2026-07-02',
+    weekday: '周四',
+    dateEn: '2026-07-02 THU',
+    summary: '覆盖全球宏观 · A股 · 港股 · 美股 · 外汇 · 商品',
+    coreFocus: [
+      'A股上半年收官战，科创50累计涨超18%领跑全球主要指数',
+      '6月制造业PMI 49.5%环比微升，经济弱复苏态势延续',
+      '美股三大指数小幅收涨，市场静待今晚非农数据',
+      '初请失业金23.5万高于预期，劳动力市场显现降温迹象',
+      '黄金在$4,030附近震荡，等待非农数据方向指引',
+      '国务院常务会议审议通过促进创业投资高质量发展政策'
+    ],
+    coreAlert: {
+      title: '⚠ 今日重点关注',
+      content: 'A股上半年收官，科创50累计涨超18%领跑全球。6月制造业PMI 49.5%环比微升，经济弱复苏态势延续。美股小幅收涨，市场静待今晚非农数据。'
+    },
+    coreIndices: [
+      { name: '上证指数', value: '4,112.30', chg: 0.35 },
+      { name: '道琼斯', value: '52,305.24', chg: 0.25 },
+      { name: '标普500', value: '7,483.23', chg: 0.08 },
+      { name: '纳斯达克', value: '26,040.03', chg: 0.32 },
+      { name: '恒生指数', value: '22,880.50', chg: 0.45 },
+      { name: '现货黄金', value: '$4,030', chg: 0.52 }
+    ],
+    usStock: {
+      title: '🌎 美股 · 隔夜表现',
+      indices: [
+        { name: '道琼斯工业', value: '52,305.24', chg: 0.25, chgVal: '+130.45' },
+        { name: '标普500', value: '7,483.23', chg: 0.08, chgVal: '+5.98' },
+        { name: '纳斯达克综合', value: '26,040.03', chg: 0.32, chgVal: '+83.12' }
+      ],
+      points: [
+        '美股三大指数小幅收涨，市场等待今晚非农数据指引',
+        '科技股多数上涨，英伟达、微软小幅攀升',
+        '初请失业金人数23.5万，高于预期，劳动力市场显现降温迹象'
+      ]
+    },
+    aShare: {
+      title: '📈 A股 · 市场回顾',
+      indices: [
+        { name: '上证指数', value: '4,112.30', chg: 0.35, note: '半年线收官' },
+        { name: '深证成指', value: '16,119.45', chg: 0.52, note: '消费领涨' },
+        { name: '创业板指', value: '4,260.81', chg: 0.68, note: '新能源反弹' },
+        { name: '科创50', value: '2,153.08', chg: 1.15, note: '上半年累计涨18%+' }
+      ],
+      warning: '📊 A股上半年收官',
+      warningContent: '上半年A股主要指数全线收涨，科创50以18%+涨幅领跑全球主要指数。6月收官日市场情绪偏暖，超3000只个股上涨，成交额维持在2万亿上方。',
+      sectors: {
+        leading: '消费电子、食品饮料、新能源汽车、医药',
+        lagging: '煤炭、银行、石油石化等防御板块小幅回调',
+        turnover: '沪深两市约2.68万亿元'
+      }
+    },
+    hkStock: {
+      title: '🏛 港股 · 市场回顾',
+      indices: [
+        { name: '恒生指数', value: '22,880.50', chg: 0.45 },
+        { name: '恒生科技指数', value: '4,472.15', chg: 0.82 }
+      ],
+      points: [
+        '恒指收涨0.45%，恒生科技指数涨0.82%',
+        '科技股和消费股领涨，南向资金净买入超50亿港元'
+      ]
+    },
+    macro: {
+      title: '🌍 宏观数据与政策动态',
+      headline: '中国6月制造业PMI',
+      dataTable: [
+        { metric: '制造业PMI', prev: '49.3%', expected: '49.6%', actual: '49.5%' },
+        { metric: '非制造业PMI', prev: '50.5%', expected: '50.4%', actual: '50.3%' }
+      ],
+      points: [
+        '6月制造业PMI 49.5%，环比微升0.2个百分点，但仍处荣枯线以下',
+        '新订单指数回升至49.8%，需求端边际改善',
+        '国务院常务会议审议通过促进创业投资高质量发展政策'
+      ]
+    },
+    fxCommodity: {
+      title: '💰 外汇与商品',
+      fx: [
+        { name: '美元指数', value: '101.42', chg: -0.12, note: '非农前窄幅震荡', chgStr: '-0.12%' },
+        { name: '美元/人民币（在岸）', value: '6.7894', chg: -0.03, note: '人民币持稳', chgStr: '-0.03%' }
+      ],
+      commodity: [
+        { name: '现货黄金', value: '$4,030.50', chg: 0.52, note: '静待非农数据' },
+        { name: 'WTI原油', value: '$68.58', chg: -0.35, note: '库存增加压制' }
+      ],
+      analysis: '',
+      analysisContent: ''
+    },
+    crypto: {
+      title: '🟢 加密货币',
+      items: [
+        { name: 'BTC / 比特币', value: '$58,620', chg: -1.25, note: '继续探底' }
+      ],
+      points: [
+        '比特币继续在$5.8万附近震荡，市场等待非农数据方向指引',
+        'ETF资金流向显示机构观望情绪浓厚'
+      ]
+    },
+    news: {
+      title: '📰 公司与行业重大新闻',
+      items: [
+        { tag: '政策', tagClass: 'report-tag-policy', title: '证监会发布新"国九条"配套政策', content: '— 进一步强化分红导向，推动上市公司提升投资者回报水平。' },
+        { tag: '行业', tagClass: 'report-tag-industry', title: '人形机器人产业化加速', content: '— 多家核心零部件企业发布半年报预告，订单同比大幅增长。' }
+      ]
+    },
+    calendar: {
+      title: '📅 今日经济日历与风险事件',
+      items: [
+        { time: '09:45', event: '中国6月财新制造业PMI', stars: 2 },
+        { time: '20:30', event: '美国6月非农就业数据', stars: 3 }
+      ],
+      liquidity: '',
+      liquidityContent: ''
+    },
+    outlook: {
+      title: '📊 市场展望',
+      global: '今晚美国非农数据是全球市场焦点，若数据大幅不及预期可能强化降息预期，利好风险资产；若超预期强劲则可能压制市场。',
+      ashare: '下半年开局，关注中报业绩预告窗口期。市场结构性行情特征明显，建议均衡配置科技成长与消费复苏主线。',
+      hk: '港股估值优势明显，南向资金持续流入提供支撑。',
+      commodity: '黄金在非农前维持谨慎，数据公布后或选择方向。'
+    },
+    sources: [
+      { name: '东方财富网', title: '7月2日投资日历', url: '#' }
+    ],
+    disclaimer: '免责声明：本早报基于公开市场数据整理，仅供参考，不构成任何投资建议。'
+  },
   '2026-07-01': {
     date: '2026-07-01',
     weekday: '周三',
@@ -2758,290 +3160,8 @@ const MORNING_REPORTS = {
       { name: '东方财富网', title: '6月23日投资日历', url: '#' }
     ],
     disclaimer: '免责声明：本早报基于公开市场数据整理，仅供参考，不构成任何投资建议。'
-  },
-  '2026-07-03': {
-    date: '2026-07-03',
-    weekday: '周五',
-    dateEn: '2026-07-03 FRI',
-    summary: '覆盖全球宏观 · A股 · 港股 · 美股 · 外汇 · 商品 · 加密货币',
-    coreFocus: [
-      '美国非农报告今晚20:30提前公布（因独立日假期），预期+11.5万人',
-      'A股下半年首日沪强深弱，上证站上4100点，创业板跌近2%',
-      '港股大幅反弹，恒生科技指数涨3.23%，领涨全球',
-      '美伊多哈会谈推动油价大跌，WTI跌破69美元创数月新低',
-      '黄金上演V型反转，重返4000美元上方报4044.60美元',
-      'ADP"小非农"仅增9.8万，低于预期，今晚非农分歧加大',
-      '特朗普明确不延长7月9日贸易谈判截止日，地缘风险升温',
-      '比特币升破6万美元关口，24h涨幅约2.9%'
-    ],
-    coreAlert: {
-      title: '⚠ 今日重点关注',
-      content: '美国6月非农仅增5.7万人，远低于预期的11.5万人，失业率升至4.2%。数据公布后美元跳水、黄金飙升、加息预期推迟至12月。美股隔夜呈现"道强纳弱"风格切换。A股科技股遭遇"黑色星期四"，科创50暴跌7.70%。'
-    },
-    coreIndices: [
-      { name: '上证指数', value: '4,028.90', chg: -2.03 },
-      { name: '道琼斯', value: '52,900.07', chg: 1.14 },
-      { name: '标普500', value: '7,483.24', chg: 0.00 },
-      { name: '纳斯达克', value: '25,832.67', chg: -0.80 },
-      { name: '恒生指数', value: '23,055.03', chg: 0.76 },
-      { name: '现货黄金', value: '$4,123', chg: 2.30 }
-    ],
-    usStock: {
-      title: '🌎 美股 · 隔夜表现',
-      indices: [
-        { name: '道琼斯工业', value: '52,900.07', chg: 1.14, chgVal: '+594.83' },
-        { name: '标普500', value: '7,483.24', chg: 0.00, chgVal: '+0.01' },
-        { name: '纳斯达克综合', value: '25,832.67', chg: -0.80, chgVal: '-207.36' }
-      ],
-      points: [
-        '美股三大股指涨跌分化，道指领涨1.14%创历史新高，纳指连续回调跌0.80%',
-        '标普500十一大板块八涨三跌：医疗(+2.70%)、必需消费品(+2.41%)领涨；科技(-1.46%)、通信服务(-0.83%)领跌',
-        '美国6月非农爆冷后，市场加息预期从10月推迟至12月，美股期指短线拉升，科技股盘前企稳',
-        '风格切换加速：资金从AI/科技巨头流向传统价值板块，盘面呈现明显的"价值优于成长"格局'
-      ]
-    },
-    aShare: {
-      title: '📈 A股 · 市场回顾',
-      indices: [
-        { name: '上证指数', value: '4,028.90', chg: -2.03, note: '银行护盘跌幅最小' },
-        { name: '深证成指', value: '15,498.81', chg: -3.85, note: '科技股拖累' },
-        { name: '创业板指', value: '4,017.27', chg: -5.71, note: '创2025/4/7以来最大跌幅' },
-        { name: '科创50', value: '1,987.29', chg: -7.70, note: '年内最大单日跌幅' }
-      ],
-      warning: '⚠ 科技股"黑色星期四"',
-      warningContent: 'A股三大指数集体大幅下跌，但等权口径下万得全A微涨0.19%，全市场仍有2,219只个股上涨、156只涨停。下跌主要集中在权重科技股：半导体、CPO、算力硬件板块集体重挫，北方华创、金海通跌停，寒武纪跌超5%。',
-      sectors: {
-        leading: '贵金属、人形机器人、创新药、银行（宁波银行/沪农商行/成都银行涨超3%）、汽车',
-        lagging: '半导体、CPO、算力硬件、通信设备 — 前期涨幅巨大的热门赛道遭遇集中获利了结',
-        turnover: '沪深两市约3.45万亿元，较前一日缩量约2,095亿元'
-      }
-    },
-    hkStock: {
-      title: '🏛 港股 · 市场回顾',
-      indices: [
-        { name: '恒生指数', value: '23,055.03', chg: 0.76 },
-        { name: '恒生科技指数', value: '4,454.28', chg: -0.40 }
-      ],
-      points: [
-        '恒指收涨0.76%，主板成交3,696.3亿港元',
-        '恒生科技指数逆势微跌0.40%，科技股承压与A股联动',
-        '港股走势强于A股，受益于南向资金持续流入及估值优势'
-      ]
-    },
-    macro: {
-      title: '🌍 宏观数据与政策动态',
-      headline: '美国6月非农就业报告（重磅）',
-      dataTable: [
-        { metric: '非农新增就业', prev: '17.2万', expected: '11.5万', actual: '5.7万' },
-        { metric: '失业率', prev: '4.1%', expected: '4.2%', actual: '4.2%' },
-        { metric: '4月/5月累计下修', prev: '—', expected: '—', actual: '-7.4万' }
-      ],
-      points: [
-        '美国ISM制造业PMI（6月）：53.3，连续第六个月扩张，但低于预期的53.9，扩张步伐放缓。14个制造行业中14个报告增长，就业分项仍处收缩区间',
-        '美联储政策预期：非农远不及预期后，市场重新定价利率路径，加息时点从此前预期10月推迟至12月，降息预期升温但路径存在分歧',
-        '美元指数：非农数据公布后直线跳水，跌破101关口'
-      ]
-    },
-    fxCommodity: {
-      title: '💰 外汇与商品',
-      fx: [
-        { name: '美元指数', value: '101.35', chg: -0.06, note: '非农后跌破101' },
-        { name: '美元/人民币（中间价）', value: '6.8088', chg: -0.21, note: '央行小幅下调', chgStr: '-21bp' },
-        { name: '美元/人民币（在岸）', value: '6.7879', chg: -0.0015, note: '日内基本持平', chgStr: '-0.0015%' }
-      ],
-      commodity: [
-        { name: '现货黄金', value: '$4,123.21', chg: 2.30, note: '非农爆冷后暴力拉升' },
-        { name: '现货白银', value: '$60.94', chg: 3.04, note: '跟随黄金走强' },
-        { name: 'WTI原油', value: '$68.69', chg: 0.16, note: '能源运输恢复压制油价' },
-        { name: '布伦特原油', value: '$71.80', chg: 0.32, note: '窄幅波动' }
-      ],
-      analysis: '📈 黄金与油价走势分化',
-      analysisContent: '油价与金价二季度同时回落但驱动因素分化：油价下行主要受能源运输恢复影响，金价压力来自美联储偏鹰预期与技术面弱化。非农数据公布后，黄金暴力拉涨逾2%至$4,123，银价涨超3%。国内成品油调价窗口今日24时开启，零售限价大概率下调。'
-    },
-    crypto: {
-      title: '🟢 加密货币',
-      items: [
-        { name: 'BTC / 比特币', value: '$61,253', chg: 4.47, note: '从$5.8万低点强势反弹' },
-        { name: 'ETH / 以太坊', value: '$1,647', chg: 4.69, note: '跟随BTC反弹' }
-      ],
-      points: [
-        '比特币从7月初$5.8万低点（2024年底以来新低）强劲反弹至$6.1万上方，24H涨超4.5%',
-        '反弹逻辑：非农爆冷导致美元走弱、美联储加息预期降温，风险资产集体受益',
-        '上半年比特币从$4万冲高至$6.3万后回落，"数字黄金"叙事阶段性弱化'
-      ]
-    },
-    news: {
-      title: '📰 公司与行业重大新闻',
-      items: [
-        { tag: '重磅', tagClass: 'report-tag-hot', title: 'Meta计划出售闲置AI算力', content: '— Meta正筹划推出云基础设施业务，对外出售过剩AI计算能力和模型访问权限，直接挑战AWS/Azure/谷歌云。消息引发全球市场对"AI算力过剩"的担忧，美股费城半导体指数暴跌超6%。' },
-        { tag: '行业', tagClass: 'report-tag-industry', title: '全球科技股遭遇"黑色星期四"', content: '— 日韩股市大幅下挫（韩国KOSPI跌7.89%），A股半导体/算力/CPO集体暴跌。多重利空叠加：AI算力过剩担忧 + 交易拥挤获利了结 + 中报窗口期临近 + 估值风险提示公告频发。' },
-        { tag: '政策', tagClass: 'report-tag-policy', title: '高端制造税收补贴政策落地', content: '— 2026.7.1至2028年底，高端制造领域税收优惠政策正式实施，利好高端装备、新材料、新能源汽车等板块。' },
-        { tag: '市场', tagClass: 'report-tag-market', title: '广期所引入境外交易者', content: '— 7月3日9时起，广期所正式引入境外交易者参与碳酸锂期货及期权交易，中国大宗商品市场对外开放迈出重要一步。' },
-        { tag: '国债', tagClass: 'report-tag-blue', title: '800亿元30年期超长期特别国债今日招标', content: '— 全年总额1.3万亿，本次发行后整体进度突破50%。三季度将集中发行11期20/30/50年期超长债。' },
-        { tag: '能源', tagClass: 'report-tag-green', title: '国内成品油调价窗口今日开启', content: '— 7月3日24时，本轮成品油零售限价大概率迎下调，利好物流运输及消费者成本。' }
-      ]
-    },
-    calendar: {
-      title: '📅 今日经济日历与风险事件',
-      items: [
-        { time: '全天', event: '纽约交易所因美国独立日假期休市', stars: 3 },
-        { time: '09:00', event: '广期所碳酸锂期货引入境外交易者', stars: 2 },
-        { time: '待定', event: '2026全球数字经济大会 · AI融合应用论坛', stars: 2 },
-        { time: '待定', event: '欧元区6月服务业PMI终值', stars: 2 },
-        { time: '24:00', event: '国内成品油零售限价调价窗口', stars: 1 },
-        { time: '全天', event: '800亿元30年期超长期特别国债招标', stars: 1 }
-      ],
-      liquidity: '📝 流动性提示',
-      liquidityContent: '今日有2,315亿元7天期逆回购到期，关注央行是否进行等额或超额续做，以判断短期流动性态度。'
-    },
-    outlook: {
-      title: '📊 市场展望',
-      global: '美国6月非农仅增5.7万人，远低于预期，叠加4/5月数据累计下修7.4万，劳动力市场降温信号明确。市场已将美联储加息预期从10月推迟至12月，短期对风险资产偏利多。今日纽约交易所因独立日休市，美盘交投清淡，市场焦点将转向欧洲数据及下周的美联储会议纪要。',
-      ashare: '昨日科技股遭遇剧烈调整，但市场呈现"指数弱、个股活跃"格局，风格切换加速深化。短期内关注：(1) 科创板/半导体板块调整是否已到位；(2) 北方华创、寒武纪等龙头能否止跌企稳；(3) 黄金、银行、创新药等防御板块能否延续相对优势。今日无新股申购，流动性压力可控。',
-      hk: '恒指独立走强，收涨0.76%，显示南向资金逢低布局意愿较强。恒生科技指数微跌，预计短期跟随A股科技板块波动。在A股风格切换背景下，港股低估值优势有望吸引更多配置资金。',
-      commodity: '黄金在非农爆冷后暴力拉升逾2%，短期关注$4,150阻力位。油价受能源运输恢复压制，上方空间有限。比特币从$5.8万低点反弹至$6.1万，但上方$6.3万前高仍构成重要阻力，中期走势取决于全球流动性预期及监管政策。'
-    },
-    sources: [
-      { name: '新华网', title: '纽约股市三大股指2日涨跌不一', url: 'http://www.xinhuanet.com/fortune/' },
-      { name: '中财网', title: '道琼斯收涨1.14% 标普指数收平', url: 'https://www.cfi.net.cn/' },
-      { name: '证券时报', title: 'A股半导体崩跌，全球资本市场遭遇"黑色星期四"', url: 'https://www.stcn.com/' },
-      { name: '中国新闻网', title: '美国6月非农就业新增5.7万人 失业率4.2%', url: 'https://www.chinanews.com.cn/finance/' },
-      { name: '财联社', title: '比特币涨至$61,253，24H涨4.47%', url: 'https://www.cls.cn/' },
-      { name: '东方财富网', title: '7月3日投资日历', url: 'https://www.eastmoney.com/' }
-    ],
-    disclaimer: '免责声明：本早报基于公开市场数据整理，仅供参考，不构成任何投资建议。投资有风险，入市须谨慎。'
-  },
-  '2026-07-02': {
-    date: '2026-07-02',
-    weekday: '周四',
-    dateEn: '2026-07-02 THU',
-    summary: '覆盖全球宏观 · A股 · 港股 · 美股 · 外汇 · 商品',
-    coreFocus: [
-      'A股上半年收官战，科创50累计涨超18%领跑全球主要指数',
-      '6月制造业PMI 49.5%环比微升，经济弱复苏态势延续',
-      '美股三大指数小幅收涨，市场静待今晚非农数据',
-      '初请失业金23.5万高于预期，劳动力市场显现降温迹象',
-      '黄金在$4,030附近震荡，等待非农数据方向指引',
-      '国务院常务会议审议通过促进创业投资高质量发展政策'
-    ],
-    coreAlert: {
-      title: '⚠ 今日重点关注',
-      content: 'A股上半年收官，科创50累计涨超18%领跑全球。6月制造业PMI 49.5%环比微升，经济弱复苏态势延续。美股小幅收涨，市场静待今晚非农数据。'
-    },
-    coreIndices: [
-      { name: '上证指数', value: '4,112.30', chg: 0.35 },
-      { name: '道琼斯', value: '52,305.24', chg: 0.25 },
-      { name: '标普500', value: '7,483.23', chg: 0.08 },
-      { name: '纳斯达克', value: '26,040.03', chg: 0.32 },
-      { name: '恒生指数', value: '22,880.50', chg: 0.45 },
-      { name: '现货黄金', value: '$4,030', chg: 0.52 }
-    ],
-    usStock: {
-      title: '🌎 美股 · 隔夜表现',
-      indices: [
-        { name: '道琼斯工业', value: '52,305.24', chg: 0.25, chgVal: '+130.45' },
-        { name: '标普500', value: '7,483.23', chg: 0.08, chgVal: '+5.98' },
-        { name: '纳斯达克综合', value: '26,040.03', chg: 0.32, chgVal: '+83.12' }
-      ],
-      points: [
-        '美股三大指数小幅收涨，市场等待今晚非农数据指引',
-        '科技股多数上涨，英伟达、微软小幅攀升',
-        '初请失业金人数23.5万，高于预期，劳动力市场显现降温迹象'
-      ]
-    },
-    aShare: {
-      title: '📈 A股 · 市场回顾',
-      indices: [
-        { name: '上证指数', value: '4,112.30', chg: 0.35, note: '半年线收官' },
-        { name: '深证成指', value: '16,119.45', chg: 0.52, note: '消费领涨' },
-        { name: '创业板指', value: '4,260.81', chg: 0.68, note: '新能源反弹' },
-        { name: '科创50', value: '2,153.08', chg: 1.15, note: '上半年累计涨18%+' }
-      ],
-      warning: '📊 A股上半年收官',
-      warningContent: '上半年A股主要指数全线收涨，科创50以18%+涨幅领跑全球主要指数。6月收官日市场情绪偏暖，超3000只个股上涨，成交额维持在2万亿上方。',
-      sectors: {
-        leading: '消费电子、食品饮料、新能源汽车、医药',
-        lagging: '煤炭、银行、石油石化等防御板块小幅回调',
-        turnover: '沪深两市约2.68万亿元'
-      }
-    },
-    hkStock: {
-      title: '🏛 港股 · 市场回顾',
-      indices: [
-        { name: '恒生指数', value: '22,880.50', chg: 0.45 },
-        { name: '恒生科技指数', value: '4,472.15', chg: 0.82 }
-      ],
-      points: [
-        '恒指收涨0.45%，恒生科技指数涨0.82%',
-        '科技股和消费股领涨，南向资金净买入超50亿港元'
-      ]
-    },
-    macro: {
-      title: '🌍 宏观数据与政策动态',
-      headline: '中国6月制造业PMI',
-      dataTable: [
-        { metric: '制造业PMI', prev: '49.3%', expected: '49.6%', actual: '49.5%' },
-        { metric: '非制造业PMI', prev: '50.5%', expected: '50.4%', actual: '50.3%' }
-      ],
-      points: [
-        '6月制造业PMI 49.5%，环比微升0.2个百分点，但仍处荣枯线以下',
-        '新订单指数回升至49.8%，需求端边际改善',
-        '国务院常务会议审议通过促进创业投资高质量发展政策'
-      ]
-    },
-    fxCommodity: {
-      title: '💰 外汇与商品',
-      fx: [
-        { name: '美元指数', value: '101.42', chg: -0.12, note: '非农前窄幅震荡', chgStr: '-0.12%' },
-        { name: '美元/人民币（在岸）', value: '6.7894', chg: -0.03, note: '人民币持稳', chgStr: '-0.03%' }
-      ],
-      commodity: [
-        { name: '现货黄金', value: '$4,030.50', chg: 0.52, note: '静待非农数据' },
-        { name: 'WTI原油', value: '$68.58', chg: -0.35, note: '库存增加压制' }
-      ],
-      analysis: '',
-      analysisContent: ''
-    },
-    crypto: {
-      title: '🟢 加密货币',
-      items: [
-        { name: 'BTC / 比特币', value: '$58,620', chg: -1.25, note: '继续探底' }
-      ],
-      points: [
-        '比特币继续在$5.8万附近震荡，市场等待非农数据方向指引',
-        'ETF资金流向显示机构观望情绪浓厚'
-      ]
-    },
-    news: {
-      title: '📰 公司与行业重大新闻',
-      items: [
-        { tag: '政策', tagClass: 'report-tag-policy', title: '证监会发布新"国九条"配套政策', content: '— 进一步强化分红导向，推动上市公司提升投资者回报水平。' },
-        { tag: '行业', tagClass: 'report-tag-industry', title: '人形机器人产业化加速', content: '— 多家核心零部件企业发布半年报预告，订单同比大幅增长。' }
-      ]
-    },
-    calendar: {
-      title: '📅 今日经济日历与风险事件',
-      items: [
-        { time: '09:45', event: '中国6月财新制造业PMI', stars: 2 },
-        { time: '20:30', event: '美国6月非农就业数据', stars: 3 }
-      ],
-      liquidity: '',
-      liquidityContent: ''
-    },
-    outlook: {
-      title: '📊 市场展望',
-      global: '今晚美国非农数据是全球市场焦点，若数据大幅不及预期可能强化降息预期，利好风险资产；若超预期强劲则可能压制市场。',
-      ashare: '下半年开局，关注中报业绩预告窗口期。市场结构性行情特征明显，建议均衡配置科技成长与消费复苏主线。',
-      hk: '港股估值优势明显，南向资金持续流入提供支撑。',
-      commodity: '黄金在非农前维持谨慎，数据公布后或选择方向。'
-    },
-    sources: [
-      { name: '东方财富网', title: '7月2日投资日历', url: '#' }
-    ],
-    disclaimer: '免责声明：本早报基于公开市场数据整理，仅供参考，不构成任何投资建议。'
   }
 };
-
 function getMorningReport(date) {
   return MORNING_REPORTS[date] || null;
 }
@@ -3195,16 +3315,8 @@ function tradeMarkers(code, group='stocks') {
 }
 
 let currentTrendCode = null;
-let currentTrendRange = '30d';
-
-function trendImageUrl(code, range) {
-  const info = STOCK_INFO[code];
-  const prefix = info.prefix;
-  const symbol = `${prefix}${code}`;
-  if (range === '5d') return `https://image.sinajs.cn/newchart/min/n/${symbol}.gif?${Date.now()}`;
-  if (range === 'year') return `https://image2.sinajs.cn/newchart/weekly/n/${symbol}.gif?${Date.now()}`;
-  return `https://image2.sinajs.cn/newchart/daily/n/${symbol}.gif?${Date.now()}`;
-}
+let currentTrendRange = 'day';
+let echartInstance = null;
 
 function updateTrendTabs() {
   document.querySelectorAll('#trendTabs button').forEach(btn => {
@@ -3212,34 +3324,208 @@ function updateTrendTabs() {
   });
 }
 
+async function fetchKlineData(code, klt) {
+  const secid = eastmoneySecid(code);
+  const url = `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${secid}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=${klt}&fqt=0&end=20500101&lmt=120`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('K线数据请求失败');
+  const data = await r.json();
+  if (!data || !data.data || !data.data.klines || !data.data.klines.length) {
+    throw new Error('K线数据为空');
+  }
+  return data.data.klines.map(line => {
+    const parts = line.split(',');
+    return {
+      date: parts[0],
+      open: parseFloat(parts[1]),
+      close: parseFloat(parts[2]),
+      high: parseFloat(parts[3]),
+      low: parseFloat(parts[4]),
+      volume: parseFloat(parts[5]),
+      amount: parseFloat(parts[6])
+    };
+  });
+}
+
+function calcMA(data, period) {
+  const result = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) {
+      result.push(null);
+    } else {
+      let sum = 0;
+      for (let j = i - period + 1; j <= i; j++) {
+        sum += data[j].close;
+      }
+      result.push(+(sum / period).toFixed(3));
+    }
+  }
+  return result;
+}
+
+function renderKlineChart(code, range) {
+  const chartDom = document.getElementById('modalChart');
+  if (echartInstance) {
+    echartInstance.dispose();
+    echartInstance = null;
+  }
+  // 移除旧的错误提示
+  chartDom.classList.remove('modal-chart-error');
+  chartDom.innerHTML = '';
+
+  const isLight = document.body.classList.contains('light');
+  const bgColor = isLight ? '#ffffff' : '#1a1d27';
+  const textColor = isLight ? '#657089' : '#8b8fa3';
+  const borderColor = isLight ? '#e5e7eb' : '#2a2e3e';
+  const upColor = '#00c853';
+  const downColor = '#ff1744';
+
+  const kltMap = { day: 101, week: 102, month: 103 };
+  const klt = kltMap[range] || 101;
+
+  fetchKlineData(code, klt).then(klineData => {
+    const dates = klineData.map(d => d.date);
+    const ohlcData = klineData.map(d => [d.open, d.close, d.low, d.high]);
+    const ma5 = calcMA(klineData, 5);
+    const ma10 = calcMA(klineData, 10);
+    const ma30 = calcMA(klineData, 30);
+
+    const option = {
+      backgroundColor: bgColor,
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'cross' },
+        backgroundColor: isLight ? '#fff' : '#1a1d27',
+        borderColor: borderColor,
+        textStyle: { color: textColor, fontSize: 12 }
+      },
+      legend: {
+        data: ['K线', 'MA5', 'MA10', 'MA30'],
+        top: 0,
+        textStyle: { color: textColor, fontSize: 11 },
+        itemWidth: 14, itemHeight: 8
+      },
+      grid: { left: '8%', right: '4%', top: '14%', bottom: '16%' },
+      xAxis: {
+        type: 'category',
+        data: dates,
+        axisLine: { lineStyle: { color: borderColor } },
+        axisTick: { lineStyle: { color: borderColor } },
+        axisLabel: { color: textColor, fontSize: 10, rotate: 0 },
+        splitLine: { show: false }
+      },
+      yAxis: {
+        type: 'value',
+        scale: true,
+        axisLine: { lineStyle: { color: borderColor } },
+        axisLabel: { color: textColor, fontSize: 10 },
+        splitLine: { lineStyle: { color: borderColor, type: 'dashed' } }
+      },
+      dataZoom: [
+        { type: 'inside', start: 70, end: 100 },
+        { type: 'slider', height: 20, bottom: '2%', borderColor: borderColor,
+          backgroundColor: isLight ? '#f5f7fb' : '#0f1117',
+          dataBackground: {
+            lineStyle: { color: borderColor },
+            areaStyle: { color: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.03)' }
+          },
+          selectedDataBackground: {
+            lineStyle: { color: '#ffd600' },
+            areaStyle: { color: 'rgba(255,214,0,0.1)' }
+          },
+          textStyle: { color: textColor, fontSize: 10 }
+        }
+      ],
+      series: [
+        {
+          name: 'K线',
+          type: 'candlestick',
+          data: ohlcData,
+          itemStyle: {
+            color: upColor,
+            color0: downColor,
+            borderColor: upColor,
+            borderColor0: downColor
+          },
+          markPoint: {
+            symbol: 'pin',
+            symbolSize: 30,
+            label: { fontSize: 10 }
+          }
+        },
+        {
+          name: 'MA5',
+          type: 'line',
+          data: ma5,
+          smooth: true,
+          lineStyle: { width: 1, color: '#ffd600' },
+          symbol: 'none',
+          emphasis: { focus: 'series' }
+        },
+        {
+          name: 'MA10',
+          type: 'line',
+          data: ma10,
+          smooth: true,
+          lineStyle: { width: 1, color: '#00bcd4' },
+          symbol: 'none',
+          emphasis: { focus: 'series' }
+        },
+        {
+          name: 'MA30',
+          type: 'line',
+          data: ma30,
+          smooth: true,
+          lineStyle: { width: 1, color: '#9c27b0' },
+          symbol: 'none',
+          emphasis: { focus: 'series' }
+        }
+      ]
+    };
+
+    echartInstance = echarts.init(chartDom);
+    echartInstance.setOption(option);
+    // 响应窗口大小变化
+    window.addEventListener('resize', () => {
+      if (echartInstance) echartInstance.resize();
+    }, { once: true });
+  }).catch(err => {
+    console.error('K线数据加载失败:', err);
+    chartDom.classList.add('modal-chart-error');
+    chartDom.innerHTML = 'K线数据加载失败，请稍后重试';
+    chartDom.style.height = '200px';
+  });
+}
+
 function showTrend(code) {
   const info = STOCK_INFO[code];
   if (!info) return;
   currentTrendCode = code;
-  currentTrendRange = '30d';
+  currentTrendRange = 'day';
   currentFundCode = null;
   const prefix = info.prefix;
   const title = document.getElementById('modalTitle');
-  const img = document.getElementById('modalChart');
+  const chartDiv = document.getElementById('modalChart');
   const detail = document.getElementById('modalDetail');
   const tabs = document.getElementById('trendTabs');
   const link = document.getElementById('modalLink');
   title.textContent = `${info.name}（${code}）最新 ¥${info.price}`;
   tabs.style.display = 'flex';
   tabs.innerHTML = `
-    <button data-range="5d" onclick="setTrendRange('5d')">分时/5日</button>
-    <button data-range="30d" onclick="setTrendRange('30d')">日K线</button>
-    <button data-range="year" onclick="setTrendRange('year')">周K/年线</button>
+    <button data-range="day" onclick="setTrendRange('day')">日K</button>
+    <button data-range="week" onclick="setTrendRange('week')">周K</button>
+    <button data-range="month" onclick="setTrendRange('month')">月K</button>
   `;
-  img.style.display = 'block';
+  chartDiv.style.display = 'block';
+  chartDiv.style.height = '420px';
   document.getElementById('fundChartCanvas').style.display = 'none';
-  img.onerror = null;
   detail.innerHTML = '';
-  img.src = trendImageUrl(code, currentTrendRange);
   link.href = `https://quote.eastmoney.com/${prefix}${code}.html`;
   link.textContent = '在东方财富查看详情 ↗';
   updateTrendTabs();
   document.getElementById('trendModal').classList.add('active');
+  // 等 DOM 渲染完成后初始化 ECharts
+  setTimeout(() => renderKlineChart(code, currentTrendRange), 100);
 }
 
 let currentFundCode = null;
@@ -3479,7 +3765,7 @@ function showFundDetail(code) {
   if (!f) return;
   currentFundCode = code;
   const title = document.getElementById('modalTitle');
-  const img = document.getElementById('modalChart');
+  const chartDiv = document.getElementById('modalChart');
   const canvas = document.getElementById('fundChartCanvas');
   const detail = document.getElementById('modalDetail');
   const tabs = document.getElementById('trendTabs');
@@ -3497,7 +3783,7 @@ function showFundDetail(code) {
 
   // 基金走势图区域：显示自定义canvas净值走势
   tabs.style.display = 'none';
-  img.style.display = 'none';
+  chartDiv.style.display = 'none';
   canvas.style.display = 'block';
 
   title.textContent = `${f.name}（${code}）`;
@@ -3553,11 +3839,15 @@ function showFundDetail(code) {
 function setTrendRange(range) {
   if (!currentTrendCode) return;
   currentTrendRange = range;
-  document.getElementById('modalChart').src = trendImageUrl(currentTrendCode, range);
   updateTrendTabs();
+  renderKlineChart(currentTrendCode, range);
 }
 
 function closeTrend() {
+  if (echartInstance) {
+    echartInstance.dispose();
+    echartInstance = null;
+  }
   document.getElementById('trendModal').classList.remove('active');
 }
 
@@ -4597,6 +4887,7 @@ let plValueType = 'amount';
 
 // Page routing
 let currentPage = 'home'; // 'home' | 'holdings' | 'market'
+let _prevPage = null; // 记录上一次 render() 时的页面，用于判断是否为同页刷新
 let titleClickCount = 0;
 let dataRevealed = false;
 
@@ -7230,6 +7521,7 @@ function render() {
   else if (currentPage === 'todoDetail') renderTodoDetail();
   else if (currentPage === 'sanxingDetail') renderSanxingDetail();
   else if (currentPage === 'anniDetail') renderAnniDetail();
+  _prevPage = currentPage;
 }
 
 function updateCurrentAINameDisplay() {
@@ -8104,7 +8396,19 @@ function renderHome() {
   }
 
   html += '</div>';
+
+  // 保存已有的 input 元素引用，避免 innerHTML 重建导致浏览器触发"保存密码"提示
+  const _oldTodoInput = _prevPage === 'home' ? document.getElementById('todoInput') : null;
+  const _oldDiaryInput = _prevPage === 'home' ? document.getElementById('diaryInput') : null;
   document.getElementById('content').innerHTML = html;
+  if (_oldTodoInput) {
+    const _newTodoInput = document.getElementById('todoInput');
+    if (_newTodoInput) _newTodoInput.replaceWith(_oldTodoInput);
+  }
+  if (_oldDiaryInput) {
+    const _newDiaryInput = document.getElementById('diaryInput');
+    if (_newDiaryInput) _newDiaryInput.replaceWith(_oldDiaryInput);
+  }
 
   // 登录后渲染待办和纪念日内容
   if (currentUser) {
@@ -8131,7 +8435,12 @@ function renderTodoDetail() {
       </div>
       <div id="todoListContainer" data-mode="detail"></div>
     </div>`;
+  const _oldTodoInput = _prevPage === 'todoDetail' ? document.getElementById('todoInput') : null;
   document.getElementById('content').innerHTML = html;
+  if (_oldTodoInput) {
+    const _newTodoInput = document.getElementById('todoInput');
+    if (_newTodoInput) _newTodoInput.replaceWith(_oldTodoInput);
+  }
   renderTodoListDetail();
 }
 

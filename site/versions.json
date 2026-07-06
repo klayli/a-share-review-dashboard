@@ -1,7 +1,14 @@
 {
-  "current": "v1.36.0",
+  "current": "v1.37.0",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.37.0",
+      "date": "2026-07-06 14:30（北京时间）",
+      "summary": "ECharts交互K线图+早报数据补充+Cloudflare KV云端存储绑定+DOM密码提示修复+日期倒序确认",
+      "cache": "a-share-review-v47-20260706",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
     {
       "version": "v1.36.0",
       "date": "2026-07-05 19:30（北京时间）",

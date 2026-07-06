@@ -1,0 +1,21 @@
+- [x] 早报数据：MORNING_REPORTS包含2026-07-03（周五）完整早报数据
+- [x] 早报数据：MORNING_REPORTS包含2026-07-06（周一）完整早报数据
+- [x] 早报数据：2026-07-06早报包含coreFocus、coreIndices、usStock、aShare、hkStock、macro、fx、crypto、news、calendar、outlook等模块
+- [x] 云端存储：site/wrangler.toml包含[[kv_namespaces]]配置，binding为USER_DATA
+- [ ] 云端存储：KV命名空间ID已填入wrangler.toml（当前为占位符USER_DATA_KV，需在Cloudflare控制台创建KV命名空间后替换为真实ID）
+- [x] 云端存储：saveToCloud()中的headerCustom数据正确拼装并发送到/api/user/data
+- [x] 云端存储：loadFromCloud()正确从/api/user/data获取并回写localStorage
+- [x] 日期选择器：renderDateButtons()中select元素按日期倒序排列（最新在最前）
+- [x] 日期选择器：早报详情页日期选择器同样倒序排列
+- [x] 密码提示修复：renderHome()中todoInput的DOM不在render()中重建
+- [x] 密码提示修复：所有input元素（headerCustomInput、todoInput、日记输入框）不被周期性render()重建
+- [x] ECharts：HTML中引入echarts CDN脚本
+- [x] ECharts：showTrend()函数使用ECharts渲染K线图替代新浪GIF
+- [x] ECharts：K线图包含MA5/MA10/MA30均线
+- [x] ECharts：支持日K/周K/月K周期切换
+- [x] ECharts：支持缩放、拖拽、十字光标交互
+- [x] ECharts：K线API请求失败时显示友好错误提示
+- [x] 版本号：APP_VERSION和APP_VERSION_DATE已更新
+- [x] 版本号：VERSION_HISTORY已添加新版本条目
+- [x] 部署：site/index.html已同步主文件
+- [x] 部署：site/versions.json已更新
