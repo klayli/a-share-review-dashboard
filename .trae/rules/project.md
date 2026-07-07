@@ -70,3 +70,9 @@ git add -A && git commit -m "release vX.X.X: 说明" && git push origin main
 - `.env` 文件已被 gitignore，不会提交到 GitHub
 - 部署前务必同步 `a-share-review-dashboard.html` 到 `site/index.html`
 - 新增页面时，在 `BREADCRUMB_SECTIONS` 数组中添加面包屑配置
+
+### Cloudflare KV
+
+- 项目名称: `a-share-review-dashboard`
+- 账户 ID: `b0286f9e4a2bd889c47a7644d565c9d4`
+- KV 命名空间 `USER_DATA`: `ea06b101b8114c60bcb0461672fb3125`
