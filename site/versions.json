@@ -1,7 +1,14 @@
 {
-  "current": "v1.37.0",
+  "current": "v1.39.1",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.39.1",
+      "date": "2026-07-07 15:00（北京时间）",
+      "summary": "修复面包屑导航href缺失+7月7日早报+移除持仓卡片点击弹窗",
+      "cache": "a-share-review-v48-20260707",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
     {
       "version": "v1.37.0",
       "date": "2026-07-06 14:30（北京时间）",
