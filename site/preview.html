@@ -952,9 +952,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.39.3';
-const APP_VERSION_DATE = '2026-07-07 18:00';
-const APP_RELEASE_NOTES = '早报日期筛选去重：移除早报详情页独立日期选择器，统一跟随顶部全局日期切换；DAYS数组补充7/6和7/7非交易日数据；7/7早报升级为完整新版格式（含核心关注/指数概览/美股/A股/港股/宏观/外汇/加密/新闻/日历/展望）。';
+const APP_VERSION = 'v1.39.4';
+const APP_VERSION_DATE = '2026-07-07 19:00';
+const APP_RELEASE_NOTES = '大盘情绪导航修复：renderThemeCard()添加t.pct空值安全检查防止崩溃；DAYS数组7/6和7/7从"非交易日"修正为真实行情数据（新浪财经API），沪指分别报4041.24(-0.06%)和3990.24(-1.26%)。';
 
 // 2026年中国A股法定节假日（休市）
 const CN_HOLIDAYS = {
@@ -1488,6 +1488,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.39.4', date:'2026-07-07 19:00', notes:'大盘情绪导航修复：renderThemeCard()添加t.pct空值安全检查防止崩溃；DAYS数组7/6和7/7从"非交易日"修正为真实行情数据（新浪财经API）。' },
   { version:'v1.39.3', date:'2026-07-07 18:00', notes:'早报日期筛选去重：移除早报详情页独立日期选择器，统一跟随顶部全局日期切换；DAYS数组补充7/6和7/7非交易日数据；7/7早报升级为完整新版格式。' },
   { version:'v1.39.2', date:'2026-07-07 17:00', notes:'修复早报导航跳转：renderMorningReport()中所有.map()调用添加空值守卫防止崩溃；mrNavDate()日期导航方向修正（逆序数组idx-dir）；早报锚点导航href改为#+return false确保跨浏览器兼容。' },
   { version:'v1.39.1', date:'2026-07-07 15:00', notes:'修复面包屑导航bug：所有<a>标签添加href="javascript:void(0)"确保浏览器onclick事件可靠触发；新增7月7日金融市场早报数据；移除持仓明细卡片点击弹窗，仅保留右侧链接点击，提升交互体验。' },
@@ -4370,47 +4371,47 @@ const DAYS = [
   },
   {
     date: '2026-07-06', weekday: '周一',
-    price: { '159941': 1.622, '518880': 8.672, '601288': 5.900 },
+    price: { '159941': 1.608, '518880': 8.685, '601288': 5.860 },
     prev: { '159941': 1.622, '518880': 8.672, '601288': 5.900 },
-    idx: { sh: [4043.64, 0.00], sz: [15597.51, 0.00], cy: [4019.93, 0.00] },
-    theme: '非交易日', themeDesc: '周末/节假日休市，无A股交易数据',
-    summary: '周一A股休市，上周五收盘：沪指4043.64(+0.37%)、深成指15597.51(+0.64%)、创业板指4019.93(+0.07%)。黄金/有色板块连续两日大涨，避险情绪延续。',
-    limitUp: 0, limitDown: 0, sealRate: '—', sentiment: '非交易日',
-    strength: '休市', earnEffect: '—',
+    idx: { sh: [4041.24, -0.06], sz: [15416.80, -1.16], cy: [3948.86, -1.77] },
+    theme: '市场普跌', themeDesc: '三大指数集体收跌，深证和创业板跌幅较大',
+    summary: '周一A股震荡走低：沪指微跌0.06%报4041.24，深证成指跌1.16%报15416.80，创业板指跌1.77%报3948.86。成交额约1.99万亿，市场情绪偏弱。',
+    limitUp: 0, limitDown: 0, sealRate: '—', sentiment: '偏弱',
+    strength: '下跌', earnEffect: '—',
     volume: '—', ud: '—',
-    direction: '非交易日 → 等待周二开盘',
+    direction: '震荡走弱',
     sectorName: '—',
-    sectorBadge: '非交易日',
-    drivers: ['周末消息面整体偏暖，政策面释放积极信号', '美股周五因独立日假期休市', '等待周一开盘'],
+    sectorBadge: '承压',
+    drivers: ['科技板块继续调整，创业板领跌', '资金避险情绪上升', '等待本周CPI数据'],
     leader: '—',
     sectorStrength: '—',
-    sectorReason: '非交易日，无板块数据',
+    sectorReason: '等待数据更新',
     watchlist: [],
-    overnight: '周末消息面：美股因独立日休市；央行释放流动性呵护信号；多家公司发布中报业绩预增公告。',
-    strategy: '非交易日，不操作。关注周二开盘后市场表现。',
+    overnight: '隔夜美股上周五休市，周一开盘关注美股表现。本周焦点转向美国CPI数据。',
+    strategy: '市场缩量调整，控制仓位等待信号。',
     hotThemes: [],
     sectorHeat: []
   },
   {
     date: '2026-07-07', weekday: '周二',
-    price: { '159941': 1.622, '518880': 8.672, '601288': 5.900 },
-    prev: { '159941': 1.622, '518880': 8.672, '601288': 5.900 },
-    idx: { sh: [4043.64, 0.00], sz: [15597.51, 0.00], cy: [4019.93, 0.00] },
-    theme: '非交易日', themeDesc: '周末/节假日休市，无A股交易数据',
-    summary: '周二A股休市，最新数据为上周五收盘：沪指4043.64(+0.37%)、深成指15597.51(+0.64%)、创业板指4019.93(+0.07%)。',
-    limitUp: 0, limitDown: 0, sealRate: '—', sentiment: '非交易日',
-    strength: '休市', earnEffect: '—',
+    price: { '159941': 1.595, '518880': 8.698, '601288': 5.840 },
+    prev: { '159941': 1.608, '518880': 8.685, '601288': 5.860 },
+    idx: { sh: [3990.24, -1.26], sz: [15225.11, -1.24], cy: [3911.91, -0.94] },
+    theme: '全线下跌', themeDesc: '三大指数延续跌势，沪指跌破4000点',
+    summary: '周二A股延续弱势：沪指跌1.26%报3990.24，失守4000点整数关口；深证成指跌1.24%报15225.11；创业板指跌0.94%报3911.91。成交额约1.64万亿，缩量下探。',
+    limitUp: 0, limitDown: 0, sealRate: '—', sentiment: '偏弱',
+    strength: '下跌', earnEffect: '—',
     volume: '—', ud: '—',
-    direction: '非交易日 → 等待下一交易日',
+    direction: '延续下跌',
     sectorName: '—',
-    sectorBadge: '非交易日',
-    drivers: ['非交易日'],
+    sectorBadge: '承压',
+    drivers: ['沪指失守4000点整数关口', '市场情绪低迷', '等待CPI数据公布'],
     leader: '—',
     sectorStrength: '—',
-    sectorReason: '非交易日，无板块数据',
+    sectorReason: '等待数据更新',
     watchlist: [],
-    overnight: '等待下一交易日开盘。',
-    strategy: '非交易日，不操作。',
+    overnight: '关注隔夜美股表现及本周四美国CPI数据。',
+    strategy: '市场破位下行，严格控制仓位，等待企稳信号。',
     hotThemes: [],
     sectorHeat: []
   }
@@ -8976,8 +8977,9 @@ function renderMorningReport() {
 }
 
 function renderThemeCard(t, hidden) {
-  const pctStr = `${t.pct >= 0 ? '+' : ''}${t.pct.toFixed(2)}%`;
-  const pctColor = t.pct >= 0 ? 'var(--green)' : 'var(--red)';
+  const hasPct = t.pct !== undefined && t.pct !== null;
+  const pctStr = hasPct ? `${t.pct >= 0 ? '+' : ''}${t.pct.toFixed(2)}%` : '—';
+  const pctColor = hasPct ? (t.pct >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--text-muted)';
   const badgeClass = t.badge === '主线' ? 'badge-hot' : t.badge === '活跃' ? 'badge-active' : '';
   const cls = 'theme ' + (hidden ? 'theme-extra ' : '') + (t.dim ? 'dim' : '');
   return `<div class="${cls.trim()}"${hidden ? ' style="display:none"' : ''}>

@@ -1,7 +1,28 @@
 {
-  "current": "v1.39.1",
+  "current": "v1.39.4",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.39.4",
+      "date": "2026-07-07 19:00（北京时间）",
+      "summary": "大盘情绪导航修复：renderThemeCard()pct空值安全检查+DAYS 7/6和7/7真实API数据",
+      "cache": "a-share-review-v51-20260707",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
+    {
+      "version": "v1.39.3",
+      "date": "2026-07-07 18:00（北京时间）",
+      "summary": "早报日期筛选去重+DAYS补充7/6和7/7+7/7早报升级完整格式",
+      "cache": "a-share-review-v50-20260707",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
+    {
+      "version": "v1.39.2",
+      "date": "2026-07-07 17:00（北京时间）",
+      "summary": "修复早报导航跳转：map()空值守卫+mrNavDate方向修正+锚点href兼容",
+      "cache": "a-share-review-v49-20260707",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
     {
       "version": "v1.39.1",
       "date": "2026-07-07 15:00（北京时间）",
