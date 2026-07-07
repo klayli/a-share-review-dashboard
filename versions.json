@@ -1,7 +1,14 @@
 {
-  "current": "v1.39.6",
+  "current": "v1.39.7",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.39.7",
+      "date": "2026-07-07 22:00（北京时间）",
+      "summary": "STOCK_INFO补全：新增27个热点题材个股代码（中芯国际/海光信息/比亚迪/紫金矿业等），修复大盘情绪页面个股名称显示为纯文本问题。",
+      "cache": "a-share-review-v54-20260707",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
     {
       "version": "v1.39.6",
       "date": "2026-07-07 21:00（北京时间）",

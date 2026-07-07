@@ -952,9 +952,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.39.6';
-const APP_VERSION_DATE = '2026-07-07 21:00';
-const APP_RELEASE_NOTES = '热点题材代表个股API化：新增BK_CODE_MAP板块代码映射和fetchSectorStocks()动态查询函数，所有hotThemes.stocks改用板块真实成分股Top 3（按市值），与板块热力图龙头完全区分。';
+const APP_VERSION = 'v1.39.7';
+const APP_VERSION_DATE = '2026-07-07 22:00';
+const APP_RELEASE_NOTES = 'STOCK_INFO补全：新增27个热点题材个股代码到查找表，确保大盘情绪页面hotThemes个股名称正确显示为可点击链接。';
 
 // BK 板块代码映射（热点题材 → BK 代码），用于查询板块真实成分股
 const BK_CODE_MAP = {
@@ -1534,6 +1534,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.39.7', date:'2026-07-07', notes:'STOCK_INFO补全：新增27个热点题材个股代码（中芯国际/海光信息/比亚迪/紫金矿业等），修复大盘情绪页面个股名称显示为纯文本问题。' },
   { version:'v1.39.6', date:'2026-07-07', desc:'热点题材代表个股API化：新增BK_CODE_MAP和fetchSectorStocks()，hotThemes.stocks切换为板块真实成分股Top 3' },
   { version:'v1.39.5', date:'2026-07-07 19:30', notes:'热点题材代表个股去重：附录·当日热点题材汇总中代表个股与板块热力图龙头区分，每个热点题材显示独立的前3只代表个股。' },
   { version:'v1.39.4', date:'2026-07-07 19:00', notes:'大盘情绪导航修复：renderThemeCard()添加t.pct空值安全检查防止崩溃；DAYS数组7/6和7/7从"非交易日"修正为真实行情数据（新浪财经API）。' },
@@ -3412,7 +3413,34 @@ const STOCK_INFO = {
   '600378': { name:'昊华科技', price:'—', prefix:'sh' },
   '002167': { name:'东方锆业', price:'—', prefix:'sz' },
   '000603': { name:'盛达资源', price:'—', prefix:'sz' },
-  '002738': { name:'中矿资源', price:'—', prefix:'sz' }
+  '002738': { name:'中矿资源', price:'—', prefix:'sz' },
+  '000426': { name:'兴业银锡', price:'—', prefix:'sz' },
+  '000568': { name:'泸州老窖', price:'—', prefix:'sz' },
+  '000858': { name:'五粮液', price:'—', prefix:'sz' },
+  '000895': { name:'双汇发展', price:'—', prefix:'sz' },
+  '002379': { name:'宏桥控股', price:'—', prefix:'sz' },
+  '002475': { name:'立讯精密', price:'—', prefix:'sz' },
+  '002594': { name:'比亚迪', price:'—', prefix:'sz' },
+  '002600': { name:'领益智造', price:'—', prefix:'sz' },
+  '002714': { name:'牧原股份', price:'—', prefix:'sz' },
+  '300433': { name:'蓝思科技', price:'—', prefix:'sz' },
+  '300498': { name:'温氏股份', price:'—', prefix:'sz' },
+  '300972': { name:'万辰集团', price:'—', prefix:'sz' },
+  '300979': { name:'华利集团', price:'—', prefix:'sz' },
+  '300999': { name:'金龙鱼', price:'—', prefix:'sz' },
+  '600177': { name:'雅戈尔', price:'—', prefix:'sh' },
+  '600398': { name:'海澜之家', price:'—', prefix:'sh' },
+  '600489': { name:'中金黄金', price:'—', prefix:'sh' },
+  '600547': { name:'山东黄金', price:'—', prefix:'sh' },
+  '600704': { name:'物产中大', price:'—', prefix:'sh' },
+  '601138': { name:'工业富联', price:'—', prefix:'sh' },
+  '601899': { name:'紫金矿业', price:'—', prefix:'sh' },
+  '603288': { name:'海天味业', price:'—', prefix:'sh' },
+  '603993': { name:'洛阳钼业', price:'—', prefix:'sh' },
+  '688017': { name:'绿的谐波', price:'—', prefix:'sh' },
+  '688041': { name:'海光信息', price:'—', prefix:'sh' },
+  '688802': { name:'沐曦股份-U', price:'—', prefix:'sh' },
+  '688981': { name:'中芯国际', price:'—', prefix:'sh' }
 };
 
 function stockPrefix(code) {
