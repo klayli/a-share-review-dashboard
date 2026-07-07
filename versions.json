@@ -1,7 +1,14 @@
 {
-  "current": "v1.39.4",
+  "current": "v1.39.5",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.39.5",
+      "date": "2026-07-07 19:30（北京时间）",
+      "summary": "热点题材代表个股去重：hotThemes.stocks与sectorHeat.leaders区分",
+      "cache": "a-share-review-v52-20260707",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
     {
       "version": "v1.39.4",
       "date": "2026-07-07 19:00（北京时间）",
