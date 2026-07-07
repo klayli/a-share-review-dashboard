@@ -952,9 +952,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.37.0';
-const APP_VERSION_DATE = '2026-07-06 14:30';
-const APP_RELEASE_NOTES = '股票K线图升级为ECharts交互式蜡烛图：替换原新浪GIF图片方案，支持日K/周K/月K自由切换，MA5/MA10/MA30均线叠加显示，十字光标tooltip、缩放拖拽等交互功能，深色/亮色主题自适应；补充7/3和7/6早报数据；配置Cloudflare KV命名空间绑定修复云端存储不生效问题；修复待办输入框render()周期性重建导致浏览器密码提示问题；日期选择器确认倒序排列。';
+const APP_VERSION = 'v1.39.1';
+const APP_VERSION_DATE = '2026-07-07 15:00';
+const APP_RELEASE_NOTES = '修复面包屑导航bug：所有<a>标签添加href="javascript:void(0)"确保浏览器onclick事件可靠触发；新增7月7日金融市场早报数据；移除持仓明细卡片点击弹窗，仅保留右侧链接点击，提升交互体验。';
 
 // 2026年中国A股法定节假日（休市）
 const CN_HOLIDAYS = {
@@ -1488,6 +1488,7 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.39.1', date:'2026-07-07 15:00', notes:'修复面包屑导航bug：所有<a>标签添加href="javascript:void(0)"确保浏览器onclick事件可靠触发；新增7月7日金融市场早报数据；移除持仓明细卡片点击弹窗，仅保留右侧链接点击，提升交互体验。' },
   { version:'v1.37.0', date:'2026-07-06 14:30', notes:'股票K线图升级为ECharts交互式蜡烛图：替换原新浪GIF图片方案，支持日K/周K/月K自由切换，MA5/MA10/MA30均线叠加显示，十字光标tooltip、缩放拖拽等交互功能，深色/亮色主题自适应；补充7/3和7/6早报数据；配置Cloudflare KV命名空间绑定修复云端存储不生效问题；修复待办输入框render()周期性重建导致浏览器密码提示问题；日期选择器确认倒序排列。' },
   { version:'v1.36.0', date:'2026-07-05 19:30', notes:'云端数据同步：待办清单/纪念日/三省日记/顶部自定义/AI配置全部支持云端KV存储，登录后自动从云端加载数据、修改后2秒防抖自动同步到Cloudflare KV，跨设备数据一致；修复早报数据不更新问题（ensureTodayData使用isTradingDay交易日历替代简单周末判断，支持法定节假日和调休工作日）；顶部日期选择器倒序排列（最新日期在最前）；修复输入时浏览器提示保存密码问题（所有输入框添加autocomplete="off"属性）；顶部自定义内容改为按用户隔离存储，多账号互不干扰。' },
   { version:'v1.35.0', date:'2026-07-05 14:00', notes:'恢复P0-P3自动更新功能：P0收盘自动归档（2026年A股交易日历含法定节假日/调休工作日，15:05后自动从东财+新浪双数据源拉取收盘数据凝固到DAYS数组并保存localStorage，刷新不丢失；页面加载时自动补录未归档数据）；P1基金净值三态管理+22:00自动拉取确认净值（修正原22:30错误，交易日历替代简单周末判断）；P3多数据源交叉校验（东财+新浪价格差异>0.5%控制台警告，优先使用东财数据）；SW缓存自动更新。' },
@@ -9090,7 +9091,7 @@ function renderHoldings() {
   pnl.stocks.forEach(s => {
     const prevClose = d.prev ? d.prev[s.code] : null;
     const chgPct = prevClose ? ((s.price - prevClose) / prevClose * 100) : null;
-    html += `<div class="card clickable">`
+    html += `<div class="card clickable">
       <div class="card-head">${stockTag(s.code)}</div>
       <div class="card-price">${s.price.toFixed(3)}</div>
       <div class="card-chg ${cls(chgPct)}">${chgPct != null ? sign(chgPct) + fmt(chgPct) + '%' : '—'} <span class="tag tag-${chgPct >= 0 ? 'green' : 'red'}">${chgPct >= 0 ? '涨' : '跌'}</span></div>

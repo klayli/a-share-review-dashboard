@@ -9091,7 +9091,7 @@ function renderHoldings() {
   pnl.stocks.forEach(s => {
     const prevClose = d.prev ? d.prev[s.code] : null;
     const chgPct = prevClose ? ((s.price - prevClose) / prevClose * 100) : null;
-    html += `<div class="card clickable">`
+    html += `<div class="card clickable">
       <div class="card-head">${stockTag(s.code)}</div>
       <div class="card-price">${s.price.toFixed(3)}</div>
       <div class="card-chg ${cls(chgPct)}">${chgPct != null ? sign(chgPct) + fmt(chgPct) + '%' : '—'} <span class="tag tag-${chgPct >= 0 ? 'green' : 'red'}">${chgPct >= 0 ? '涨' : '跌'}</span></div>
