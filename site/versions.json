@@ -1,7 +1,14 @@
 {
-  "current": "v1.39.5",
+  "current": "v1.39.6",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.39.6",
+      "date": "2026-07-07 21:00（北京时间）",
+      "summary": "热点题材代表个股API化：新增BK_CODE_MAP和fetchSectorStocks()，hotThemes.stocks切换为板块真实成分股Top 3",
+      "cache": "a-share-review-v53-20260707",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
     {
       "version": "v1.39.5",
       "date": "2026-07-07 19:30（北京时间）",
