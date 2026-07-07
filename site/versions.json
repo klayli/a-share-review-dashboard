@@ -1,7 +1,14 @@
 {
-  "current": "v1.40.0",
+  "current": "v1.40.1",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.40.1",
+      "date": "2026-07-07 23:59（北京时间）",
+      "summary": "热点题材动态去重：新增dedupStocks()和updateHotThemeStocks()函数，renderMarket()改为异步，对带bkCode的热点题材动态fetch API成分股并排除sectorHeat.leaders重叠个股；修复版本通知按钮崩溃（VERSION_HISTORY v1.39.6 desc→notes）及formatNotes空值防御。",
+      "cache": "a-share-review-v56-20260707",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
     {
       "version": "v1.40.0",
       "date": "2026-07-07 23:00（北京时间）",

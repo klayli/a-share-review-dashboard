@@ -952,9 +952,9 @@ function updateHeaderClock() {
 }
 
 // ==================== DATA ====================
-const APP_VERSION = 'v1.40.0';
-const APP_VERSION_DATE = '2026-07-07 23:00';
-const APP_RELEASE_NOTES = '早报自动生成：新增Cloudflare Worker定时任务（每交易日8:30生成早报），前端getMorningReport()改为async优先从KV API读取，自动生成早报标记"AI生成"标签；Worker新增交易日判断+东方财富API数据拉取+早报JSON生成逻辑。';
+const APP_VERSION = 'v1.40.1';
+const APP_VERSION_DATE = '2026-07-07 23:59';
+const APP_RELEASE_NOTES = '热点题材动态去重：新增dedupStocks()和updateHotThemeStocks()函数，renderMarket()改为异步，对带bkCode的热点题材动态fetch API成分股并排除sectorHeat.leaders重叠个股；修复版本通知按钮崩溃（VERSION_HISTORY v1.39.6 desc→notes）及formatNotes空值防御。';
 
 // BK 板块代码映射（热点题材 → BK 代码），用于查询板块真实成分股
 const BK_CODE_MAP = {
@@ -1000,6 +1000,53 @@ function getBkCode(themeName) {
     if (themeName.includes(key) || key.includes(themeName)) return code;
   }
   return null;
+}
+
+// 从 API 股票列表中排除与 sectorHeat.leaders 重叠的股票
+function dedupStocks(apiStocks, sectorHeatLeaders) {
+  const leaderSet = new Set();
+  sectorHeatLeaders.forEach(l => {
+    const name = l.replace(/\([^)]*\)/g, '').trim();
+    const codeMatch = l.match(/\b(\d{6})\b/);
+    if (name) leaderSet.add(name);
+    if (codeMatch) leaderSet.add(codeMatch[1]);
+  });
+  const deduped = apiStocks.filter(s => !leaderSet.has(s.name) && !leaderSet.has(s.code));
+  return deduped;
+}
+
+// 异步更新热点题材个股（动态去重）
+async function updateHotThemeStocks(day) {
+  if (!day || !day.hotThemes) return;
+  for (let i = 0; i < day.hotThemes.length; i++) {
+    const t = day.hotThemes[i];
+    if (!t.bkCode) continue;
+    try {
+      const apiStocks = await fetchSectorStocks(t.bkCode);
+      if (!apiStocks || apiStocks.length === 0) continue;
+      // 收集 sectorHeat 中与本题材相关的 leaders
+      const heatLeaders = (day.sectorHeat || [])
+        .filter(h => {
+          const tn = (t.name || '').toLowerCase();
+          const hn = (h.name || '').toLowerCase();
+          return tn.includes(hn) || hn.includes(tn);
+        })
+        .flatMap(h => (h.leaders || '').split('·').map(s => s.trim()));
+      // 去重
+      const deduped = dedupStocks(apiStocks, heatLeaders);
+      // 取前 3 个（去重后不够则回退到原始 API 数据）
+      const top3 = (deduped.length >= 3 ? deduped : apiStocks).slice(0, 3);
+      t.stocks = top3.map(s => `${s.name}(${s.code})`).join(' · ');
+      // 更新 DOM
+      const themeEl = document.querySelector(`.theme[data-hottheme-idx="${i}"]`);
+      if (themeEl) {
+        const tsEl = themeEl.querySelector('.ts');
+        if (tsEl) tsEl.innerHTML = linkStocks(t.stocks);
+      }
+    } catch (e) {
+      console.warn('updateHotThemeStocks failed for', t.name, e);
+    }
+  }
 }
 
 // 2026年中国A股法定节假日（休市）
@@ -1534,9 +1581,10 @@ const DATA_API = '/api/portfolio.json';
 let API_STATUS = '使用内置备用数据';
 
 const VERSION_HISTORY = [
+  { version:'v1.40.1', date:'2026-07-07', notes:'热点题材动态去重：新增dedupStocks()和updateHotThemeStocks()函数，renderMarket()改为异步，对带bkCode的热点题材动态fetch API成分股并排除sectorHeat.leaders重叠个股；修复版本通知按钮崩溃（VERSION_HISTORY v1.39.6 desc→notes）及formatNotes空值防御。' },
   { version:'v1.40.0', date:'2026-07-07', notes:'早报自动生成：新增Cloudflare Worker定时任务（每交易日8:30生成早报），前端getMorningReport()支持KV API动态读取，自动生成早报标记"AI生成"标签。' },
   { version:'v1.39.7', date:'2026-07-07', notes:'STOCK_INFO补全：新增27个热点题材个股代码（中芯国际/海光信息/比亚迪/紫金矿业等），修复大盘情绪页面个股名称显示为纯文本问题。' },
-  { version:'v1.39.6', date:'2026-07-07', desc:'热点题材代表个股API化：新增BK_CODE_MAP和fetchSectorStocks()，hotThemes.stocks切换为板块真实成分股Top 3' },
+  { version:'v1.39.6', date:'2026-07-07', notes:'热点题材代表个股API化：新增BK_CODE_MAP和fetchSectorStocks()，hotThemes.stocks切换为板块真实成分股Top 3' },
   { version:'v1.39.5', date:'2026-07-07 19:30', notes:'热点题材代表个股去重：附录·当日热点题材汇总中代表个股与板块热力图龙头区分，每个热点题材显示独立的前3只代表个股。' },
   { version:'v1.39.4', date:'2026-07-07 19:00', notes:'大盘情绪导航修复：renderThemeCard()添加t.pct空值安全检查防止崩溃；DAYS数组7/6和7/7从"非交易日"修正为真实行情数据（新浪财经API）。' },
   { version:'v1.39.3', date:'2026-07-07 18:00', notes:'早报日期筛选去重：移除早报详情页独立日期选择器，统一跟随顶部全局日期切换；DAYS数组补充7/6和7/7非交易日数据；7/7早报升级为完整新版格式。' },
@@ -4091,8 +4139,7 @@ function closeTrend() {
 function openVersionLog() {
   const list = document.getElementById('versionList');
   const formatDate = date => date;
-  const formatNotes = notes => notes
-    .split('；')
+  const formatNotes = notes => (notes || '').split('；')
     .map(note => note.trim().replace(/。$/, ''))
     .filter(Boolean)
     .map(note => `<li>${note}</li>`)
@@ -7792,7 +7839,7 @@ function loadMarketData() {
 async function render() {
   if (currentPage === 'home') await renderHome();
   else if (currentPage === 'holdings') renderHoldings();
-  else if (currentPage === 'market') renderMarket();
+  else if (currentPage === 'market') await renderMarket();
   else if (currentPage === 'morningReport') await renderMorningReport();
   else if (currentPage === 'todoDetail') renderTodoDetail();
   else if (currentPage === 'sanxingDetail') renderSanxingDetail();
@@ -9073,13 +9120,13 @@ async function renderMorningReport() {
   document.getElementById('content').innerHTML = html;
 }
 
-function renderThemeCard(t, hidden) {
+function renderThemeCard(t, hidden, idx) {
   const hasPct = t.pct !== undefined && t.pct !== null;
   const pctStr = hasPct ? `${t.pct >= 0 ? '+' : ''}${t.pct.toFixed(2)}%` : '—';
   const pctColor = hasPct ? (t.pct >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--text-muted)';
   const badgeClass = t.badge === '主线' ? 'badge-hot' : t.badge === '活跃' ? 'badge-active' : '';
   const cls = 'theme ' + (hidden ? 'theme-extra ' : '') + (t.dim ? 'dim' : '');
-  return `<div class="${cls.trim()}"${hidden ? ' style="display:none"' : ''}>
+  return `<div class="${cls.trim()}"${hidden ? ' style="display:none"' : ''}${idx !== undefined ? ' data-hottheme-idx="' + idx + '"' : ''}${t.bkCode ? ' data-bkcode="' + t.bkCode + '"' : ''}>
     <div class="tn"><span class="rank">${t.rank}</span>${t.name}<span class="pct" style="color:${pctColor}">${pctStr}</span>${t.badge ? '<span class="badge ' + badgeClass + '">' + t.badge + '</span>' : ''}</div>
     <div class="td">${linkStocks(t.desc)}</div>
     <div class="ts">${linkStocks(t.stocks)}</div>
@@ -9101,7 +9148,7 @@ function toggleThemesMore(btn) {
   }
 }
 
-function renderMarket() {
+async function renderMarket() {
   const d = DAYS.find(d => d.date === currentDate);
   if (!d) return;
   const isToday = d.date === todayText();
@@ -9245,12 +9292,12 @@ function renderMarket() {
   if (d.hotThemes && d.hotThemes.length > 0) {
     const themesShow = d.hotThemes.slice(0, 6);
     const themesMore = d.hotThemes.slice(6);
-    themesShow.forEach(t => {
-      html += renderThemeCard(t);
+    themesShow.forEach((t, idx) => {
+      html += renderThemeCard(t, false, idx);
     });
     if (themesMore.length > 0) {
-      themesMore.forEach(t => {
-        html += renderThemeCard(t, true);
+      themesMore.forEach((t, idx) => {
+        html += renderThemeCard(t, true, themesShow.length + idx);
       });
       html += `<div style="grid-column:1/-1;text-align:center;margin-top:4px"><button class="btn-more" onclick="toggleThemesMore(this)" style="background:var(--card-hover);color:var(--blue);border:1px solid var(--border);border-radius:8px;padding:6px 24px;cursor:pointer;font-size:0.85rem;transition:all 0.2s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">展开其余${themesMore.length}个题材 ▼</button></div>`;
     }
@@ -9258,6 +9305,9 @@ function renderMarket() {
     html += `<div class="info-item" style="color:var(--text-dim)">盘前数据，等待9:30开盘后自动更新热点题材。</div>`;
   }
   html += `</div></div>`;
+
+  // 异步更新热点题材个股（动态去重）
+  setTimeout(() => updateHotThemeStocks(d), 200);
 
   document.getElementById('content').innerHTML = html;
 }
