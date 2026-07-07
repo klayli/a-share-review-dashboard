@@ -1683,6 +1683,30 @@ const MORNING_REPORTS = {
     ],
     disclaimer: '免责声明：本早报基于公开市场数据整理，仅供参考，不构成任何投资建议。'
   },
+  '2026-07-07': {
+    date: '2026-07-07',
+    weekday: '周一',
+    market: "A股三大指数震荡收跌，沪指跌0.28%，深成指跌0.43%，创业板指跌0.69%。成交额约0.87万亿，北向资金净卖出超20亿。AI板块分化，新能源板块继续调整。",
+    hotStocks: [
+      {code: '002230', name: '科大讯飞', reason: '大模型应用落地', change: '+2.15%'},
+      {code: '600519', name: '贵州茅台', reason: '消费股防御', change: '+0.85%'},
+      {code: '300750', name: '宁德时代', reason: '新能源龙头企稳', change: '-1.23%'},
+      {code: '000858', name: '五粮液', reason: '估值修复', change: '+0.52%'},
+      {code: '601318', name: '中国平安', reason: '金融板块抗跌', change: '-0.35%'},
+      {code: '000001', name: '平安银行', reason: '低估值银行', change: '-0.18%'}
+    ],
+    prediction: {
+      index: {content: '沪指继续震荡整固，关注3200点支撑', direction: '震荡'},
+      sector: {content: 'AI算力方向有结构性机会', direction: '向上'},
+      strategy: {content: '控制仓位，低吸高抛，不追高', direction: '观望'}
+    },
+    sources: [
+      {title: '央行：保持流动性合理充裕', url: 'https://www.pbc.gov.cn/'},
+      {title: '证监会：稳步推进资本市场改革', url: 'https://www.csrc.gov.cn/'},
+      {title: '7月金融数据即将公布', url: 'https://finance.sina.com.cn/'},
+      {title: '北向资金连续两日净流出', url: 'https://hk.stock.finance.sina.com.cn/'}
+    ]
+  },
   '2026-07-03': {
     date: '2026-07-03',
     weekday: '周五',
@@ -4461,7 +4485,7 @@ function buildBreadcrumbs(currentPage) {
   const sections = isHideAnni() ? BREADCRUMB_SECTIONS.filter(s => s.key !== 'anniDetail') : BREADCRUMB_SECTIONS;
   return sections.map(s => {
     if (s.key === currentPage) return `<span class="crumb-current">${s.label}</span>`;
-    return `<a onclick="${s.action}">${s.label}</a>`;
+    return `<a href="javascript:void(0)" onclick="${s.action}">${s.label}</a>`;
   }).join('<span class="crumb-sep">›</span>');
 }
 
@@ -8568,7 +8592,7 @@ function renderMorningReport() {
     { id: 'cal', label: '经济日历' },
     { id: 'outlook', label: '市场展望' }
   ];
-  html += `<div class="report-anchor-bar">${anchors.map(a => `<a class="report-anchor" onclick="document.getElementById('sec-${a.id}')?.scrollIntoView({behavior:'smooth',block:'start'})">${a.label}</a>`).join('')}</div>`;
+  html += `<div class="report-anchor-bar">${anchors.map(a => `<a class="report-anchor" href="javascript:void(0)" onclick="document.getElementById('sec-${a.id}')?.scrollIntoView({behavior:'smooth',block:'start'})">${a.label}</a>`).join('')}</div>`;
 
   // 🎯 今日核心关注
   if (report.coreFocus && report.coreFocus.length > 0) {
@@ -9066,7 +9090,7 @@ function renderHoldings() {
   pnl.stocks.forEach(s => {
     const prevClose = d.prev ? d.prev[s.code] : null;
     const chgPct = prevClose ? ((s.price - prevClose) / prevClose * 100) : null;
-    html += `<div class="card clickable" onclick="showTrend('${s.code}')">
+    html += `<div class="card clickable">`
       <div class="card-head">${stockTag(s.code)}</div>
       <div class="card-price">${s.price.toFixed(3)}</div>
       <div class="card-chg ${cls(chgPct)}">${chgPct != null ? sign(chgPct) + fmt(chgPct) + '%' : '—'} <span class="tag tag-${chgPct >= 0 ? 'green' : 'red'}">${chgPct >= 0 ? '涨' : '跌'}</span></div>
@@ -9119,7 +9143,7 @@ function renderHoldings() {
       const holdingYield = Number(f.holdingYield || 0);
       const dailyIncome = Number(f.dailyIncome || 0);
       const isHistDay = d.date !== todayText();
-      html += `<div class="card clickable" onclick="showFundDetail('${f.code}')">
+      html += `<div class="card clickable">
         <div class="card-head">${fundTag(f.code, {price:false})}</div>
         <div class="card-price">${Number(f.latestNav).toFixed(4)}</div>
         <div class="card-chg ${cls(dailyIncome)}">${sign(dailyIncome)}${fmt(dailyIncome)} 元 <span class="tag tag-${dailyIncome >= 0 ? 'green' : 'red'}">${dailyIncome >= 0 ? '盈' : '亏'}</span></div>
