@@ -1,7 +1,21 @@
 {
-  "current": "v1.40.1",
+  "current": "v1.42.0",
   "rollback_supported": true,
   "versions": [
+    {
+      "version": "v1.42.0",
+      "date": "2026-07-10 10:30（北京时间）",
+      "summary": "修复基金持仓昨日收盘净值不对；更新7月6-9日DAYS数据（真实股票/指数/基金数据）；添加7月10日金融市场早报；更新大盘情绪数据和备选标的（真实强势个股）；更新明日一句话策略（结合市场情绪和板块轮动）。",
+      "cache": "a-share-review-v58-20260710",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
+    {
+      "version": "v1.41.0",
+      "date": "2026-07-10 10:00（北京时间）",
+      "summary": "数据完整性规则：添加数据完整性规则到项目规范，确保所有显示数据基于真实市场数据。",
+      "cache": "a-share-review-v57-20260710",
+      "deploy_url": "https://a-share-review-dashboard.pages.dev"
+    },
     {
       "version": "v1.40.1",
       "date": "2026-07-07 23:59（北京时间）",
